@@ -11,17 +11,23 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="SRLPackage",
     version="0.0.1",
-    scripts=['SRLPackage'],
+    #scripts=["SRLPackage"],
     author="Andre Markard",
     author_email="andre@markard.eu",
     description="A summarization of the SRL process",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="Yet to be published",
-    packages=setuptools.find_packages(),
+    platforms=["any"],
+    packages=["SRLPackage"],
     install_requires=[
-        'pyfn',
+        "pyfn",
     ],
+    entry_points={
+        "console_scripts": [
+            "SRLPackage = SRLPackage.main:main"
+        ],
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
