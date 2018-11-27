@@ -5,6 +5,7 @@ import logging
 import sys
 import pyfn
 from subprocess import call
+from frame_identification.reader import Data_reader
 
 def download_file(url, file_path):
 	r = requests.get(url, stream=True)
@@ -101,5 +102,8 @@ def main():
  	 			"--target","data/experiments/xp_001/data", \
   				"--splits","train", \
   				"--output_sentences"])
+		if sys.argv[1] in ["f_id"]:
+			reader = Data_reader("data/experiments/xp_001/data/dev.sentences", "data/experiments/xp_001/data/dev.frames")
+			reader.read_data()
 
 main()
