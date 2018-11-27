@@ -1,9 +1,9 @@
 # SRLPackage
 
 A summarization of the SRL process
+- Based on (and using) pyfn (https://pypi.org/project/pyfn/)
 
 ## Preparation
-- Download and install pyfn (https://pypi.org/project/pyfn/)
 - Download the FrameNet dataset
 - Extract the FrameNet dataset to data/ (alternatively adjust conversion.sh)
 - The following three files need to be downloaded and extracted to the root directory
