@@ -2,6 +2,8 @@
 import os
 import requests
 import logging
+import sys
+import pyfn
 from subprocess import call
 
 def download_file(url, file_path):
@@ -51,18 +53,18 @@ def download_resources():
 def download_data():
 	url = "https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z"
 	file_path = "data.7z"
-	print("Downloading resources:")
+	print("Downloading data:")
 	
 	download_file(url, file_path)
 	extract_file(file_path)
 
 
-def check_files():
+def check_files(path):
 	print("SRLPackage: Checking for required files:")
-	script_path = os.path.dirname(os.path.realpath(__file__)) + "/scripts"
-	lib_path = os.path.dirname(os.path.realpath(__file__)) + "/lib"
-	resources_path = os.path.dirname(os.path.realpath(__file__)) + "/resources"
-	resources_path = os.path.dirname(os.path.realpath(__file__)) + "/data"
+	script_path = path + "/scripts"
+	lib_path = path + "/lib"
+	resources_path = path + "/resources"
+	data_path = path + "/data"
 
 	if os.path.isdir(script_path):
 		print("[Skip] Already found scripts!")
@@ -86,7 +88,18 @@ def check_files():
 	
 
 def main():
-	check_files()
-
+	if len(sys.argv) > 1:
+		if sys.argv[1] in ["help","-h","--help"]:
+			print("SRLPackage usage:\n download - downloads and extracts all required files \
+				\n convert - converts the data to CoNLL format (analogous to pyfn's convert)")
+		if sys.argv[1] in ["download"]:
+			path = os.getcwd()
+			check_files(path)
+		if sys.argv[1] in ["convert"]:
+			call(["pyfn","convert","--from","fnxml","--to","semafor", \
+  				"--source","data/fndata-1.5-with-dev", \
+ 	 			"--target","data/experiments/xp_001/data", \
+  				"--splits","train", \
+  				"--output_sentences"])
 
 main()
