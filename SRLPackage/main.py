@@ -105,5 +105,7 @@ def main():
 		if sys.argv[1] in ["f_id"]:
 			reader = Data_reader("data/experiments/xp_001/data/dev.sentences", "data/experiments/xp_001/data/dev.frames")
 			reader.read_data()
+			dataset = reader.get_dataset()
+			print(dataset)
 
 main()

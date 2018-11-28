@@ -438,3 +438,5 @@ lib/
 resources/
 scripts/
 log/
+.vector_cache/
+*.csv
