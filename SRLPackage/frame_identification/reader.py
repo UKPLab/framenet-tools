@@ -40,7 +40,7 @@ class Data_reader(object):
 				#print(i)
 				#print(frame_des[len(frame_des)-1])
 
-				if not i == int(frame_des[len(frame_des)-1]):
+				if not i == int(frame_des[7]):
 					#Next sentence
 					#print("unequal")
 					same_sentence = False
