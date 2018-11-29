@@ -17,11 +17,6 @@ dataset = reader.get_dataset()
 
 dataset_size = len(dataset)
 
-raw_data = {'Sentence' : [i[0] for i in dataset], 'Frame': [j[1] for j in dataset]}
-df = pd.DataFrame(raw_data, columns=["Sentence", "Frame"])
-
-df.to_csv("train.csv", index=False)
-
 xs = [i[0] for i in dataset]
 ys = [i[1] for i in dataset]
 
@@ -31,12 +26,16 @@ for x in xs:
     if len(x) > max_length:
         max_length = len(x)
 
+
+
 input_field = data.Field(dtype=torch.float, fix_length= max_length)
 output_field = data.Field(dtype=torch.long)
-
 data_fields = [('Sentence', input_field), ('Frame', output_field)]
 
-my_dataset = data.TabularDataset("train.csv", format="csv", fields=data_fields)
+examples = [data.Example.fromlist([x,y], data_fields) for x,y in zip(xs,ys)]
+
+
+my_dataset = data.Dataset(examples, fields=data_fields)
 
 input_field.build_vocab(my_dataset,vectors="glove.6B.300d")
 output_field.build_vocab(my_dataset)
@@ -46,10 +45,9 @@ train_iter = data.BucketIterator(my_dataset, batch_size=1, shuffle=False)
 
 print(len(output_field.vocab))
 
-print(raw_data.keys())
 
-#for i in iter(train_iter):
-#	print(i.Sentence[0])
+for i in iter(train_iter):
+	print(i.Sentence)
 
 
 input_size = max_length
