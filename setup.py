@@ -19,7 +19,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="Yet to be published",
     platforms=["any"],
-    packages=["SRLPackage"],
+    packages=["SRLPackage",
+                "SRLPackage.frame_identification"],
     install_requires=[
         "pyfn",
     ],

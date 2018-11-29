@@ -5,7 +5,7 @@ import logging
 import sys
 import pyfn
 from subprocess import call
-from frame_identification.reader import Data_reader
+from SRLPackage.frame_identification.reader import Data_reader
 
 def download_file(url, file_path):
 	r = requests.get(url, stream=True)
@@ -108,4 +108,4 @@ def main():
 			dataset = reader.get_dataset()
 			print(dataset)
 
-main()
+#main()

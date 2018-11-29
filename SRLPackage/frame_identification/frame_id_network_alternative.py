@@ -74,10 +74,15 @@ class Net(nn.Module):
         out = self.fc2(out)
         return out
 
-    
+#Check for CUDA
+use_cuda = True
+use_cuda = use_cuda and torch.cuda.is_available()
+device = torch.device("cuda" if use_cuda else "cpu")    
+print(device)
 
 net = Net(input_size, hidden_size, num_classes)
-net.cuda()   
+
+net.to(device)   
 
 # Loss and Optimizer
 criterion = nn.CrossEntropyLoss()  
@@ -93,9 +98,9 @@ for epoch in range(num_epochs):
         #print(batch.Sentence.view(batch_size, 66))
         #print(batch.Frame[0])
         i += 1
-        sent = Variable(batch.Sentence.view(batch_size, max_length)).cuda()
+        sent = Variable(batch.Sentence.view(batch_size, max_length)).to(device)
         #print(batch.Frame[0])
-        labels = Variable(batch.Frame[0]).cuda()
+        labels = Variable(batch.Frame[0]).to(device)
 
         
         # Forward + Backward + Optimize
@@ -117,8 +122,8 @@ for epoch in range(num_epochs):
 correct = 0
 total = 0
 for batch in iter(train_iter):
-    sent = Variable(batch.Sentence.view(batch_size, max_length)).cuda()
-    labels = Variable(batch.Frame[0]).cuda()
+    sent = Variable(batch.Sentence.view(batch_size, max_length)).to(device)
+    labels = Variable(batch.Frame[0]).to(device)
 
     outputs = net(sent)
     _, predicted = torch.max(outputs.data, 1)
