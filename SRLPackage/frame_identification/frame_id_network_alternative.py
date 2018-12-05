@@ -24,6 +24,7 @@ def prepare_dataset(file):
     dataset = reader.get_dataset()
 
     xs = [[i[4]]+i[0] for i in dataset]
+    
     ys = [i[1] for i in dataset]
 
     return xs, ys
@@ -53,7 +54,7 @@ input_field.build_vocab(my_dataset)
 input_field.build_vocab(dev_dataset)
 output_field.build_vocab(my_dataset)
 
-batch_size = 32
+batch_size = 1
 
 train_iter = data.BucketIterator(my_dataset, batch_size=batch_size, shuffle=False)
 dev_iter = data.BucketIterator(dev_dataset, batch_size=batch_size, shuffle=False)
@@ -71,7 +72,7 @@ input_count = len(input_field.vocab)
 hidden_size = 2048
 hidden_size2 = 1024
 num_classes = len(output_field.vocab)
-num_epochs = 20
+num_epochs = 2
 learning_rate = 0.001
 embedding_size = 300
 
@@ -92,7 +93,33 @@ def average_sentence(sent):
     lookup_tensor = torch.tensor(sent, dtype=torch.long)
     embedded_sent = embed(lookup_tensor)
 
+    #Skip first vector, as it does not belong to the senctence
+    #print(len(sent))
+    #print(embedded_sent[1])
+    #embedded_sent
+    #exit()
+
     averaged_sent = embedded_sent.mean(dim=0)
+
+    #Reappend the FEE 
+    #print(embedded_sent[0][0])
+    #exit()
+
+    appended_avg = []
+
+    for sentence in averaged_sent:
+        inc_FEE = torch.cat((embedded_sent[0][0], sentence),0)
+        appended_avg.append(inc_FEE)
+        #print(inc_FEE)
+        #exit()
+
+    #averaged_sent = torch.cat((embedded_sent[0], averaged_sent),0)
+    #print(len(averaged_sent))
+    #exit()
+    #print(averaged_sent.shape)
+    averaged_sent = torch.stack(appended_avg)
+    #print(averaged_sent.shape)
+    #exit()
 
     return averaged_sent
 
@@ -104,7 +131,7 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
 
-        self.fc1 = nn.Linear(embedding_size, hidden_size) 
+        self.fc1 = nn.Linear(embedding_size * 2, hidden_size) 
         self.relu = nn.ReLU()
         self.fc2 = nn.Linear(hidden_size, hidden_size2) 
         self.relu2 = nn.ReLU()
@@ -145,7 +172,7 @@ def train_model():
         i = 0
 
         for batch in iter(train_iter):
-            i += 1
+            
             sent = batch.Sentence
             sent = torch.tensor(sent, dtype=torch.long)
             
@@ -165,6 +192,8 @@ def train_model():
             if (i+1) % 100 == 0:
                 print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f' 
                        %(epoch+1, num_epochs, i+1, dataset_size//batch_size, loss.data[0]))
+
+            i += 1
 
 
 def eval_model():
