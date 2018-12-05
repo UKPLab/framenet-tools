@@ -1,221 +1,150 @@
 import torch
 import torch.nn as nn
-import torchvision.datasets as dsets
-import torchvision.transforms as transforms
 from torch.autograd import Variable
-import torchtext
-from torchtext import data
-from torchtext import vocab
-import pandas as pd 
-import numpy as np
 
-from reader import Data_reader
-
-def load_glove_model(glove_file):
-	print("Loading Glove Model")
-	f = open(glove_file,'r')
-	model = {}
-	for line in f:
-		split_line = line.split()
-		word = split_line[0]
-		embedding = np.array([float(val) for val in split_line[1:]])
-		model[word] = embedding
-	return model
-
-def embed_dataset(xs, model):
-	embeddings_size = 300
-	embedded_xs = []
-
-	for x in xs:
-		embedded_sentence = []
-
-		for word in x:
-			#Default value
-			embedded_word = [0] * embeddings_size 
-
-			if word in model:
-				embedded_word = model[word]
-			
-			#print(embedded_word.eval())
-			#exit()
-			
-			embedded_sentence.append(embedded_word)
-
-		embedded_xs.append(embedded_sentence)
-
-	return embedded_xs
-
-def pad_dataset(embeddded_xs):
-	embeddings_size = 300
-
-	max_length = get_max_length(embedded_xs)
-
-	padded_xs = []
-
-	for x in embedded_xs:
-		while len(x)< max_length:
-			x.append([0]*embeddings_size)
-
-		padded_xs.append(x)
-
-	return padded_xs
-
-
-def get_max_length(xs):
-	max_length = 0
-
-	for x in xs:
-		if len(x) > max_length:
-			max_length = len(x)
-
-	return max_length
-
-def build_dict(ys):
-	_dict = dict()
-	count = 0
-
-	for y in ys:
-		if not y in _dict:
-			_dict[y] = count
-			count += 1
-
-	return _dict
-
-def dict_convert_dataset(ys, _dict):
-	converted_ys = []
-
-	for y in ys:
-		converted_ys.append(_dict[y])
-
-	return converted_ys
-
-def to_one_hot(converted_ys, _dict):
-	one_hot_ys = []
-	_dict_length = len(_dict)
-
-	for y in converted_ys:
-		one_hot_y = [0]* _dict_length
-		one_hot_y[y] = 1
-
-		one_hot_ys.append(one_hot_y)
-
-	return one_hot_ys
-
-
-#reader = Data_reader("../data/experiments/xp_001/data/dev.sentences", "../data/experiments/xp_001/data/dev.frames")
-
-reader = Data_reader("../data/experiments/xp_001/data/train.sentences", "../data/experiments/xp_001/data/train.frame.elements")
-reader.read_data()
-dataset = reader.get_dataset()
-
-dataset_size = len(dataset)
-
-
-
-xs = [i[0] for i in dataset]
-ys = [i[1] for i in dataset]
-
-#print(xs[0])
-
-#vectors = vocab.GloVe(name='6B', dim=300)
-model = load_glove_model(".vector_cache/glove.6B.300d.txt")
-embedded_xs = embed_dataset(xs, model)
-max_length = get_max_length(embedded_xs)
-padded_xs = pad_dataset(embedded_xs)
-
-#print(padded_xs[0])
-#exit()
-
-_dict = build_dict(ys)
-converted_ys = dict_convert_dataset(ys, _dict)
-one_hot_ys = to_one_hot(converted_ys, _dict)
-
-padded_xs = torch.tensor(padded_xs, dtype=torch.float)
-one_hot_ys = torch.tensor(one_hot_ys)
-converted_ys = torch.tensor(converted_ys)
-#print(one_hot_ys[0])
-
-
-
-input_size = max_length*300
-hidden_size = 500
-num_classes = len(_dict)
-num_epochs = 1
-embed_dim = 66*300
-batch_size = 1
+hidden_size = 2048
+hidden_size2 = 1024
+num_epochs = 4
 learning_rate = 0.001
+embedding_size = 300
 
-
-#Creat network
 class Net(nn.Module):
-	def __init__(self, input_size, hidden_size, num_classes):
-		super(Net, self).__init__()
-		#self.embedding = nn.Embedding(input_size, 300).from_pretrained(input_field.vocab.vectors)
-		self.fc1 = nn.Linear(input_size, hidden_size) 
-		self.relu = nn.ReLU()
-		self.fc2 = nn.Linear(hidden_size, num_classes)  
-	
-	def forward(self, x):
-		#out = self.embedding(x)
-		#print(x)
-		#print(out)
+        def __init__(self, embedding_size, hidden_size, hidden_size2, num_classes, embedding_layer, device):
+            super(Net, self).__init__()
 
-		out = self.fc1(x)
-		out = self.relu(out)
-		out = self.fc2(out)
-		return out
+            self.device = device
+            self.embedding_layer = embedding_layer
+            self.fc1 = nn.Linear(embedding_size * 2, hidden_size) 
+            self.relu = nn.ReLU()
+            self.fc2 = nn.Linear(hidden_size, hidden_size2) 
+            self.relu2 = nn.ReLU()
+            self.fc3 = nn.Linear(hidden_size2, num_classes)  
 
-	
+        def average_sentence(self, sent):
+            """ Averages a sentence/multiple sentences by taking the mean of its embeddings
 
-net = Net(input_size, hidden_size, num_classes)
-net.cuda()   
+                Args:
+                    sent: the given sentence as numbers from the vocab
 
-# Loss and Optimizer
-criterion = nn.CrossEntropyLoss()  
-optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)  
+                Returns:
+                    the averaged sentence/sentences as a tensor (size equals the size of one word embedding for each sentence)
 
-iterations = round(dataset_size/batch_size)
+            """
 
-# Train the Model
-for epoch in range(num_epochs):   
-	i = 0
+            lookup_tensor = torch.tensor(sent, dtype=torch.long).to(self.device)
+            embedded_sent = self.embedding_layer(lookup_tensor)
 
-	for x,y in zip(padded_xs,converted_ys):
-		
-		x = x.view(1,-1)
-		i += 1
-		
-		sent = Variable(x).cuda()
-		#print(batch.Frame[0])
-		labels = Variable(y).cuda()
+               
 
-		
-		# Forward + Backward + Optimize
-		optimizer.zero_grad()  # zero the gradient buffer
-		outputs = net(sent)
+            averaged_sent = embedded_sent.mean(dim=0)
 
-		#print(outputs)
-		#print(torch.argmax(labels))
-		loss = criterion(outputs, labels.view(1))
-		loss.backward()
-		optimizer.step()
-		
-		if (i+1) % 100 == 0:
-			#print(loss)
-			print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f' 
-				   %(epoch+1, num_epochs, i+1, iterations, loss.data[0]))
+            #Reappend the FEE 
 
-# Test the Model
-correct = 0
-total = 0
-for x,y in zip(padded_xs,converted_ys):
-	x = x.view(1,-1)
-	sent = Variable(x).cuda()
-	labels = Variable(y).cuda()
+            appended_avg = []
 
-	outputs = net(sent)
-	_, predicted = torch.max(outputs.data, 1)
-	total += 1
-	correct += (predicted == labels).sum()
-print(correct)
-print(total)
+            for sentence in averaged_sent:
+                inc_FEE = torch.cat((embedded_sent[0][0], sentence),0)
+                appended_avg.append(inc_FEE)
+                    
+
+            averaged_sent = torch.stack(appended_avg)
+                
+            return averaged_sent  
+                
+        def forward(self, x):
+
+            x = Variable(self.average_sentence(x)).to(self.device)
+
+            out = self.fc1(x)
+            out = self.relu(out)
+            out = self.fc2(out)
+            out = self.relu2(out)
+            out = self.fc3(out)
+            return out   
+
+
+class Frame_id_network(object):
+
+    def __init__(self, use_cuda, embedding_layer, num_classes):
+
+        #Check for CUDA
+        use_cuda = use_cuda and torch.cuda.is_available()
+        self.device = torch.device("cuda" if use_cuda else "cpu")    
+        print(self.device) 
+            
+        self.embedding_layer = embedding_layer
+        self.num_classes = num_classes
+
+        self.net = Net(embedding_size, hidden_size, hidden_size2, num_classes, embedding_layer, self.device)
+
+        self.net.to(self.device)   
+
+        # Loss and Optimizer
+        self.criterion = nn.CrossEntropyLoss()  
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=learning_rate)    
+
+
+    def train_model(self, train_iter, dataset_size, batch_size):
+        """ Trains the model with the given dataset
+            
+            - uses the model specified in net 
+
+        """
+        for epoch in range(num_epochs):   
+            #Counter for the iterations
+            i = 0
+
+            for batch in iter(train_iter):
+                
+                sent = batch.Sentence
+                sent = torch.tensor(sent, dtype=torch.long)
+                
+                
+                #sent = Variable(average_sentence(sent)).to(self.device)
+                labels = Variable(batch.Frame[0]).to(self.device)
+
+                
+                # Forward + Backward + Optimize
+                self.optimizer.zero_grad()  # zero the gradient buffer
+                outputs = self.net(sent)
+
+                loss = self.criterion(outputs,labels)
+                loss.backward()
+                self.optimizer.step()
+                
+                if (i+1) % 100 == 0:
+                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f' 
+                           %(epoch+1, num_epochs, i+1, dataset_size//batch_size, loss.data[0]))
+
+                i += 1
+
+
+    def eval_model(self, dev_iter):
+        """ Evaluates the model on the given dataset
+
+            Args:
+
+            Returns:
+                The accuracy reached on the given dataset
+
+        """
+        correct = 0.0
+        total = 0.0
+        for batch in iter(dev_iter):
+            sent = batch.Sentence
+            sent = torch.tensor(sent, dtype=torch.long)
+            labels = Variable(batch.Frame[0]).to(self.device)
+
+            outputs = self.net(sent)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum()
+            
+        correct = int(correct.data[0])
+
+        #print(correct)
+        #print(total)
+        accuracy = correct/total
+
+        return accuracy
+
