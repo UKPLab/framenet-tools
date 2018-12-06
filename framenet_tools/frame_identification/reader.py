@@ -11,7 +11,6 @@ class Data_reader(object):
 	def digest_rawdata(self, elements, sentences):
 
 		elements_line = 0
-		frame_des = elements[elements_line].split("\t")
 
 		
 		for i in range(len(sentences)):
@@ -22,28 +21,31 @@ class Data_reader(object):
 			same_sentence = True
 
 			while same_sentence:
+
+				#Reached EOF
+				if(elements_line >= len(elements)):
+					break
+
 				#New Frame
+				frame_des = elements[elements_line].split("\t")
 				frame = frame_des[3] #Frame
 				fee = frame_des[4] #Frame evoking element
 				position = frame_des[5] #Position of word in sentence
 				fee_raw = frame_des[6] #Frame evoking element as it appeared
+				sent_num = frame_des[7] #Sentence number
 				
-				self.dataset.append([words, frame, fee, position, fee_raw])
-
-				elements_line += 1
 				
-				if(elements_line >= len(elements)):
-					break
-
-				frame_des = elements[elements_line].split("\t")
-
-				#print(i)
-				#print(frame_des[len(frame_des)-1])
-
-				if not i == int(frame_des[7]):
+				if not i == int(sent_num):
 					#Next sentence
 					#print("unequal")
 					same_sentence = False
+				else:
+					self.dataset.append([words, frame, fee, position, fee_raw, sent_num])	
+					#Shift for next iteration
+					elements_line += 1				
+
+
+
 
 
 	def read_data(self):

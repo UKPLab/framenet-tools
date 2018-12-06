@@ -23,6 +23,9 @@ setuptools.setup(
                 "framenet_tools.frame_identification"],
     install_requires=[
         "pyfn",
+        "torch",
+        "torchtext",
+        "nltk"
     ],
     entry_points={
         "console_scripts": [
