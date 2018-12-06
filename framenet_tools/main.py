@@ -5,7 +5,7 @@ import logging
 import sys
 import pyfn
 from subprocess import call
-from SRLPackage.frame_identification.reader import Data_reader
+from framenet_tools.frame_identification.frame_identifier import Frame_Identifier
 
 def download_file(url, file_path):
 	r = requests.get(url, stream=True)
@@ -103,9 +103,7 @@ def main():
   				"--splits","train", \
   				"--output_sentences"])
 		if sys.argv[1] in ["f_id"]:
-			reader = Data_reader("data/experiments/xp_001/data/dev.sentences", "data/experiments/xp_001/data/dev.frames")
-			reader.read_data()
-			dataset = reader.get_dataset()
-			print(dataset)
+			f_i = Frame_Identifier()
+			f_i.main()
 
 #main()

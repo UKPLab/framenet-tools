@@ -7,8 +7,8 @@ import torchtext
 from torchtext import data
 from torchtext import vocab
 
-from reader import Data_reader
-from frame_id_network import Frame_id_network
+from framenet_tools.frame_identification.reader import Data_reader
+from framenet_tools.frame_identification.frame_id_network import Frame_id_network
 
 use_cuda = True
 batch_size = 1

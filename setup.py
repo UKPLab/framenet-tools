@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="SRLPackage",
+    name="framenet_tools",
     version="0.0.1",
     #scripts=["SRLPackage"],
     author="Andre Markard",
@@ -19,19 +19,19 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="Yet to be published",
     platforms=["any"],
-    packages=["SRLPackage",
-                "SRLPackage.frame_identification"],
+    packages=["framenet_tools",
+                "framenet_tools.frame_identification"],
     install_requires=[
         "pyfn",
     ],
     entry_points={
         "console_scripts": [
-            "SRLPackage = SRLPackage.main:main"
+            "framenet_tools = framenet_tools.main:main"
         ],
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: Apache License, Version 2.0",
         "Operating System :: OS Independent",
     ],
 )
