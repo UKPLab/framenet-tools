@@ -7,8 +7,13 @@ import torchtext
 from torchtext import data
 from torchtext import vocab
 
-from framenet_tools.frame_identification.reader import Data_reader
-from framenet_tools.frame_identification.frame_id_network import Frame_id_network
+#from framenet_tools.frame_identification.reader import Data_reader
+#from framenet_tools.frame_identification.frame_id_network import Frame_id_network
+#from framenet_tools.frame_identification.fee_identifier import fee_identifier
+from reader import Data_reader
+from frame_id_network import Frame_id_network
+from fee_identifier import fee_identifier
+
 
 use_cuda = True
 batch_size = 1
@@ -21,7 +26,76 @@ test_file = ["../data/experiments/xp_001/data/test.sentences", "../data/experime
 
 class Frame_Identifier(object):
 
-    def get_dataset(self,file):
+    #Standard calculation for F1 score, taken from Open-SESAME
+    def calc_f(self, tp, fp, fn):
+        if tp == 0.0 and fp == 0.0:
+            pr = 0.0
+        else:
+            pr = tp / (tp + fp)
+        if tp == 0.0 and fn == 0.0:
+            re = 0.0
+        else:
+            re = tp / (tp + fn)
+        if pr == 0.0 and re == 0.0:
+            f = 0.0
+        else:
+            f = 2.0 * pr * re / (pr + re)
+        return pr, re, f
+
+    def get_dataset(self,file, predict_FEEs):
+        if predict_FEEs:
+            return self.get_dataset_pred_FEEs(file)
+        else:
+            return self.get_dataset_gold_FEEs(file)
+
+    def get_dataset_pred_FEEs(self, file):
+        
+        fee_finder = fee_identifier()
+        dataset_FEE = fee_finder.load_dataset(file)
+        predicted_FEEs = fee_finder.predict_FEEs(dataset_FEE)
+
+        #print(len(predicted_FEEs))
+
+        
+        #reader = Data_reader(file[0], file[1])
+        #reader.read_data()
+        #dataset = reader.get_dataset() 
+
+        #print(len(dataset))
+
+        xs = []
+        ys = []
+
+        #sentences = []
+        #for data in dataset:
+        #    sentences.append()
+
+
+        #WIP TODO fix
+
+        #print(len(dataset_FEE))
+        #print (len(predicted_FEEs))
+
+        
+        #print(dataset_FEE[0])
+        #print(predicted_FEEs[0])
+
+        #exit()
+
+        for sentences, sentence_FEEs in zip(dataset_FEE, predicted_FEEs):
+        	for prediction in sentence_FEEs:
+        		x = [prediction] + sentences[0]
+        		#As we can not make any assumptions on y 
+        		y = 'Default'
+        		#print(x)
+        		#exit()
+        		xs.append(x)
+        		ys.append(y)
+
+
+        return xs, ys
+
+    def get_dataset_gold_FEEs(self,file):
         ''' Loads the dataset and combines the necessary data 
 
             Args:
@@ -57,25 +131,125 @@ class Frame_Identifier(object):
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 
-        self.input_field.build_vocab(dataset)
-        self.output_field.build_vocab(dataset)
+        #input_field.build_vocab(dataset)
+        #output_field.build_vocab(dataset)
+
+        #print(output_field.vocab.itos)
 
         iterator = data.BucketIterator(dataset, batch_size=batch_size, shuffle=False)
 
         return iterator
 
+    '''
+    def reformat_dataset(self, predictions, xs, ys):
+        dataset = []
+        i = 0
+
+        for x in xs:
+
+
+            while x[1] == ys[i][1]:
+                dataset.append([])
+
+                i += 1
+
+
+        return dataset
+    '''
+
+    def evaluate(self, predictions, xs, file):
+        	
+        #Load correct answers for comparison:
+        gold_xs, gold_ys = self.get_dataset(file, False)
+
+        tp = 0
+        fp = 0
+        fn = 0
+
+
+        print(len(predictions))
+        print(len(xs))
+        #print(len(ys))
+
+        #dataset = reformat_dataset(predictions, xs, ys)
+        found = False
+
+        for gold_x, gold_y in zip(gold_xs, gold_ys):
+        	for x, y in zip(xs, predictions):
+        		if gold_x == x and gold_y == self.output_field.vocab.itos[y.item()]:
+        			found = True
+        			#break
+
+        	if found:
+        		tp += 1
+        	else:
+        		fn += 1
+
+        	found = False
+
+        for x, y in zip(xs, predictions):
+        	for gold_x, gold_y in zip(gold_xs, gold_ys):
+        		if gold_x == x and gold_y == self.output_field.vocab.itos[y.item()]:
+        			found = True
+
+        	if not found:
+        		fp += 1
+
+        	found = False
+
+
+        	#print(gold_x)
+        	#print(gold_y)
+        	#print('Predicted:')
+        	#print(xs[0])
+        	#print(self.output_field.vocab.itos[predictions[0].item()])
+        	#exit()
+
+        print(tp, fp, fn)
+
+        return self.calc_f(tp, fp, fn)
+
     def main(self):
 
-        xs, ys = self.get_dataset(train_file)
+        xs, ys = self.get_dataset(train_file, False)
 
-        dev_xs, dev_ys = self.get_dataset(dev_file)
+        #print(xs[0])
+        #print(ys[0])
 
-        dataset_size = len(xs)
+        dev_xs, dev_ys = self.get_dataset(dev_file, True)
+
+        complete_xs = xs + dev_xs
+        complete_ys = ys + dev_ys
+
 
         #Create fields
         self.input_field = data.Field(dtype=torch.float, use_vocab=True, preprocessing=None)#, fix_length= max_length) #No padding necessary anymore, since avg
         self.output_field = data.Field(dtype=torch.long)
         self.data_fields = [('Sentence', self.input_field), ('Frame', self.output_field)]
+
+        examples = [data.Example.fromlist([x,y], self.data_fields) for x,y in zip(complete_xs,complete_ys)]
+
+        dataset = data.Dataset(examples, fields=self.data_fields)
+
+        self.input_field.build_vocab(dataset)
+        self.output_field.build_vocab(dataset)
+
+        print(self.output_field.vocab.itos)
+
+
+        #print(dev_xs[0])
+        #print(dev_ys[0])
+
+        #additional_dev_xs, additional_dev_ys = self.get_dataset(dev_file, True)
+        #dev_xs = [i[0] for i in additional_dev_xs]
+        #print(len(additional_dev_xs))
+        #exit()
+        #No info on ys needed, but field is required as a complete dataset is needed
+        #dev_ys = ['Default']*len(additional_dev_xs)
+
+
+        dataset_size = len(xs)
+
 
        
         train_iter = self.prepare_dataset(xs, ys)
@@ -83,7 +257,8 @@ class Frame_Identifier(object):
 
 
         self.input_field.vocab.load_vectors("glove.6B.300d")
-
+        #dev_input_field.vocab.load_vectors("glove.6B.300d")
+        
 
         input_count = len(self.input_field.vocab)
         num_classes = len(self.output_field.vocab)
@@ -94,9 +269,15 @@ class Frame_Identifier(object):
         network = Frame_id_network(True, embed, num_classes)
 
         network.train_model(train_iter, dataset_size, batch_size)
-        acc =network.eval_model(dev_iter)
+        
+        predictions = network.predict(dev_iter)
+        #print(predictions)
+        print(self.evaluate(predictions, dev_xs, dev_file))
 
-        print(acc)
+        
+        #acc = network.eval_model(dev_iter)
+
+        #print(acc)
 
 
 

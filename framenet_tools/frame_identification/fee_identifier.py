@@ -18,6 +18,22 @@ direct_object_labels = ("OBJ", "DOBJ")    # accomodates MST labels and Standford
 
 class fee_identifier(object):
 
+    #Standard calculation for F1 score, taken from Open-SESAME
+    def calc_f(self, tp, fp, fn):
+        if tp == 0.0 and fp == 0.0:
+            pr = 0.0
+        else:
+            pr = tp / (tp + fp)
+        if tp == 0.0 and fn == 0.0:
+            re = 0.0
+        else:
+            re = tp / (tp + fn)
+        if pr == 0.0 and re == 0.0:
+            f = 0.0
+        else:
+            f = 2.0 * pr * re / (pr + re)
+        return pr, re, f
+
     def identify_targets(self, sentence):
         tokens = nltk.word_tokenize(sentence)
         pData = getTags(tokens)
@@ -149,7 +165,29 @@ class fee_identifier(object):
 
         return predictions
 
-    def evaluate(self, dataset):
+    def evaluate_f1(self, dataset):
+        tp = 0
+        fp = 0
+        fn = 0
+
+        for data in dataset:
+            predictions = self.query(data)
+
+            for gold_fee in data[1]:
+                if gold_fee in predictions:
+                    tp += 1
+                else:
+                    fn += 1
+
+            for prediction in predictions:
+                if prediction not in data[1]:
+                    fp += 1
+
+        print(tp, fp, fn)
+
+        return self.calc_f(tp, fp, fn)
+
+    def evaluate_acc(self, dataset):
         correct = 0
         total = 0
 
@@ -168,15 +206,16 @@ class fee_identifier(object):
 
 
 
-train_file = ["../data/experiments/xp_001/data/train.sentences", "../data/experiments/xp_001/data/train.frame.elements"]
+#train_file = ["../data/experiments/xp_001/data/train.sentences", "../data/experiments/xp_001/data/train.frame.elements"]
+#dev_file = ["../data/experiments/xp_001/data/dev.sentences", "../data/experiments/xp_001/data/dev.frames"]
 
-fee_finder = fee_identifier()
+#fee_finder = fee_identifier()
 
-dataset_FEE = fee_finder.load_dataset(train_file)
-pred = fee_finder.predict_FEEs(dataset_FEE)
-print(pred[0])
-#print(dataset_FEE[2])
-#print(fee_finder.evaluate(dataset_FEE))
+#dataset_FEE = fee_finder.load_dataset(dev_file)
+#pred = fee_finder.predict_FEEs(dataset_FEE)
+#print(pred[0])
+#print(len(pred))
+#print(fee_finder.evaluate_f1(dataset_FEE))
 
 #example = "The leaves are falling in Germany's forests."
 #tokens = nltk.word_tokenize(example)
