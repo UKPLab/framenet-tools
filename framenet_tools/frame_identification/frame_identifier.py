@@ -216,6 +216,9 @@ class Frame_Identifier(object):
         #print(xs[0])
         #print(ys[0])
 
+        # Load with predicted FEEs
+        #dev_xs, dev_ys = self.get_dataset(dev_file, True)
+
         dev_xs, dev_ys = self.get_dataset(dev_file, True)
 
         complete_xs = xs + dev_xs
@@ -227,7 +230,8 @@ class Frame_Identifier(object):
         self.output_field = data.Field(dtype=torch.long)
         self.data_fields = [('Sentence', self.input_field), ('Frame', self.output_field)]
 
-        examples = [data.Example.fromlist([x,y], self.data_fields) for x,y in zip(complete_xs,complete_ys)]
+        # Zip datasets and generate complete dictionary
+        examples = [data.Example.fromlist([x,y], self.data_fields) for x, y in zip(complete_xs, complete_ys)]
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 

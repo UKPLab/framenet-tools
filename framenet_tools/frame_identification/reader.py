@@ -1,7 +1,8 @@
+import nltk
 
 class Data_reader(object):
 
-	def __init__(self, path_sent ,path_elements):
+	def __init__(self, path_sent=None, path_elements=None):
 		self.loaded = False
 		self.i = 0
 		self.path_sent = path_sent
@@ -12,7 +13,7 @@ class Data_reader(object):
 
 		elements_line = 0
 
-		
+
 		for i in range(len(sentences)):
 			#Next sentence
 
@@ -33,22 +34,56 @@ class Data_reader(object):
 				position = frame_des[5] #Position of word in sentence
 				fee_raw = frame_des[6] #Frame evoking element as it appeared
 				sent_num = frame_des[7] #Sentence number
-				
-				
+
+
 				if not i == int(sent_num):
 					#Next sentence
 					#print("unequal")
 					same_sentence = False
 				else:
-					self.dataset.append([words, frame, fee, position, fee_raw, sent_num])	
+					self.dataset.append([words, frame, fee, position, fee_raw, sent_num])
 					#Shift for next iteration
-					elements_line += 1				
+					elements_line += 1
+
+	def read_raw_text(self, file_path):
+		""" Reads a raw text file and saves the content as a dataset
+			NOTE: Applying this function removes the previous dataset content
+
+			Args:
+				file_path: The path of the file to read
+
+			Returns:
+				-
+		"""
+
+		file = open(file_path, "r")
+		raw = file.read()
+		file.close()
+
+		sents = nltk.sent_tokenize(raw)
+
+		for sent in sents:
+			words = nltk.word_tokenize(sent)
+			self.dataset.append([words])
 
 
+	def read_data(self, path_sent=None, path_elements=None):
+		""" Reads a the sentence and elements file and saves the content as a dataset
+			NOTE: Applying this function removes the previous dataset content
 
+			Args:
+				path_sent: The path to the sentence file
+				path_elements: The path to the elements
 
+			Returns:
+				-
+		"""
 
-	def read_data(self):
+		if path_sent is not None:
+			self.path_sent = path_sent
+
+		if path_elements is not None:
+			self.path_elements = path_elements
 
 		file = open(self.path_sent, "r")
 		sentences = file.read()
@@ -60,12 +95,12 @@ class Data_reader(object):
 
 		sentences = sentences.split("\n")
 		elements = elements.split("\n")
-		
+
 		#Remove empty line at the end
 		if elements[len(elements)-1] == "":
 			print("Removed empty line at eof")
 			elements = elements[:len(elements)-1]
-		
+
 		if sentences[len(sentences)-1] == "":
 			print("Removed empty line at eof")
 			sentences = sentences[:len(sentences)-1]

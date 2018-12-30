@@ -4,7 +4,7 @@ from torch.autograd import Variable
 
 hidden_size = 2048
 hidden_size2 = 1024
-num_epochs = 5
+num_epochs = 1
 learning_rate = 0.001
 embedding_size = 300
 
