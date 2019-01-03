@@ -7,12 +7,9 @@ import torchtext
 from torchtext import data
 from torchtext import vocab
 
-#from framenet_tools.frame_identification.reader import Data_reader
-#from framenet_tools.frame_identification.frame_id_network import Frame_id_network
+from framenet_tools.frame_identification.reader import Data_reader
+from framenet_tools.frame_identification.frame_id_network import Frame_id_network
 #from framenet_tools.frame_identification.fee_identifier import fee_identifier
-from reader import Data_reader
-from frame_id_network import Frame_id_network
-from fee_identifier import fee_identifier
 
 
 use_cuda = True
@@ -43,78 +40,29 @@ class Frame_Identifier(object):
         return pr, re, f
 
     def get_dataset(self,file, predict_FEEs):
+        """
+        Loads the dataset and combines the necessary data
+
+        :param file: A list of the two files to load
+        :param predict_FEEs: A boolean whether to predict the frame evoking elements
+        :return: xs: A list of senctences appended with its FEE
+                ys: A list of frames corresponding to the given sentences
+        """
+        reader = Data_reader(file[0], file[1])
+        reader.read_data()
+
         if predict_FEEs:
-            return self.get_dataset_pred_FEEs(file)
-        else:
-            return self.get_dataset_gold_FEEs(file)
-
-    def get_dataset_pred_FEEs(self, file):
-        
-        fee_finder = fee_identifier()
-        dataset_FEE = fee_finder.load_dataset(file)
-        predicted_FEEs = fee_finder.predict_FEEs(dataset_FEE)
-
-        #print(len(predicted_FEEs))
-
-        
-        #reader = Data_reader(file[0], file[1])
-        #reader.read_data()
-        #dataset = reader.get_dataset() 
-
-        #print(len(dataset))
+            reader.predict_fees()
 
         xs = []
         ys = []
 
-        #sentences = []
-        #for data in dataset:
-        #    sentences.append()
+        for annotation_sentences in reader.annotations:
+            for annotation in annotation_sentences:
+                xs.append(annotation.sentence + [annotation.fee_raw])
+                ys.append(annotation.frame)
 
-
-        #WIP TODO fix
-
-        #print(len(dataset_FEE))
-        #print (len(predicted_FEEs))
-
-        
-        #print(dataset_FEE[0])
-        #print(predicted_FEEs[0])
-
-        #exit()
-
-        for sentences, sentence_FEEs in zip(dataset_FEE, predicted_FEEs):
-        	for prediction in sentence_FEEs:
-        		x = [prediction] + sentences[0]
-        		#As we can not make any assumptions on y 
-        		y = 'Default'
-        		#print(x)
-        		#exit()
-        		xs.append(x)
-        		ys.append(y)
-
-
-        return xs, ys
-
-    def get_dataset_gold_FEEs(self,file):
-        ''' Loads the dataset and combines the necessary data 
-
-            Args:
-                file: A list of the two files to load
-
-            Returns:
-                xs: A list of senctences
-                ys: A list of frames corresponding to the given sentences appended with its FEE
-
-        '''
-        reader = Data_reader(file[0], file[1])
-        reader.read_data()
-        dataset = reader.get_dataset()
-
-        xs = [[i[4]]+i[0] for i in dataset]
-        
-        ys = [i[1] for i in dataset]
-
-        return xs, ys
+        return xs.copy(), ys.copy()
 
     def prepare_dataset(self, xs, ys):
         ''' Prepares the dataset and returns a BucketIterator of the dataset
@@ -127,7 +75,7 @@ class Frame_Identifier(object):
                 A BucketIterator of the dataset
 
         '''
-        examples = [data.Example.fromlist([x,y], self.data_fields) for x,y in zip(xs,ys)]
+        examples = [data.Example.fromlist([x,y], self.data_fields) for x, y in zip(xs, ys)]
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 
@@ -158,13 +106,17 @@ class Frame_Identifier(object):
     '''
 
     def evaluate(self, predictions, xs, file):
-        	
+
         #Load correct answers for comparison:
         gold_xs, gold_ys = self.get_dataset(file, False)
 
         tp = 0
         fp = 0
         fn = 0
+
+        #print(xs[0])
+        #print(gold_xs[0])
+        #exit()
 
 
         print(len(predictions))
@@ -178,7 +130,7 @@ class Frame_Identifier(object):
         	for x, y in zip(xs, predictions):
         		if gold_x == x and gold_y == self.output_field.vocab.itos[y.item()]:
         			found = True
-        			#break
+        			break
 
         	if found:
         		tp += 1
@@ -219,7 +171,7 @@ class Frame_Identifier(object):
         # Load with predicted FEEs
         #dev_xs, dev_ys = self.get_dataset(dev_file, True)
 
-        dev_xs, dev_ys = self.get_dataset(dev_file, True)
+        dev_xs, dev_ys = self.get_dataset(dev_file, False)
 
         complete_xs = xs + dev_xs
         complete_ys = ys + dev_ys
@@ -276,12 +228,12 @@ class Frame_Identifier(object):
         
         predictions = network.predict(dev_iter)
         #print(predictions)
-        print(self.evaluate(predictions, dev_xs, dev_file))
+        #print(self.evaluate(predictions, dev_xs, dev_file))
 
         
-        #acc = network.eval_model(dev_iter)
+        acc = network.eval_model(dev_iter)
 
-        #print(acc)
+        print(acc)
 
 
 
