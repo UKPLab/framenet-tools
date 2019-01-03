@@ -277,9 +277,9 @@ fabric.properties
 ### PyCharm Patch ###
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
 
-# *.iml
+#*.iml
 # modules.xml
-# .idea/misc.xml
+#.idea/misc.xml
 # *.ipr
 
 # Sonarlint plugin
@@ -433,7 +433,7 @@ tags
 # End of https://www.gitignore.io/api/vim,latex,python,pycharm,sublimetext
 
 idea/
-.idea/
+#.idea/
 data/
 experiments/
 lib/

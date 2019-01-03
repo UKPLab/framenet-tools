@@ -134,7 +134,8 @@ class Frame_id_network(object):
 
     def eval_model(self, dev_iter):
         """ Evaluates the model on the given dataset
-
+            NOTE: only works on gold FEEs, therefore deprecated
+                  use f1 evaluation instead
             Args:
 
             Returns:

@@ -97,7 +97,7 @@ class Data_reader(object):
 
 		for sent in sents:
 			words = nltk.word_tokenize(sent)
-			self.words.append([words])
+			self.sentences.append(words)
 
 		self.loaded(False)
 
