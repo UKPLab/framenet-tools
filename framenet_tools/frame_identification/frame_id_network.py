@@ -4,7 +4,7 @@ from torch.autograd import Variable
 
 hidden_size = 2048
 hidden_size2 = 1024
-num_epochs = 4
+num_epochs = 1
 learning_rate = 0.001
 embedding_size = 300
 
@@ -118,10 +118,24 @@ class Frame_id_network(object):
 
                 i += 1
 
+    def predict(self, dataset_iter):
+        predictions = []
+
+        for batch in iter(dataset_iter):
+            sent = batch.Sentence
+            sent = torch.tensor(sent, dtype=torch.long)
+
+            outputs = self.net(sent)
+            _, predicted = torch.max(outputs.data, 1)
+            predictions.append(predicted.to("cpu"))
+
+        return predictions
+
 
     def eval_model(self, dev_iter):
         """ Evaluates the model on the given dataset
-
+            NOTE: only works on gold FEEs, therefore deprecated
+                  use f1 evaluation instead
             Args:
 
             Returns:
@@ -140,10 +154,10 @@ class Frame_id_network(object):
             total += labels.size(0)
             correct += (predicted == labels).sum()
             
-        correct = int(correct.data[0])
+        correct = correct.item()
 
-        #print(correct)
-        #print(total)
+        print(correct)
+        print(total)
         accuracy = correct/total
 
         return accuracy
