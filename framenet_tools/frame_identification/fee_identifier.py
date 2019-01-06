@@ -49,6 +49,7 @@ class Fee_identifier(object):
 		postags = []
 		lemmas = []
 		nes = []
+		# print(tokens)
 		tags = nltk.pos_tag(tokens)
 		for tag in tags:
 			postags.append(tag[1])

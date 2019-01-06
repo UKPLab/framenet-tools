@@ -43,7 +43,10 @@ class Data_reader(object):
 
 		# Append sentences
 		for sentence in sentences:
-			self.sentences.append(sentence.split(" "))
+			words = sentence.split(" ")
+			if "" in words:
+				words.remove("")
+			self.sentences.append(words)
 
 		for element in elements:
 			# Element data

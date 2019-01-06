@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchtext import data
+import pickle
 
 from framenet_tools.frame_identification.reader import Data_reader
 from framenet_tools.frame_identification.frame_id_network import Frame_id_network
@@ -17,6 +18,13 @@ raw_file = ["../data/experiments/xp_001/data/WallStreetJournal20150915.txt"]
 
 
 class Frame_Identifier(object):
+
+	def __init__(self):
+		# Create fields
+		self.input_field = data.Field(dtype=torch.float, use_vocab=True,
+									  preprocessing=None)  # , fix_length= max_length) #No padding necessary anymore, since avg
+		self.output_field = data.Field(dtype=torch.long)
+		self.data_fields = [('Sentence', self.input_field), ('Frame', self.output_field)]
 
 	# Standard calculation for F1 score, taken from Open-SESAME
 	def calc_f(self, tp, fp, fn):
@@ -76,11 +84,6 @@ class Frame_Identifier(object):
 		examples = [data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)]
 
 		dataset = data.Dataset(examples, fields=self.data_fields)
-
-		# input_field.build_vocab(dataset)
-		# output_field.build_vocab(dataset)
-
-		# print(output_field.vocab.itos)
 
 		iterator = data.BucketIterator(dataset, batch_size=batch_size, shuffle=False)
 
@@ -146,80 +149,80 @@ class Frame_Identifier(object):
 
 		return self.calc_f(tp, fp, fn)
 
-	def write_predictions(self, predictions, xs):
+	def write_predictions(self, file):
+		xs, ys = self.get_dataset(file, True)
+
+		iter = self.prepare_dataset(xs, ys)
+		predictions = self.network.predict(iter)
 
 		for prediction, x in zip(predictions, xs):
 			print(x)
 			print(self.output_field.vocab.itos[prediction.item()])
 
-	def train(self):
+	def save_model(self, name):
+		pickle.dump(self.output_field.vocab, open(name + ".out_voc", "wb"))
+		pickle.dump(self.input_field.vocab, open(name + ".in_voc", "wb"))
+		self.network.save_model(name + ".ph")
 
-		xs, ys = self.get_dataset(train_file, False)
+	def load_model(self, name):
+		out_voc = pickle.load(open(name + ".out_voc", "rb"))
+		in_voc = pickle.load(open(name + ".in_voc", "rb"))
 
-		# print(xs[0])
-		# print(ys[0])
+		self.output_field.vocab = out_voc
+		self.input_field.vocab = in_voc
 
-		# Load with predicted FEEs
-		# dev_xs, dev_ys = self.get_dataset(dev_file, True)
+		num_classes = len(self.output_field.vocab)
+		embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
+		self.network = Frame_id_network(True, embed, num_classes)
 
-		dev_xs, dev_ys = self.get_dataset(raw_file, True)
+		self.network.load_model(name + ".ph")
 
-		complete_xs = xs + dev_xs
-		complete_ys = ys + dev_ys
+	def evaluate_f1(self, file):
+		xs, ys = self.get_dataset(file, True)
 
-		# Create fields
-		self.input_field = data.Field(dtype=torch.float, use_vocab=True,
-									  preprocessing=None)  # , fix_length= max_length) #No padding necessary anymore, since avg
-		self.output_field = data.Field(dtype=torch.long)
-		self.data_fields = [('Sentence', self.input_field), ('Frame', self.output_field)]
+		iter = self.prepare_dataset(xs, ys)
+
+		predictions = self.network.predict(iter)
+
+		print(self.evaluate(predictions, xs, file))
+
+	def train(self, files):
+
+		xs = []
+		ys = []
+
+		for file in files:
+			new_xs, new_ys = self.get_dataset(file, False)
+			xs += new_xs
+			ys += new_ys
 
 		# Zip datasets and generate complete dictionary
-		examples = [data.Example.fromlist([x, y], self.data_fields) for x, y in zip(complete_xs, complete_ys)]
+		examples = [data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)]
 
 		dataset = data.Dataset(examples, fields=self.data_fields)
 
 		self.input_field.build_vocab(dataset)
 		self.output_field.build_vocab(dataset)
 
-		print(self.output_field.vocab.itos)
-
-		# print(dev_xs[0])
-		# print(dev_ys[0])
-
-		# additional_dev_xs, additional_dev_ys = self.get_dataset(dev_file, True)
-		# dev_xs = [i[0] for i in additional_dev_xs]
-		# print(len(additional_dev_xs))
-		# exit()
-		# No info on ys needed, but field is required as a complete dataset is needed
-		# dev_ys = ['Default']*len(additional_dev_xs)
-
 		dataset_size = len(xs)
 
 		train_iter = self.prepare_dataset(xs, ys)
-		dev_iter = self.prepare_dataset(dev_xs, dev_ys)
 
 		self.input_field.vocab.load_vectors("glove.6B.300d")
-		# dev_input_field.vocab.load_vectors("glove.6B.300d")
 
-		input_count = len(self.input_field.vocab)
 		num_classes = len(self.output_field.vocab)
 
 		embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
 
-		network = Frame_id_network(True, embed, num_classes)
+		self.network = Frame_id_network(True, embed, num_classes)
 
-		network.train_model(train_iter, dataset_size, batch_size)
+		self.network.train_model(train_iter, dataset_size, batch_size)
 
-		predictions = network.predict(dev_iter)
-		# print(predictions)
-		# print(self.evaluate(predictions, dev_xs, dev_file))
-
-		self.write_predictions(predictions, dev_xs)
-
-# acc = network.eval_model(dev_iter)
-
-# print(acc)
 
 
 f_i = Frame_Identifier()
-f_i.train()
+#f_i.train([train_file])
+#f_i.save_model("test")
+f_i.load_model("test")
+#f_i.evaluate_f1(dev_file)
+f_i.write_predictions(raw_file)

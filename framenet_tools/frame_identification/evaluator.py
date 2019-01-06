@@ -1,5 +1,5 @@
 from framenet_tools.frame_identification.reader import Data_reader
-from framenet_tools.frame_identification.fee_identifier import Fee_identifier
+#from framenet_tools.frame_identification.frame_identifier import Frame_Identifier
 
 #Standard calculation for F1 score, taken from Open-SESAME
 def calc_f(tp, fp, fn):
@@ -44,6 +44,7 @@ def evaluate_frame_identification():
 
 def evaluate_fee_frame_identification():
 	return None
+
 
 train_file = ["../data/experiments/xp_001/data/train.sentences", "../data/experiments/xp_001/data/train.frame.elements"]
 dev_file = ["../data/experiments/xp_001/data/dev.sentences", "../data/experiments/xp_001/data/dev.frames"]

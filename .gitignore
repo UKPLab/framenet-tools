@@ -442,3 +442,6 @@ scripts/
 log/
 .vector_cache/
 *.csv
+*.ph
+*.in_voc
+*.out_voc
