@@ -1,8 +1,11 @@
-from framenet_tools.frame_identification.reader import Data_reader
-#from framenet_tools.frame_identification.frame_identifier import Frame_Identifier
+from framenet_tools.frame_identification.frame_identifier import Frame_Identifier
 
-#Standard calculation for F1 score, taken from Open-SESAME
-def calc_f(tp, fp, fn):
+from framenet_tools.paths import *
+from framenet_tools.frame_identification.reader import Data_reader
+
+
+# Standard calculation for F1 score, taken from Open-SESAME
+def calc_f(tp: int, fp: int, fn: int):
 	if tp == 0.0 and fp == 0.0:
 		pr = 0.0
 	else:
@@ -17,7 +20,11 @@ def calc_f(tp, fp, fn):
 		f = 2.0 * pr * re / (pr + re)
 	return pr, re, f
 
-def evaluate_fee_identification(m_data_reader):
+
+def evaluate_fee_identification(files: list):
+	m_data_reader = Data_reader()
+	m_data_reader.read_data(files[0], files[1])
+
 	gold_sentences = m_data_reader.annotations.copy()
 
 	m_data_reader.predict_fees()
@@ -39,23 +46,18 @@ def evaluate_fee_identification(m_data_reader):
 
 	return calc_f(tp, fp, fn)
 
-def evaluate_frame_identification():
-	return None
 
-def evaluate_fee_frame_identification():
-	return None
+def evaluate_frame_identification(model: str, files: list):
+	f_i = Frame_Identifier()
+	f_i.load_model(model)
+
+	tp, fp, fn = f_i.evaluate_file(files)
+	print(tp, fp, fn)
+	return calc_f(tp, fp, fn)
 
 
-train_file = ["../data/experiments/xp_001/data/train.sentences", "../data/experiments/xp_001/data/train.frame.elements"]
-dev_file = ["../data/experiments/xp_001/data/dev.sentences", "../data/experiments/xp_001/data/dev.frames"]
-
-m_data_reader = Data_reader()
-m_data_reader.read_data(train_file[0], train_file[1])
-
-f1 = evaluate_fee_identification(m_data_reader)
+f1 = evaluate_fee_identification(DEV_FILES)
 print(f1)
 
-#print(m_data_reader.annotations[0].sentence)
-#for i in range(10):
-#	print(m_data_reader.annotations[i].fee_raw)
-#fee_finder = Fee_identifier()
+f1 = evaluate_frame_identification(SAVED_MODEL, DEV_FILES)
+print(f1)
