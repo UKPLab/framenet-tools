@@ -433,7 +433,7 @@ tags
 # End of https://www.gitignore.io/api/vim,latex,python,pycharm,sublimetext
 
 idea/
-#.idea/
+.idea/
 data/
 experiments/
 lib/
@@ -442,3 +442,6 @@ scripts/
 log/
 .vector_cache/
 *.csv
+*.ph
+*.in_voc
+*.out_voc

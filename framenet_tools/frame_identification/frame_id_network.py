@@ -4,7 +4,7 @@ from torch.autograd import Variable
 
 hidden_size = 2048
 hidden_size2 = 1024
-num_epochs = 1
+num_epochs = 5
 learning_rate = 0.001
 embedding_size = 300
 
@@ -18,7 +18,10 @@ class Net(nn.Module):
             self.relu = nn.ReLU()
             self.fc2 = nn.Linear(hidden_size, hidden_size2) 
             self.relu2 = nn.ReLU()
-            self.fc3 = nn.Linear(hidden_size2, num_classes)  
+            self.fc3 = nn.Linear(hidden_size2, num_classes)
+
+        def set_embedding_layer(self, embedding_layer):
+            self.embedding_layer = embedding_layer
 
         def average_sentence(self, sent):
             """ Averages a sentence/multiple sentences by taking the mean of its embeddings
@@ -162,3 +165,8 @@ class Frame_id_network(object):
 
         return accuracy
 
+    def save_model(self, path):
+        torch.save(self.net.state_dict(), path)
+
+    def load_model(self, path):
+        self.net.load_state_dict(torch.load(path))

@@ -1,7 +1,7 @@
 import setuptools
 
 #######################
-# Taken from: 
+# Taken from:
 # https://packaging.python.org/tutorials/packaging-projects/
 #######################
 
@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="framenet_tools",
     version="0.0.1",
-    #scripts=["SRLPackage"],
+    # scripts=["SRLPackage"],
     author="Andre Markard",
     author_email="andre@markard.eu",
     description="A summarization of the SRL process",
@@ -19,19 +19,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="Yet to be published",
     platforms=["any"],
-    packages=["framenet_tools",
-                "framenet_tools.frame_identification"],
-    install_requires=[
-        "pyfn",
-        "torch",
-        "torchtext",
-        "nltk"
-    ],
-    entry_points={
-        "console_scripts": [
-            "framenet_tools = framenet_tools.main:main"
-        ],
-    },
+    packages=["framenet_tools", "framenet_tools.frame_identification"],
+    install_requires=["pyfn", "torch", "torchtext", "nltk"],
+    entry_points={"console_scripts": ["framenet_tools = framenet_tools.main:main"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: Apache License, Version 2.0",
