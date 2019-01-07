@@ -1,7 +1,7 @@
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 
 from framenet_tools.paths import *
-from framenet_tools.frame_identification.reader import Data_reader
+from framenet_tools.frame_identification.reader import DataReader
 
 
 def calc_f(tp: int, fp: int, fn: int):
@@ -38,7 +38,7 @@ def evaluate_fee_identification(files: list):
     :param files: The Files to evaluate on
     :return: A Triple of Precision, Recall and F1-Score
     """
-    m_data_reader = Data_reader()
+    m_data_reader = DataReader()
     m_data_reader.read_data(files[0], files[1])
 
     gold_sentences = m_data_reader.annotations.copy()

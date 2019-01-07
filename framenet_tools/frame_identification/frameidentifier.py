@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchtext import data
 import pickle
 
-from framenet_tools.frame_identification.reader import Data_reader
+from framenet_tools.frame_identification.reader import DataReader
 from framenet_tools.frame_identification.frame_id_network import Frame_id_network
 
 use_cuda = True
@@ -14,7 +14,6 @@ raw_file = ["../data/experiments/xp_001/data/WallStreetJournal20150915.txt"]
 
 
 class FrameIdentifier(object):
-
     def __init__(self):
         # Create fields
         self.input_field = data.Field(
@@ -26,6 +25,8 @@ class FrameIdentifier(object):
             ("Frame", self.output_field),
         ]
 
+        self.network = None
+
     def get_dataset(self, file: list, predict_fees: bool):
         """
         Loads the dataset and combines the necessary data
@@ -36,7 +37,7 @@ class FrameIdentifier(object):
                 ys: A list of frames corresponding to the given sentences
         """
 
-        reader = Data_reader()
+        reader = DataReader()
         if len(file) == 2:
             reader.read_data(file[0], file[1])
         else:
