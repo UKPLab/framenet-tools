@@ -3,6 +3,8 @@
 A summarization of the SRL process
 - Based on (and using) pyfn (https://pypi.org/project/pyfn/)
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 ## Preparation
 - Clone repository or download files
 - Enter the directory

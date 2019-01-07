@@ -5,7 +5,7 @@ import logging
 import sys
 import pyfn
 from subprocess import call
-from framenet_tools.frame_identification.frame_identifier import Frame_Identifier
+from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 
 def download_file(url, file_path):
 	r = requests.get(url, stream=True)
@@ -103,7 +103,7 @@ def main():
   				"--splits","train", \
   				"--output_sentences"])
 		if sys.argv[1] in ["f_id"]:
-			f_i = Frame_Identifier()
+			f_i = FrameIdentifier()
 			f_i.main()
 
 #main()
