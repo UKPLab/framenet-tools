@@ -81,9 +81,16 @@ def evaluate_frame_identification(model: str, files: list):
     print(tp, fp, fn)
     return calc_f(tp, fp, fn)
 
-
+'''
 f1 = evaluate_fee_identification(DEV_FILES)
 print(f1)
 
 f1 = evaluate_frame_identification(SAVED_MODEL, DEV_FILES)
 print(f1)
+
+f_i = FrameIdentifier()
+f_i.load_model(SAVED_MODEL)
+f_i.write_predictions("../data/experiments/xp_001/data/WallStreetJournal20150915.txt", "here.txt")
+'''
+
+
