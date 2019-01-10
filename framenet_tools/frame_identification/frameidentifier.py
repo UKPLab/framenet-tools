@@ -5,7 +5,6 @@ import pickle
 
 from framenet_tools.frame_identification.reader import DataReader
 from framenet_tools.frame_identification.frame_id_network import Frame_id_network
-from framenet_tools.paths import *
 
 use_cuda = True
 batch_size = 1
@@ -242,12 +241,3 @@ class FrameIdentifier(object):
         self.network = Frame_id_network(True, embed, num_classes)
 
         self.network.train_model(train_iter, dataset_size, batch_size)
-
-    def train_complete(self):
-        """
-        Function to train on all available data
-
-        :return:
-        """
-
-        self.train(ALL_FILES)

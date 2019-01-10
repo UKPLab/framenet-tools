@@ -37,8 +37,6 @@ class Net(nn.Module):
             lookup_tensor = torch.tensor(sent, dtype=torch.long).to(self.device)
             embedded_sent = self.embedding_layer(lookup_tensor)
 
-               
-
             averaged_sent = embedded_sent.mean(dim=0)
 
             #Reappend the FEE 
@@ -100,7 +98,7 @@ class Frame_id_network(object):
             for batch in iter(train_iter):
                 
                 sent = batch.Sentence
-                sent = torch.tensor(sent, dtype=torch.long)
+                #sent = torch.tensor(sent, dtype=torch.long)
                 
                 
                 #sent = Variable(average_sentence(sent)).to(self.device)
@@ -116,8 +114,8 @@ class Frame_id_network(object):
                 self.optimizer.step()
                 
                 if (i+1) % 100 == 0:
-                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f' 
-                           %(epoch+1, num_epochs, i+1, dataset_size//batch_size, loss.data[0]))
+                    print('Epoch [%d/%d], Step [%d/%d], Loss: %.4f'
+                          %(epoch+1, num_epochs, i+1, dataset_size//batch_size, loss.data[0]))
 
                 i += 1
 
@@ -126,7 +124,7 @@ class Frame_id_network(object):
 
         for batch in iter(dataset_iter):
             sent = batch.Sentence
-            sent = torch.tensor(sent, dtype=torch.long)
+            #sent = torch.tensor(sent, dtype=torch.long)
 
             outputs = self.net(sent)
             _, predicted = torch.max(outputs.data, 1)
