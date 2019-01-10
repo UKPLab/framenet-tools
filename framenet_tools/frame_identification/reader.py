@@ -149,11 +149,11 @@ class DataReader(object):
 
         # Remove empty line at the end
         if elements[len(elements) - 1] == "":
-            print("Removed empty line at eof")
+            # print("Removed empty line at eof")
             elements = elements[: len(elements) - 1]
 
         if sentences[len(sentences) - 1] == "":
-            print("Removed empty line at eof")
+            # print("Removed empty line at eof")
             sentences = sentences[: len(sentences) - 1]
 
         # print(sentences)

@@ -126,24 +126,29 @@ class FrameIdentifier(object):
 
         return tp, fp, fn
 
-    def write_predictions(self, file: list):
+    def write_predictions(self, file: str, out_file: str):
         """
         Prints the predictions of a given file
 
-        TODO change into a nice API
-
         :param file: The file to predict (either a raw file or annotated file set)
+        :param out_file: The filename for saving the predictions
         :return:
         """
 
-        xs, ys = self.get_dataset(file, True)
+        xs, ys = self.get_dataset([file], True)
 
         dataset_iter = self.prepare_dataset(xs, ys)
         predictions = self.network.predict(dataset_iter)
 
+        out_string = ""
+
         for prediction, x in zip(predictions, xs):
-            print(x)
-            print(self.output_field.vocab.itos[prediction.item()])
+            out_string += str(x) + "\n"
+            out_string += self.output_field.vocab.itos[prediction.item()] + "\n"
+
+        file = open(out_file, "w")
+        file.write(out_string)
+        file.close()
 
     def save_model(self, name: str):
         """

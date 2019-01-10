@@ -441,6 +441,7 @@ resources/
 scripts/
 log/
 .vector_cache/
+config.file
 *.csv
 *.ph
 *.in_voc

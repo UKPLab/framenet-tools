@@ -1,6 +1,6 @@
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 
-from framenet_tools.paths import *
+from framenet_tools.config import *
 from framenet_tools.frame_identification.reader import DataReader
 
 
@@ -48,7 +48,7 @@ def evaluate_fee_identification(files: list):
     tp = fp = fn = 0
 
     for gold_annotations, predictied_annotations in zip(
-            gold_sentences, m_data_reader.annotations
+        gold_sentences, m_data_reader.annotations
     ):
         for gold_annotation in gold_annotations:
             if gold_annotation.fee_raw in [x.fee_raw for x in predictied_annotations]:
@@ -71,19 +71,31 @@ def evaluate_frame_identification(model: str, files: list):
 
     :param model: The path of the saved model
     :param files: The files to evaluate on
-    :return: A Triple of Precision, Recall and F1-Score
+    :return:
     """
 
     f_i = FrameIdentifier()
     f_i.load_model(model)
 
-    tp, fp, fn = f_i.evaluate_file(files)
-    print(tp, fp, fn)
-    return calc_f(tp, fp, fn)
+    for file in files:
+        print("Evaluating " + file[0])
+        tp, fp, fn = f_i.evaluate_file(file)
+        pr, re, f1 = calc_f(tp, fp, fn)
+
+        print(
+            "Evaluation complete!\n True Positives: %d False Postives: %d False Negatives: %d \n Precision: %f Recall: %f F1-Score: %f"
+            % (tp, fp, fn, pr, re, f1)
+        )
 
 
+"""
 f1 = evaluate_fee_identification(DEV_FILES)
 print(f1)
 
 f1 = evaluate_frame_identification(SAVED_MODEL, DEV_FILES)
 print(f1)
+
+f_i = FrameIdentifier()
+f_i.load_model(SAVED_MODEL)
+f_i.write_predictions("../data/experiments/xp_001/data/WallStreetJournal20150915.txt", "here.txt")
+"""
