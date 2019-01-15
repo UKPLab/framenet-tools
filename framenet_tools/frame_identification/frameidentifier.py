@@ -4,7 +4,7 @@ from torchtext import data
 import pickle
 
 from framenet_tools.frame_identification.reader import DataReader
-from framenet_tools.frame_identification.frame_id_network import Frame_id_network
+from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 
 use_cuda = True
 batch_size = 1
@@ -180,7 +180,7 @@ class FrameIdentifier(object):
 
         num_classes = len(self.output_field.vocab)
         embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
-        self.network = Frame_id_network(True, embed, num_classes)
+        self.network = FrameIDNetwork(True, embed, num_classes)
 
         self.network.load_model(name + ".ph")
 
@@ -238,6 +238,6 @@ class FrameIdentifier(object):
 
         embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
 
-        self.network = Frame_id_network(True, embed, num_classes)
+        self.network = FrameIDNetwork(True, embed, num_classes)
 
         self.network.train_model(train_iter, dataset_size, batch_size)
