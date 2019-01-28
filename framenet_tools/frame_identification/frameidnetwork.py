@@ -3,19 +3,14 @@ import torch.nn as nn
 import torchtext
 from torch.autograd import Variable
 
-hidden_size = 2048
-hidden_size2 = 1024
-num_epochs = 5
-learning_rate = 0.001
-embedding_size = 300
+from framenet_tools.config import ConfigManager
 
 
 class Net(nn.Module):
     def __init__(
         self,
         embedding_size: int,
-        hidden_size: int,
-        hidden_size2: int,
+        hidden_sizes: list,
         num_classes: int,
         embedding_layer: torch.nn.Embedding,
         device: torch.device,
@@ -24,11 +19,21 @@ class Net(nn.Module):
 
         self.device = device
         self.embedding_layer = embedding_layer
-        self.fc1 = nn.Linear(embedding_size * 2, hidden_size)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, hidden_size2)
-        self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(hidden_size2, num_classes)
+
+        self.hidden_layers = []
+
+        last_size = embedding_size * 2
+
+        for hidden_size in hidden_sizes:
+            # As hidden_layers is just saving references, manually moving the layers to the desired device is necessary
+
+            self.hidden_layers.append(nn.Linear(last_size, hidden_size).to(self.device))
+            self.hidden_layers.append(nn.ReLU().to(self.device))
+
+            last_size = hidden_size
+
+        self.out_layer = nn.Linear(last_size, num_classes)
+
 
     def set_embedding_layer(self, embedding_layer: torch.nn.Embedding):
         """
@@ -69,26 +74,29 @@ class Net(nn.Module):
         The forward function, specifying the processing path
 
         :param x: A input value
-        :return:
+        :return: The prediction of the network
         """
 
         x = Variable(self.average_sentence(x)).to(self.device)
+        #out = self.hidden_layers[0](x)
 
-        out = self.fc1(x)
-        out = self.relu(out)
-        out = self.fc2(out)
-        out = self.relu2(out)
-        out = self.fc3(out)
+        for layer in self.hidden_layers:
+            x = layer(x)
+
+        out = self.out_layer(x)
+
         return out
 
 
 class FrameIDNetwork(object):
     def __init__(
-        self, use_cuda: bool, embedding_layer: torch.nn.Embedding, num_classes: int
+        self, cM: ConfigManager, embedding_layer: torch.nn.Embedding, num_classes: int
     ):
 
+        self.cM = cM
+
         # Check for CUDA
-        use_cuda = use_cuda and torch.cuda.is_available()
+        use_cuda = self.cM.use_cuda and torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
         print(self.device)
 
@@ -96,9 +104,8 @@ class FrameIDNetwork(object):
         self.num_classes = num_classes
 
         self.net = Net(
-            embedding_size,
-            hidden_size,
-            hidden_size2,
+            self.cM.embedding_size,
+            self.cM.hidden_sizes,
             num_classes,
             embedding_layer,
             self.device,
@@ -108,7 +115,7 @@ class FrameIDNetwork(object):
 
         # Loss and Optimizer
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=learning_rate)
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.cM.learning_rate)
 
     def train_model(
         self, train_iter: torchtext.data.Iterator, dataset_size: int, batch_size: int
@@ -123,7 +130,7 @@ class FrameIDNetwork(object):
         :return:
         """
 
-        for epoch in range(num_epochs):
+        for epoch in range(self.cM.num_epochs):
             # Counter for the iterations
             i = 0
 
@@ -148,7 +155,7 @@ class FrameIDNetwork(object):
                         "Epoch [%d/%d], Step [%d/%d], Loss: %.4f"
                         % (
                             epoch + 1,
-                            num_epochs,
+                            self.cM.num_epochs,
                             i + 1,
                             dataset_size // batch_size,
                             loss.item(),

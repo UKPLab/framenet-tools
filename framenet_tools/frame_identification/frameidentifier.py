@@ -5,8 +5,8 @@ import pickle
 
 from framenet_tools.frame_identification.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
+from framenet_tools.config import ConfigManager
 
-use_cuda = True
 batch_size = 1
 
 # Exemplary raw file
@@ -14,7 +14,7 @@ raw_file = ["../data/experiments/xp_001/data/WallStreetJournal20150915.txt"]
 
 
 class FrameIdentifier(object):
-    def __init__(self):
+    def __init__(self, cM: ConfigManager):
         # Create fields
         self.input_field = data.Field(
             dtype=torch.float, use_vocab=True, preprocessing=None
@@ -25,6 +25,7 @@ class FrameIdentifier(object):
             ("Frame", self.output_field),
         ]
 
+        self.cM = cM
         self.network = None
 
     def get_dataset(self, file: list, predict_fees: bool):
@@ -180,7 +181,7 @@ class FrameIdentifier(object):
 
         num_classes = len(self.output_field.vocab)
         embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
-        self.network = FrameIDNetwork(True, embed, num_classes)
+        self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
         self.network.load_model(name + ".ph")
 
@@ -238,6 +239,6 @@ class FrameIdentifier(object):
 
         embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
 
-        self.network = FrameIDNetwork(True, embed, num_classes)
+        self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
         self.network.train_model(train_iter, dataset_size, batch_size)

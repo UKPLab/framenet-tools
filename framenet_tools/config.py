@@ -1,5 +1,6 @@
 import os
 import configparser
+import re
 
 CONFIG_PATH = "config.file"
 
@@ -17,10 +18,15 @@ class ConfigManager(object):
 
         self.use_cuda = True
 
+        self.all_files = self.train_files + self.eval_files
+
+        self.hidden_sizes = [2048, 1024]
+        self.num_epochs = 5
+        self.learning_rate = 0.001
+        self.embedding_size = 300
+
         if not self.load_config():
             self.create_config()
-
-        self.all_files = self.train_files + self.eval_files
 
     def load_defaults(self):
         """
@@ -65,25 +71,18 @@ class ConfigManager(object):
         config.read(CONFIG_PATH)
 
         for section in config.sections():
-            # print(section)
 
             if section == "TRAINPATHS":
                 for key in config[section]:
-                    # print(key)
-                    # print(config[section][key])
 
                     path = config[section][key].rsplit("\t")
                     self.train_files.append(path)
-                    # print(path)
 
             if section == "EVALPATHS":
                 for key in config[section]:
-                    # print(key)
-                    # print(config[section][key])
 
                     path = config[section][key].rsplit("\t")
                     self.eval_files.append(path)
-                    # print(path)
 
             if section == "VARIABLES":
                 for key in config[section]:
@@ -91,7 +90,23 @@ class ConfigManager(object):
                         self.saved_model = config[section][key]
 
                     if key == "use_cuda":
-                        self.use_cuda = config[section][key]
+                        self.use_cuda = config[section][key] == "True"
+
+            if section == "HYPERPARAMETER":
+                for key in config[section]:
+                    if key == "hidden_sizes":
+                        # Find numbers and convert to int using regex
+                        found_numbers = re.findall(r"[0-9]+", config[section][key])
+                        self.hidden_sizes = [int(t) for t in found_numbers]
+
+                    if key == "num_epochs":
+                        self.num_epochs = int(config[section][key])
+
+                    if key == "learning_rate":
+                        self.learning_rate = float(config[section][key])
+
+                    if key == "embedding_size":
+                        self.embedding_size = int(config[section][key])
 
         return True
 
@@ -135,6 +150,12 @@ class ConfigManager(object):
         config_string += "[VARIABLES]\n"
         config_string += "model_path: " + self.saved_model + "\n"
         config_string += "use_cuda: " + str(self.use_cuda) + "\n"
+
+        config_string += "\n[HYPERPARAMETER]\n"
+        config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"
+        config_string += "num_epochs: " + str(self.num_epochs) + "\n"
+        config_string += "learning_rate: " + str(self.learning_rate) + "\n"
+        config_string += "embedding_size: " + str(self.embedding_size) + "\n"
 
         file = open(CONFIG_PATH, "w")
         file.write(config_string)
