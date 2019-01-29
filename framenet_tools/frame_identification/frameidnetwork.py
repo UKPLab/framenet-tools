@@ -25,19 +25,21 @@ class Net(nn.Module):
 
         last_size = embedding_size * 2
 
-        for hidden_size, activation_function in zip(hidden_sizes, activation_functions):
-            # As hidden_layers is just saving references, manually moving the layers to the desired device is necessary
+        # Programmatically add new layers according to the config file
+        for i in range(len(hidden_sizes)):
 
-            self.hidden_layers.append(nn.Linear(last_size, hidden_size).to(self.device))
+            self.add_module(str(i), nn.Linear(last_size, hidden_sizes[i]))
+
+            # Saving function ref
+            self.hidden_layers.append(getattr(self, str(i)))
 
             # Dynamic instantiation of the activation function
-            act_func = getattr(nn, activation_function)().to(self.device)
+            act_func = getattr(nn, activation_functions[i])().to(self.device)
             self.hidden_layers.append(act_func)
 
-            last_size = hidden_size
+            last_size = hidden_sizes[i]
 
         self.out_layer = nn.Linear(last_size, num_classes)
-
 
     def set_embedding_layer(self, embedding_layer: torch.nn.Embedding):
         """
@@ -82,10 +84,11 @@ class Net(nn.Module):
         """
 
         x = Variable(self.average_sentence(x)).to(self.device)
-        #out = self.hidden_layers[0](x)
 
-        for layer in self.hidden_layers:
-            x = layer(x)
+        # Programmatically pass x through all layers
+        # NOTE: hidden_layers also includes activation functions!
+        for hidden_layer in self.hidden_layers:
+            x = hidden_layer(x)
 
         out = self.out_layer(x)
 
@@ -120,7 +123,9 @@ class FrameIDNetwork(object):
 
         # Loss and Optimizer
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.cM.learning_rate)
+        self.optimizer = torch.optim.Adam(
+            self.net.parameters(), lr=self.cM.learning_rate
+        )
 
     def train_model(
         self, train_iter: torchtext.data.Iterator, dataset_size: int, batch_size: int

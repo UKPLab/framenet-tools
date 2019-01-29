@@ -52,14 +52,18 @@ class FrameIdentifier(object):
 
         return xs, ys
 
-    def prepare_dataset(self, xs: list, ys: list):
+    def prepare_dataset(self, xs: list, ys: list, batch_size: int = None):
         """
         Prepares the dataset and returns a BucketIterator of the dataset
 
+        :param batch_size: The batch_size to which the dataset will be prepared
         :param xs: A list of sentences
         :param ys: A list of frames corresponding to the given sentences
         :return: A BucketIterator of the dataset
         """
+
+        if batch_size is None:
+            batch_size = self.cM.batch_size
 
         examples = [
             data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
@@ -67,7 +71,7 @@ class FrameIdentifier(object):
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 
-        iterator = data.BucketIterator(dataset, batch_size=self.cM.batch_size, shuffle=False)
+        iterator = data.BucketIterator(dataset, batch_size=batch_size, shuffle=False)
 
         return iterator
 
@@ -90,7 +94,9 @@ class FrameIdentifier(object):
         fp = 0
         fn = 0
 
+        predictions = [i.item() for j in predictions for i in j]
         print(len(predictions))
+        print(predictions)
         print(len(xs))
         # print(len(ys))
 
@@ -99,7 +105,7 @@ class FrameIdentifier(object):
 
         for gold_x, gold_y in zip(gold_xs, gold_ys):
             for x, y in zip(xs, predictions):
-                if gold_x == x and gold_y == self.output_field.vocab.itos[y[0].item()]:
+                if gold_x == x and gold_y == self.output_field.vocab.itos[y]:
                     found = True
                     break
 
@@ -112,7 +118,7 @@ class FrameIdentifier(object):
 
         for x, y in zip(xs, predictions):
             for gold_x, gold_y in zip(gold_xs, gold_ys):
-                if gold_x == x and gold_y == self.output_field.vocab.itos[y[0].item()]:
+                if gold_x == x and gold_y == self.output_field.vocab.itos[y]:
                     found = True
 
             if not found:
@@ -190,7 +196,7 @@ class FrameIdentifier(object):
 
         xs, ys = self.get_dataset(file, True)
 
-        iter = self.prepare_dataset(xs, ys)
+        iter = self.prepare_dataset(xs, ys, 1)
 
         predictions = self.network.predict(iter)
 
