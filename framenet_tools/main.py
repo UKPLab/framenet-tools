@@ -193,7 +193,7 @@ def eval_args(parser: argparse.ArgumentParser, cM: ConfigManager):
 
     if parsed.action == "train":
 
-        f_i = FrameIdentifier()
+        f_i = FrameIdentifier(cM)
 
         if parsed.use_eval_files:
             f_i.train(cM.all_files)
@@ -210,13 +210,13 @@ def eval_args(parser: argparse.ArgumentParser, cM: ConfigManager):
         if parsed.out_path is None:
             raise Exception("No path specified for saving!")
 
-        f_i = FrameIdentifier()
+        f_i = FrameIdentifier(cM)
         f_i.load_model(cM.saved_model)
         f_i.write_predictions(parsed.path, parsed.out_path)
 
     if parsed.action == "evaluate":
 
-        evaluate_frame_identification(cM.saved_model, cM.eval_files)
+        evaluate_frame_identification(cM)
 
 
 def main():
@@ -231,5 +231,9 @@ def main():
 
     eval_args(parser, cM)
 
-#cM = ConfigManager()
-#evaluate_frame_identification(cM.saved_model, cM.eval_files)
+
+# cM = ConfigManager()
+# f_i = FrameIdentifier(cM)
+# f_i.train(cM.train_files)
+# f_i.save_model(cM.saved_model)
+# evaluate_frame_identification(cM)

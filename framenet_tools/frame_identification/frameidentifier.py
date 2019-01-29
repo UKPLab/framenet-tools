@@ -7,11 +7,6 @@ from framenet_tools.frame_identification.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
 
-batch_size = 1
-
-# Exemplary raw file
-raw_file = ["../data/experiments/xp_001/data/WallStreetJournal20150915.txt"]
-
 
 class FrameIdentifier(object):
     def __init__(self, cM: ConfigManager):
@@ -72,7 +67,7 @@ class FrameIdentifier(object):
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 
-        iterator = data.BucketIterator(dataset, batch_size=batch_size, shuffle=False)
+        iterator = data.BucketIterator(dataset, batch_size=self.cM.batch_size, shuffle=False)
 
         return iterator
 
@@ -104,7 +99,7 @@ class FrameIdentifier(object):
 
         for gold_x, gold_y in zip(gold_xs, gold_ys):
             for x, y in zip(xs, predictions):
-                if gold_x == x and gold_y == self.output_field.vocab.itos[y.item()]:
+                if gold_x == x and gold_y == self.output_field.vocab.itos[y[0].item()]:
                     found = True
                     break
 
@@ -117,7 +112,7 @@ class FrameIdentifier(object):
 
         for x, y in zip(xs, predictions):
             for gold_x, gold_y in zip(gold_xs, gold_ys):
-                if gold_x == x and gold_y == self.output_field.vocab.itos[y.item()]:
+                if gold_x == x and gold_y == self.output_field.vocab.itos[y[0].item()]:
                     found = True
 
             if not found:
@@ -241,4 +236,4 @@ class FrameIdentifier(object):
 
         self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
-        self.network.train_model(train_iter, dataset_size, batch_size)
+        self.network.train_model(train_iter, dataset_size, self.cM.batch_size)

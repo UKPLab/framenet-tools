@@ -11,6 +11,7 @@ class Net(nn.Module):
         self,
         embedding_size: int,
         hidden_sizes: list,
+        activation_functions: list,
         num_classes: int,
         embedding_layer: torch.nn.Embedding,
         device: torch.device,
@@ -24,11 +25,14 @@ class Net(nn.Module):
 
         last_size = embedding_size * 2
 
-        for hidden_size in hidden_sizes:
+        for hidden_size, activation_function in zip(hidden_sizes, activation_functions):
             # As hidden_layers is just saving references, manually moving the layers to the desired device is necessary
 
             self.hidden_layers.append(nn.Linear(last_size, hidden_size).to(self.device))
-            self.hidden_layers.append(nn.ReLU().to(self.device))
+
+            # Dynamic instantiation of the activation function
+            act_func = getattr(nn, activation_function)().to(self.device)
+            self.hidden_layers.append(act_func)
 
             last_size = hidden_size
 
@@ -106,6 +110,7 @@ class FrameIDNetwork(object):
         self.net = Net(
             self.cM.embedding_size,
             self.cM.hidden_sizes,
+            self.cM.activation_functions,
             num_classes,
             embedding_layer,
             self.device,

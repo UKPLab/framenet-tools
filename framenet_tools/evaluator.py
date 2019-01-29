@@ -1,6 +1,5 @@
+from framenet_tools.config import ConfigManager
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
-
-from framenet_tools.config import *
 from framenet_tools.frame_identification.reader import DataReader
 
 
@@ -65,19 +64,18 @@ def evaluate_fee_identification(files: list):
     return calc_f(tp, fp, fn)
 
 
-def evaluate_frame_identification(model: str, files: list):
+def evaluate_frame_identification(cM: ConfigManager):
     """
     Evaluates the F1-Score for a model on a given file set
 
-    :param model: The path of the saved model
-    :param files: The files to evaluate on
+    :param cM: The ConfigManager containing the saved model and evaluation files
     :return:
     """
 
-    f_i = FrameIdentifier()
-    f_i.load_model(model)
+    f_i = FrameIdentifier(cM)
+    f_i.load_model(cM.saved_model)
 
-    for file in files:
+    for file in cM.eval_files:
         print("Evaluating " + file[0])
         tp, fp, fn = f_i.evaluate_file(file)
         pr, re, f1 = calc_f(tp, fp, fn)
