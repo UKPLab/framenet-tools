@@ -12,7 +12,7 @@ class FrameIdentifier(object):
     def __init__(self, cM: ConfigManager):
         # Create fields
         self.input_field = data.Field(
-            dtype=torch.float, use_vocab=True, preprocessing=None
+            dtype=torch.long, use_vocab=True, preprocessing=None
         )  # , fix_length= max_length) #No padding necessary anymore, since avg
         self.output_field = data.Field(dtype=torch.long)
         self.data_fields = [

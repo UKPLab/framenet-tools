@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchtext
 from torch.autograd import Variable
+from tqdm import tqdm
 
 from framenet_tools.config import ConfigManager
 
@@ -58,7 +59,7 @@ class Net(nn.Module):
         :return: The averaged sentence/sentences as a tensor (size equals the size of one word embedding for each sentence)
         """
 
-        lookup_tensor = torch.tensor(sent, dtype=torch.long).to(self.device)
+        lookup_tensor = sent.to(self.device)
         embedded_sent = self.embedding_layer(lookup_tensor)
 
         averaged_sent = embedded_sent.mean(dim=0)
@@ -105,7 +106,7 @@ class FrameIDNetwork(object):
         # Check for CUDA
         use_cuda = self.cM.use_cuda and torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
-        print(self.device)
+        print("Device used: " + str(self.device))
 
         self.embedding_layer = embedding_layer
         self.num_classes = num_classes
@@ -140,16 +141,18 @@ class FrameIDNetwork(object):
         :return:
         """
 
-        for epoch in range(self.cM.num_epochs):
-            # Counter for the iterations
-            i = 0
+        # batch_count = sum(1 for _ in train_iter)
 
-            for batch in iter(train_iter):
+        for epoch in range(self.cM.num_epochs):
+
+            total_loss = 0
+            count = 0
+
+            pbar = tqdm(train_iter)
+
+            for batch in pbar:
 
                 sent = batch.Sentence
-                # sent = torch.tensor(sent, dtype=torch.long)
-
-                # sent = Variable(average_sentence(sent)).to(self.device)
                 labels = Variable(batch.Frame[0]).to(self.device)
 
                 # Forward + Backward + Optimize
@@ -160,19 +163,12 @@ class FrameIDNetwork(object):
                 loss.backward()
                 self.optimizer.step()
 
-                if (i + 1) % 100 == 0:
-                    print(
-                        "Epoch [%d/%d], Step [%d/%d], Loss: %.4f"
-                        % (
-                            epoch + 1,
-                            self.cM.num_epochs,
-                            i + 1,
-                            dataset_size // batch_size,
-                            loss.item(),
-                        )
-                    )
+                total_loss += loss.item()
+                count += 1
 
-                i += 1
+                # Just update every 20 iterations
+                if count % 20 == 0:
+                    pbar.set_description("Epoch %d/%d Loss: %f" %((epoch+1), self.cM.num_epochs, (total_loss/count)))
 
     def predict(self, dataset_iter: torchtext.data.Iterator):
         """
