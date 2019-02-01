@@ -1,0 +1,170 @@
+import pytest
+import torch
+import torch.nn as nn
+import random
+
+from framenet_tools.frame_identification.frameidnetwork import Net
+
+ACTIVATION_FUNCTIONS = [
+    "LogSoftmax",
+    "Softmax2d",
+    "Softmax",
+    "Softmin",
+    "Tanhshrink",
+    "Softsign",
+    "PReLU",
+    "Softshrink",
+    "Softplus",
+    "LogSigmoid",
+    "LeakyReLU",
+    "Hardshrink",
+    "GLU",
+    "SELU",
+    "ELU",
+    "Tanh",
+    "Sigmoid",
+    "ReLU6",
+    "Hardtanh",
+    "RReLU",
+    "ReLU",
+]
+
+
+def create_network(
+    embedding_vocab_size: int = 2,
+    embedding_dim: int = 2,
+    hidden_sizes: list = [128],
+    activation_functions: list = ["ReLU"],
+    num_classes: int = 2,
+):
+    """
+    Helper function for parameterizable creation of the neural network
+
+    :param embedding_vocab_size: Number of words in the vocab
+    :param embedding_dim: Dimension size of the embeddings
+    :param hidden_sizes: A list including the sizes of the hidden layers
+    :param activation_functions: A list of the names of activation functions to be used
+    :param num_classes: The number of possible predictable classes
+    :return:
+    """
+
+    embedding_layer = nn.Embedding(embedding_vocab_size, embedding_dim)
+    net = Net(
+        embedding_dim,
+        hidden_sizes,
+        activation_functions,
+        num_classes,
+        embedding_layer,
+        torch.device("cpu"),
+    )
+
+    return net
+
+
+def generate_layers(layer_limit: int, size_limit: int, matching: bool):
+
+    layer_amount = random.randint(1, layer_limit)
+    activation_amount = random.randint(1, layer_limit)
+
+    while (
+        (activation_amount != layer_amount)
+        if matching
+        else (activation_amount >= layer_amount)
+    ):
+        activation_amount = random.randint(1, layer_limit)
+        layer_amount = random.randint(1, layer_limit)
+
+    rnd_hidden = [random.randint(1, size_limit) for _ in range(layer_amount)]
+    rnd_activation = ["ReLU"] * activation_amount
+
+    return rnd_hidden, rnd_activation
+
+
+def generate_parameters(iterations: int, matching: bool):
+
+    rnd_parameters = [generate_layers(20, 2048, matching) for _ in range(iterations)]
+
+    return rnd_parameters
+
+
+def test_net():
+    """
+    Simply test if network creation works
+
+    :return:
+    """
+
+    create_network()
+
+
+def test_net_train():
+    """
+    Tests if the created network can be trained with random data
+
+    :return:
+    """
+
+    net = create_network()
+    test_tensor = torch.tensor([[0], [1]], dtype=torch.long)
+    net(test_tensor)
+
+
+def test_net_avg():
+    net = create_network()
+    test_tensor = torch.tensor([[0], [1]], dtype=torch.long)
+    x = net.average_sentence(test_tensor)
+
+    ten0 = torch.tensor([0], dtype=torch.long)
+    ten1 = torch.tensor([1], dtype=torch.long)
+
+    ten0 = net.embedding_layer(ten0)
+    ten1 = net.embedding_layer(ten1)
+
+    print(ten0)
+    print(ten1)
+    print(x)
+
+    assert (ten0.data[0][0] + ten1.data[0][0]) / 2 == x.data[0][2]
+    assert (ten0.data[0][1] + ten1.data[0][1]) / 2 == x.data[0][3]
+
+
+def test_net_dim():
+    net = create_network()
+    test_tensor = torch.tensor([[0], [1]], dtype=torch.long)
+    x = net.average_sentence(test_tensor)
+
+    ten0 = torch.tensor([0], dtype=torch.long)
+    ten1 = torch.tensor([1], dtype=torch.long)
+
+    ten0 = net.embedding_layer(ten0)
+    ten1 = net.embedding_layer(ten1)
+
+    print(ten0)
+    print(ten1)
+    print(x)
+
+    assert len(ten0.data[0]) * 2 == len(x.data[0])
+
+
+@pytest.mark.parametrize("rnd_hidden, rnd_activation", generate_parameters(50, True))
+def test_arbitrary_layers(rnd_hidden, rnd_activation):
+
+    create_network(hidden_sizes=rnd_hidden, activation_functions=rnd_activation)
+
+
+@pytest.mark.parametrize("rnd_hidden, rnd_activation", generate_parameters(50, False))
+def test_unbalanced_layers(rnd_hidden, rnd_activation):
+    """
+    Tests if passing different lengths of hidden_sizes and activation_functions causes an Exception
+
+    :return:
+    """
+
+    with pytest.raises(Exception):
+        create_network(hidden_sizes=rnd_hidden, activation_functions=rnd_activation)
+
+
+@pytest.mark.parametrize("activation", ACTIVATION_FUNCTIONS)
+def test_arbitrary_activation(activation):
+
+    create_network(activation_functions=[activation])
