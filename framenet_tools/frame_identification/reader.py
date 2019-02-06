@@ -18,6 +18,17 @@ class Annotation(object):
         self.fee_raw = fee_raw
         self.sentence = sentence
 
+    def create_handle(self):
+        return [self.frame, self.fee, self.position, self.fee_raw, self.sentence]
+
+    def __eq__(self, x):
+        equal = True
+
+        for h1, h2 in zip(self.create_handle(), x.create_handle()):
+            equal &= h1 == h2
+
+        return equal
+
 
 class DataReader(object):
     def __init__(
@@ -67,7 +78,7 @@ class DataReader(object):
 
             sent_num = int(element_data[7])  # Sentence number
 
-            if sent_num <= len(self.annotations):
+            if sent_num >= len(self.annotations):
                 self.annotations.append([])
 
             self.annotations[sent_num].append(
