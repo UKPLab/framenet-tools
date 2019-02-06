@@ -139,7 +139,7 @@ class FrameIdentifier(object):
 
         xs, ys = self.get_dataset([file], True)
 
-        dataset_iter = self.prepare_dataset(xs, ys)
+        dataset_iter = self.prepare_dataset(xs, ys, 1)
         predictions = self.network.predict(dataset_iter)
 
         out_string = ""
@@ -147,6 +147,12 @@ class FrameIdentifier(object):
         for prediction, x in zip(predictions, xs):
             out_string += str(x) + "\n"
             out_string += self.output_field.vocab.itos[prediction.item()] + "\n"
+
+        # Batch prediction, more efficient, but less accurate
+        # for i in range(len(xs)):
+        #    out_string += str(xs[i]) + "\n"
+        #    prediction = predictions[int(i/self.cM.batch_size)][i%self.cM.batch_size]
+        #    out_string += self.output_field.vocab.itos[prediction.item()] + "\n"
 
         file = open(out_file, "w")
         file.write(out_string)
