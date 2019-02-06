@@ -1,14 +1,15 @@
+import os
 import pytest
 import random
 import string
-import os
+from typing import List
 
-from framenet_tools.frame_identification.reader import DataReader, Annotation
+from framenet_tools.frame_identification.reader import Annotation, DataReader
 
 
 def create_random_string(possible_chars: str, seq_length: int = 8):
     """
-    Helper Function for generation of random strings.
+    Helper function for generation of random strings.
 
     Inspired by: https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python
 
@@ -22,10 +23,13 @@ def create_random_string(possible_chars: str, seq_length: int = 8):
 
 def create_frames_file(sentence_count: int, max_frame_count: int):
     """
+    Helper function for generating a well formatted random "frames file"
 
-    :param sentence_count:
-    :param max_frame_count:
-    :return:
+    NOTE: Randomized!
+
+    :param sentence_count: The number of sentences
+    :param max_frame_count: The maximum amount of frames to generate per sentence
+    :return: The name of the generated file
     """
 
     file_name = create_random_string(string.ascii_lowercase, 8)
@@ -49,9 +53,8 @@ def create_frames_file(sentence_count: int, max_frame_count: int):
             # Sentence number (starting at 0) and new line
             content += str(i) + "\n"
 
-    file = open(file_name, "w")
-    file.write(content)
-    file.close()
+    with open(file_name, "w") as file:
+        file.write(content)
 
     return file_name
 
@@ -76,18 +79,21 @@ def create_sentences_file(sentence_count: int, max_word_count: int):
 
         content += "\n"
 
-    file = open(file_name, "w")
-    file.write(content)
-    file.close()
+    with open(file_name, "w") as file:
+        file.write(content)
 
     return file_name
 
 
 def create_and_load(max_sentence_length: int):
     """
+    A Helper function which creates and loads files with random content,
+    but every file is formatted correctly.
 
-    :param max_sentence_length:
-    :return:
+    NOTE: Randomized!
+
+    :param max_sentence_length: The maximum possible amount of sentences
+    :return: A DataReader-Object and a list of the two file names
     """
 
     num_sentences = random.randint(1, max_sentence_length)
@@ -101,10 +107,12 @@ def create_and_load(max_sentence_length: int):
     return m_reader, [sentences_file, frames_file]
 
 
-def clean_up(files: list):
+def clean_up(files: List[str]):
     """
+    Clean up function
+    Deletes all given files.
 
-    :param files:
+    :param files: A list of filenames to delete
     :return:
     """
 
@@ -150,12 +158,11 @@ def test_reader_sizes():
     m_reader, files = create_and_load(10)
     handler = [m_reader.sentences, m_reader.annotations]
 
-    for i in range(2):
-        file = open(files[i])
+    with open(files[0]) as file:
         raw = file.read()
-        file.close()
-
         raw = raw.rsplit("\n")
+
+    for i in range(2):
         # None empty lines counted
         line_count = sum(1 for line in raw if line != "")
 
@@ -190,7 +197,7 @@ def test_sentences_correctness():
     clean_up(files)
 
 
-def get_sentence(sentences: list, sentence_num: int):
+def get_sentence(sentences: List[str], sentence_num: int):
     """
     Helper function converting raw sentences into a list of words.
 
@@ -198,6 +205,7 @@ def get_sentence(sentences: list, sentence_num: int):
     :param sentence_num: The number of the sentence to get
     :return: The sentence as a list of words as strings
     """
+
     sentence = sentences[sentence_num]
     sentence = [word for word in sentence.rsplit(" ") if word != ""]
 

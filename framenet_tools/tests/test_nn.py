@@ -1,7 +1,8 @@
 import pytest
+import random
 import torch
 import torch.nn as nn
-import random
+from typing import List
 
 from framenet_tools.frame_identification.frameidnetwork import Net
 
@@ -33,8 +34,8 @@ ACTIVATION_FUNCTIONS = [
 def create_network(
     embedding_vocab_size: int = 2,
     embedding_dim: int = 2,
-    hidden_sizes: list = [128],
-    activation_functions: list = ["ReLU"],
+    hidden_sizes: List[int] = [128],
+    activation_functions: List[str] = ["ReLU"],
     num_classes: int = 2,
 ):
     """
@@ -62,6 +63,16 @@ def create_network(
 
 
 def generate_layers(layer_limit: int, size_limit: int, matching: bool):
+    """
+    Helper function for generating a random layer set
+
+    NOTE: Randomized!
+
+    :param layer_limit: The maximum amount of layers to generate
+    :param size_limit: The maximum size of each layer
+    :param matching: Specifies whether the amount of layers, and activation functions is equal
+    :return: Two lists, the first containing the sizes of each layer, the second one the activation functions
+    """
 
     layer_amount = random.randint(1, layer_limit)
     activation_amount = random.randint(1, layer_limit)
@@ -81,6 +92,13 @@ def generate_layers(layer_limit: int, size_limit: int, matching: bool):
 
 
 def generate_parameters(iterations: int, matching: bool):
+    """
+    Helper function for generating multiple sets of layers
+
+    :param iterations: The amount of layer sets generated
+    :param matching: Specifies whether the amount of layers, and activation functions is equal
+    :return: A list of layer sets, each consisting of hidden sizes and activation functions
+    """
 
     rnd_parameters = [generate_layers(20, 2048, matching) for _ in range(iterations)]
 
@@ -110,6 +128,12 @@ def test_net_train():
 
 
 def test_net_avg():
+    """
+    Tests if the averaging function of the network is correctly working
+
+    :return:
+    """
+
     net = create_network()
     test_tensor = torch.tensor([[0], [1]], dtype=torch.long)
     x = net.average_sentence(test_tensor)
@@ -119,43 +143,49 @@ def test_net_avg():
 
     ten0 = net.embedding_layer(ten0)
     ten1 = net.embedding_layer(ten1)
-
-    print(ten0)
-    print(ten1)
-    print(x)
 
     assert (ten0.data[0][0] + ten1.data[0][0]) / 2 == x.data[0][2]
     assert (ten0.data[0][1] + ten1.data[0][1]) / 2 == x.data[0][3]
 
 
 def test_net_dim():
+    """
+    Tests if the dimensions of the averaging function are plausible.
+    Because the averaging function looks like this:
+    [fee, [word for word in sentence]] -> [[fee_embedding], [sentence_embedding (averaged)]]
+
+    :return:
+    """
+
     net = create_network()
     test_tensor = torch.tensor([[0], [1]], dtype=torch.long)
     x = net.average_sentence(test_tensor)
 
-    ten0 = torch.tensor([0], dtype=torch.long)
-    ten1 = torch.tensor([1], dtype=torch.long)
+    ten = torch.tensor([0], dtype=torch.long)
+    ten = net.embedding_layer(ten)
 
-    ten0 = net.embedding_layer(ten0)
-    ten1 = net.embedding_layer(ten1)
-
-    print(ten0)
-    print(ten1)
-    print(x)
-
-    assert len(ten0.data[0]) * 2 == len(x.data[0])
+    assert len(ten.data[0]) * 2 == len(x.data[0])
 
 
 @pytest.mark.parametrize("rnd_hidden, rnd_activation", generate_parameters(50, True))
-def test_arbitrary_layers(rnd_hidden, rnd_activation):
+def test_arbitrary_layers(rnd_hidden: List[int], rnd_activation: List[str]):
+    """
+    A test for checking the creation of random networks, with different random layers.
+
+    NOTE: Randomized!
+
+    :param rnd_hidden: A list of hidden sizes
+    :param rnd_activation: A list of activation functions
+    :return:
+    """
 
     create_network(hidden_sizes=rnd_hidden, activation_functions=rnd_activation)
 
 
 @pytest.mark.parametrize("rnd_hidden, rnd_activation", generate_parameters(50, False))
-def test_unbalanced_layers(rnd_hidden, rnd_activation):
+def test_unbalanced_layers(rnd_hidden: List[int], rnd_activation: List[str]):
     """
-    Tests if passing different lengths of hidden_sizes and activation_functions causes an Exception
+    Tests if passing different lengths of hidden_sizes and activation_functions causes an Exception.
 
     :return:
     """
@@ -165,6 +195,12 @@ def test_unbalanced_layers(rnd_hidden, rnd_activation):
 
 
 @pytest.mark.parametrize("activation", ACTIVATION_FUNCTIONS)
-def test_arbitrary_activation(activation):
+def test_arbitrary_activation(activation: List[str]):
+    """
+    Test for using different activation functions.
+
+    :param activation: A list of activation functions
+    :return:
+    """
 
     create_network(activation_functions=[activation])

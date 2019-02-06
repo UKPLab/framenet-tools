@@ -1,12 +1,13 @@
 # framenet-tools
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
+
 A summarization of the SRL process.  
 Provides functionality to find Frame Evoking Elements in raw text and predict 
 their corresponding frames.  
 Models can be trained either on given files or on any annotated file in CoNLL format.  
 - Based on (and using) [pyfn][1]
-
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 ## Installation
 - Clone repository or download files
