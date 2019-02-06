@@ -20,7 +20,7 @@ class ConfigManager(object):
 
         self.all_files = self.train_files + self.eval_files
 
-        self.hidden_sizes = [2048, 1024]
+        self.hidden_sizes = [512, 256]
         self.activation_functions = ["ReLU", "ReLU"]
         self.batch_size = 10
         self.num_epochs = 5
@@ -102,7 +102,9 @@ class ConfigManager(object):
                         self.hidden_sizes = [int(t) for t in found_numbers]
 
                     if key == "activation_functions":
-                        self.activation_functions = re.findall(r"\w+", config[section][key])
+                        self.activation_functions = re.findall(
+                            r"\w+", config[section][key]
+                        )
 
                     if key == "batch_size":
                         self.batch_size = int(config[section][key])
@@ -161,7 +163,9 @@ class ConfigManager(object):
 
         config_string += "\n[HYPERPARAMETER]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"
-        config_string += "activation_functions: " + str(self.activation_functions) + "\n"
+        config_string += (
+            "activation_functions: " + str(self.activation_functions) + "\n"
+        )
         config_string += "batch_size: " + str(self.batch_size) + "\n"
         config_string += "num_epochs: " + str(self.num_epochs) + "\n"
         config_string += "learning_rate: " + str(self.learning_rate) + "\n"

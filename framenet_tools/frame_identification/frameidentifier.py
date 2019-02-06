@@ -1,7 +1,9 @@
+import json
 import torch
 import torch.nn as nn
 from torchtext import data
 import pickle
+from typing import List
 
 from framenet_tools.frame_identification.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
@@ -23,7 +25,7 @@ class FrameIdentifier(object):
         self.cM = cM
         self.network = None
 
-    def get_dataset(self, file: list, predict_fees: bool):
+    def get_dataset(self, file: List[str], predict_fees: bool):
         """
         Loads the dataset and combines the necessary data
 
@@ -52,7 +54,7 @@ class FrameIdentifier(object):
 
         return xs, ys
 
-    def prepare_dataset(self, xs: list, ys: list, batch_size: int = None):
+    def prepare_dataset(self, xs: List[str], ys: List[str], batch_size: int = None):
         """
         Prepares the dataset and returns a BucketIterator of the dataset
 
@@ -75,7 +77,7 @@ class FrameIdentifier(object):
 
         return iterator
 
-    def evaluate(self, predictions: list, xs: list, file: list):
+    def evaluate(self, predictions: List[torch.tensor], xs: List[str], file: List[str]):
         """
         Evaluates the model
 
@@ -128,7 +130,7 @@ class FrameIdentifier(object):
 
         return tp, fp, fn
 
-    def write_predictions(self, file: str, out_file: str):
+    def write_predictions(self, file: str, out_file: str, fee_only: bool = False):
         """
         Prints the predictions of a given file
 
@@ -139,24 +141,42 @@ class FrameIdentifier(object):
 
         xs, ys = self.get_dataset([file], True)
 
-        dataset_iter = self.prepare_dataset(xs, ys, 1)
-        predictions = self.network.predict(dataset_iter)
+        if not fee_only:
+            dataset_iter = self.prepare_dataset(xs, ys, 1)
+            predictions = self.network.predict(dataset_iter)
+            prediction = iter(predictions)
 
-        out_string = ""
+        out_data = []
+        sent_count = 0
+        last_sentence = []
 
-        for prediction, x in zip(predictions, xs):
-            out_string += str(x) + "\n"
-            out_string += self.output_field.vocab.itos[prediction.item()] + "\n"
+        for x in xs:
+            if last_sentence != x[1:]:
+                if not sent_count == 0:
+                    out_data.append(data_dict)
 
-        # Batch prediction, more efficient, but less accurate
-        # for i in range(len(xs)):
-        #    out_string += str(xs[i]) + "\n"
-        #    prediction = predictions[int(i/self.cM.batch_size)][i%self.cM.batch_size]
-        #    out_string += self.output_field.vocab.itos[prediction.item()] + "\n"
+                data_dict = dict()
+                data_dict["sentence"] = x[1:]
+                data_dict["sentence_id"] = sent_count
+                data_dict["prediction"] = []
+                last_sentence = x[1:]
+                sent_count += 1
+                frame_count = 0
 
-        file = open(out_file, "w")
-        file.write(out_string)
-        file.close()
+            prediction_dict = dict()
+            prediction_dict["id"] = frame_count
+            prediction_dict["fee"] = x[0]
+            if not fee_only:
+                prediction_dict["frame"] = self.output_field.vocab.itos[next(prediction).item()]
+
+            data_dict["prediction"].append(prediction_dict)
+
+            frame_count += 1
+
+        out_data.append(data_dict)
+
+        with open(out_file, "w") as out:
+            json.dump(out_data, out, indent=4)
 
     def save_model(self, name: str):
         """
@@ -192,7 +212,7 @@ class FrameIdentifier(object):
 
         self.network.load_model(name + ".ph")
 
-    def evaluate_file(self, file: list):
+    def evaluate_file(self, file: List[str]):
         """
         Evaluates the model on a given file set
 
@@ -208,7 +228,7 @@ class FrameIdentifier(object):
 
         return self.evaluate(predictions, xs, file)
 
-    def train(self, files: list):
+    def train(self, files: List[str]):
         """
         Trains the model on given files
 

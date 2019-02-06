@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+
+import argparse
+import logging
 import os
 import requests
-import logging
-import sys
-import pyfn
-import argparse
 from subprocess import call
+from typing import List
+
+#from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
@@ -136,7 +138,7 @@ def create_argparser():
 
     parser.add_argument(
         "action",
-        help="Actions to perform, namely: download, convert, train, predict, evaluate",
+        help="Actions to perform, namely: download, convert, train, predict, evaluate, fee_predict",
     )
     parser.add_argument(
         "--path", help="A path specification used by some actions.", type=str
@@ -153,7 +155,7 @@ def create_argparser():
     return parser
 
 
-def eval_args(parser: argparse.ArgumentParser, cM: ConfigManager):
+def eval_args(parser: argparse.ArgumentParser, cM: ConfigManager, args: List[str] = None):
     """
     Evaluates the given arguments and runs to program accordingly.
 
@@ -162,7 +164,10 @@ def eval_args(parser: argparse.ArgumentParser, cM: ConfigManager):
     :return:
     """
 
-    parsed = parser.parse_args()
+    if args is None:
+        parsed = parser.parse_args()
+    else:
+        parsed = parser.parse_args(args)
 
     if parsed.action == "download":
 
@@ -214,6 +219,17 @@ def eval_args(parser: argparse.ArgumentParser, cM: ConfigManager):
         f_i.load_model(cM.saved_model)
         f_i.write_predictions(parsed.path, parsed.out_path)
 
+    if parsed.action == "fee_predict":
+
+        if parsed.path is None:
+            raise Exception("No input file for prediction given!")
+
+        if parsed.out_path is None:
+            raise Exception("No path specified for saving!")
+
+        f_i = FrameIdentifier(cM)
+        f_i.write_predictions(parsed.path, parsed.out_path, fee_only=True)
+
     if parsed.action == "evaluate":
 
         evaluate_frame_identification(cM)
@@ -232,8 +248,24 @@ def main():
     eval_args(parser, cM)
 
 
-# cM = ConfigManager()
-# f_i = FrameIdentifier(cM)
-# f_i.train(cM.train_files)
-# f_i.save_model(cM.saved_model)
-# evaluate_frame_identification(cM)
+#cM = ConfigManager()
+#parser = create_argparser()
+
+#eval_args(parser, cM, ["fee_predict", "--path", "data/example.txt", "--out_path", "data/test.json"])
+
+#cM = ConfigManager()
+#f_i = FrameIdentifier(cM)
+
+#f_i.load_model(cM.saved_model)
+#f_i.write_predictions("data/example.txt", "data/out_fee.txt", True)
+
+#f_i.train(cM.train_files)
+#print(f_i.evaluate_file(cM.eval_files[0]))
+#f_i.save_model(cM.saved_model)
+#evaluate_frame_identification(cM)
+#print(evaluate_fee_identification(cM.eval_files[0]))
+
+#fiw = FeeIdentifierWrapper(cM)
+#fiw.train(cM.train_files)
+#print(fiw)
+#print(evaluate_fee_identification(cM.eval_files[0], fiw))

@@ -164,6 +164,7 @@ class FrameIDNetwork(object):
                 self.optimizer.step()
 
                 total_loss += loss.item()
+
                 count += 1
 
                 # Just update every 20 iterations
