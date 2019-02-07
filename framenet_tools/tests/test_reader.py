@@ -7,7 +7,55 @@ from typing import List
 from framenet_tools.frame_identification.reader import Annotation, DataReader
 
 
-def create_random_string(possible_chars: str, seq_length: int = 8):
+class RandomFiles(object):
+
+    def __init__(self, max_sentence_length: int):
+        self.m_reader = DataReader()
+        self.files = []
+
+        self.create_and_load(max_sentence_length)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.clean_up()
+
+    def create_and_load(self, max_sentence_length: int):
+        """
+        A Helper function which creates and loads files with random content,
+        but every file is formatted correctly.
+
+        NOTE: Randomized!
+
+        :param max_sentence_length: The maximum possible amount of sentences
+        :return: A DataReader-Object and a list of the two file names
+        """
+
+        num_sentences = random.randint(1, max_sentence_length)
+
+        frames_file = create_frames_file(num_sentences, 10)
+        sentences_file = create_sentences_file(num_sentences, 10)
+
+        self.m_reader.read_data(sentences_file, frames_file)
+
+        self.files = [sentences_file, frames_file]
+
+    def clean_up(self):
+        """
+        Clean up function
+        Deletes all given files.
+
+        :param files: A list of filenames to delete
+        :return:
+        """
+
+        for file in self.files:
+            if os.path.isfile(file):
+                os.remove(file)
+
+
+def create_random_string(possible_chars: str = string.ascii_lowercase, seq_length: int = 8):
     """
     Helper function for generation of random strings.
 
@@ -85,41 +133,6 @@ def create_sentences_file(sentence_count: int, max_word_count: int):
     return file_name
 
 
-def create_and_load(max_sentence_length: int):
-    """
-    A Helper function which creates and loads files with random content,
-    but every file is formatted correctly.
-
-    NOTE: Randomized!
-
-    :param max_sentence_length: The maximum possible amount of sentences
-    :return: A DataReader-Object and a list of the two file names
-    """
-
-    num_sentences = random.randint(1, max_sentence_length)
-
-    frames_file = create_frames_file(num_sentences, 10)
-    sentences_file = create_sentences_file(num_sentences, 10)
-
-    m_reader = DataReader()
-    m_reader.read_data(sentences_file, frames_file)
-
-    return m_reader, [sentences_file, frames_file]
-
-
-def clean_up(files: List[str]):
-    """
-    Clean up function
-    Deletes all given files.
-
-    :param files: A list of filenames to delete
-    :return:
-    """
-
-    for file in files:
-        os.remove(file)
-
-
 def test_reader_simple():
     """
     A simple reader test
@@ -129,9 +142,8 @@ def test_reader_simple():
     :return:
     """
 
-    _, files = create_and_load(10)
-
-    clean_up(files)
+    m_rndfiles = RandomFiles(10)
+    m_rndfiles.clean_up()
 
 
 def test_reader_no_file():
@@ -155,20 +167,18 @@ def test_reader_sizes():
     :return:
     """
 
-    m_reader, files = create_and_load(10)
-    handler = [m_reader.sentences, m_reader.annotations]
+    with RandomFiles(10) as m_rndfiles:
+        handler = [m_rndfiles.m_reader.sentences, m_rndfiles.m_reader.annotations]
 
-    with open(files[0]) as file:
-        raw = file.read()
-        raw = raw.rsplit("\n")
+        with open(m_rndfiles.files[0]) as file:
+            raw = file.read()
+            raw = raw.rsplit("\n")
 
-    for i in range(2):
-        # None empty lines counted
-        line_count = sum(1 for line in raw if line != "")
+        for i in range(2):
+            # None empty lines counted
+            line_count = sum(1 for line in raw if line != "")
 
-        assert len(handler[i]) == line_count
-
-    clean_up(files)
+            assert len(handler[i]) == line_count
 
 
 def test_sentences_correctness():
@@ -180,21 +190,19 @@ def test_sentences_correctness():
     :return:
     """
 
-    m_reader, files = create_and_load(10)
+    with RandomFiles(10) as m_rndfiles:
 
-    file = open(files[0])
-    raw = file.read()
-    file.close()
+        file = open(m_rndfiles.files[0])
+        raw = file.read()
+        file.close()
 
-    raw = raw.rsplit("\n")
+        raw = raw.rsplit("\n")
 
-    for line, sentence in zip(raw, m_reader.sentences):
+        for line, sentence in zip(raw, m_rndfiles.m_reader.sentences):
 
-        line = [x for x in line.rsplit(" ") if x != ""]
+            line = [x for x in line.rsplit(" ") if x != ""]
 
-        assert sentence == line
-
-    clean_up(files)
+            assert sentence == line
 
 
 def get_sentence(sentences: List[str], sentence_num: int):
@@ -221,25 +229,24 @@ def test_frames_correctness():
     :return:
     """
 
-    m_reader, files = create_and_load(10)
+    with RandomFiles(10) as m_rndfiles:
 
-    file = open(files[1])
-    raw = file.read()
-    file.close()
+        file = open(m_rndfiles.files[1])
+        raw = file.read()
+        file.close()
 
-    file = open(files[0])
-    sentences = file.read().rsplit("\n")
-    file.close()
+        file = open(m_rndfiles.files[0])
+        sentences = file.read().rsplit("\n")
+        file.close()
 
-    raw = raw.rsplit("\n")
-    reader_annotations = [x for y in m_reader.annotations for x in y]
+        raw = raw.rsplit("\n")
+        reader_annotations = [x for y in m_rndfiles.m_reader.annotations for x in y]
 
-    for line, annotation in zip(raw, reader_annotations):
+        for line, annotation in zip(raw, reader_annotations):
 
-        line = [x for x in line.rsplit("\t") if x != ""]
+            line = [x for x in line.rsplit("\t") if x != ""]
 
-        orig_annotation = Annotation(line[3], line[4], line[5], line[6], get_sentence(sentences, int(line[7])))
-        # annotation = Annotation(line[3], line[4], line[5], line[6], int(line[7]))
-        assert annotation == orig_annotation
+            orig_annotation = Annotation(line[3], line[4], line[5], line[6], get_sentence(sentences, int(line[7])))
+            # annotation = Annotation(line[3], line[4], line[5], line[6], int(line[7]))
+            assert annotation == orig_annotation
 
-    clean_up(files)

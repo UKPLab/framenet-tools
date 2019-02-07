@@ -136,8 +136,13 @@ class FrameIdentifier(object):
 
         :param file: The file to predict (either a raw file or annotated file set)
         :param out_file: The filename for saving the predictions
+        :param fee_only: If True, only Frame Evoking Elements are predicted,
+                         NOTE: In this case there is no need for either train or load a network
         :return:
         """
+
+        if not fee_only and self.network is None:
+            raise Exception("No network found! Train or load a network.")
 
         xs, ys = self.get_dataset([file], True)
 
@@ -167,7 +172,9 @@ class FrameIdentifier(object):
             prediction_dict["id"] = frame_count
             prediction_dict["fee"] = x[0]
             if not fee_only:
-                prediction_dict["frame"] = self.output_field.vocab.itos[next(prediction).item()]
+                prediction_dict["frame"] = self.output_field.vocab.itos[
+                    next(prediction).item()
+                ]
 
             data_dict["prediction"].append(prediction_dict)
 
