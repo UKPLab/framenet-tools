@@ -1,5 +1,9 @@
 import logging
 import nltk
+import random
+
+from typing import List
+
 
 required_resources = [
     ["taggers/", "averaged_perceptron_tagger"],
@@ -24,3 +28,17 @@ def download_resources():
         except LookupError:
             logging.info(f"Did not find {resource[1]}, downloading...")
             nltk.download(resource[1])
+
+
+def shuffle_concurrent_lists(l: List[List[object]]):
+    """
+
+    :param l:
+    :return:
+    """
+
+    for x in l:
+        random.seed(42)
+        random.shuffle(x)
+
+    return l

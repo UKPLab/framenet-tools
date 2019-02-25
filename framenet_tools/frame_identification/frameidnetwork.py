@@ -30,6 +30,16 @@ class Net(nn.Module):
         # Programmatically add new layers according to the config file
         for i in range(len(hidden_sizes)):
 
+            print(hidden_sizes)
+            if activation_functions[i].lower() == "dropout":
+                # Add dropout
+                self.add_module(str(i), nn.Dropout(hidden_sizes[i]))
+                self.hidden_layers.append(getattr(self, str(i)))
+
+                continue
+
+            hidden_sizes[i] = int(hidden_sizes[i])
+
             self.add_module(str(i), nn.Linear(last_size, hidden_sizes[i]))
 
             # Saving function ref
@@ -174,10 +184,12 @@ class FrameIDNetwork(object):
                 _, predicted = torch.max(outputs.data, 1)
                 total_hits += (predicted == labels).sum().item()
 
-                # print(total_hits)
-                # print(labels)
+                #print(predicted)
+                #print(labels)
+                #print(total_hits)
+                #print(count)
 
-                count += 1
+                count += labels.size(0)
 
                 # Just update every 20 iterations
                 if count % 20 == 0:
@@ -187,7 +199,8 @@ class FrameIDNetwork(object):
                     )
 
             train_loss = (total_loss / count)
-            train_acc, _ = self.eval_model(train_iter)
+            train_acc = (total_hits / count)
+
             dev_acc, dev_loss = self.eval_model(dev_iter)
 
             writer.add_scalars(
@@ -201,8 +214,6 @@ class FrameIDNetwork(object):
                 {"train_acc": train_acc, "dev_acc": dev_acc},
                 epoch
             )
-
-
 
         writer.export_scalars_to_json("data/logging/t_loss.json")
         writer.close()
@@ -256,7 +267,9 @@ class FrameIDNetwork(object):
             batch_loss = eval_criterion(outputs, labels)
 
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
+
+            total += 1
+
             correct += (predicted == labels).sum()
 
             # batch_loss.backward()
@@ -265,8 +278,8 @@ class FrameIDNetwork(object):
 
         correct = correct.item()
 
-        print(correct)
-        print(total)
+        # print(correct)
+        # print(total)
         accuracy = correct / total
         loss = loss / total
 

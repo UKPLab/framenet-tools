@@ -1,13 +1,17 @@
 import pytest
+import random
+
+from typing import List
 
 from framenet_tools.evaluator import calc_f
+from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
 
 
 @pytest.mark.parametrize(
     "testdata, expected",
     [([0] * 3, [0] * 3), ([1, 0, 0], [1, 1, 1]), ([1, 1, 1], [0.5, 0.5, 0.5])],
 )
-def test_calc_f(testdata: list, expected: list):
+def test_calc_f(testdata: List[int], expected: List[float]):
     """
     Tests the calculation of Precision, Recall and F1-Score
 
@@ -21,3 +25,30 @@ def test_calc_f(testdata: list, expected: list):
     assert pr == expected[0]
     assert re == expected[1]
     assert f == expected[2]
+
+
+@pytest.mark.parametrize(
+    "testdata, expected",
+    [([1, 2, 3, 4, 5], [6, 7, 8, 9, 0]), ([1, 0, 0, 5, 2, 45, 63], [1, 1, 4, 12, 97, 4, 1]), ([1, 4, 4, 1, 1, 2], [12, 13, 7, 0.5, 0.5, 9])],
+)
+def test_shuffle(testdata: List[object], expected: List[object]):
+    """
+    Test the correctness of the shuffling function in utils
+
+    NOTE: Each shuffling is required to keep concurrency!
+
+    :param testdata: A list of objects
+    :param expected: A list of objects
+    :return:
+    """
+
+    testdata2 = testdata.copy()
+    expected2 = expected.copy()
+
+    shuffle_concurrent_lists([testdata, expected])
+
+    for i in range(len(testdata)):
+        x = testdata[i]
+        y = expected[i]
+
+        assert (x, y) in [(s, t) for s, t in zip(testdata2, expected2)]

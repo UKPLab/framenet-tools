@@ -8,6 +8,7 @@ from typing import List
 from framenet_tools.frame_identification.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
+from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
 
 
 class FrameIdentifier(object):
@@ -237,7 +238,7 @@ class FrameIdentifier(object):
         :return: A Triple of True Positives, False Positives and False Negatives
         """
 
-        xs, ys = self.get_dataset(file, True)
+        xs, ys = self.get_dataset(file, False)
 
         iter = self.prepare_dataset(xs, ys, 1)
 
@@ -262,6 +263,8 @@ class FrameIdentifier(object):
             new_xs, new_ys = self.get_dataset(file, False)
             xs += new_xs
             ys += new_ys
+
+        shuffle_concurrent_lists([xs, ys])
 
         # Zip datasets and generate complete dictionary
         examples = [

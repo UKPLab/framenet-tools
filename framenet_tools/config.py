@@ -99,8 +99,8 @@ class ConfigManager(object):
                 for key in config[section]:
                     if key == "hidden_sizes":
                         # Find numbers and convert to int using regex
-                        found_numbers = re.findall(r"[0-9]+", config[section][key])
-                        self.hidden_sizes = [int(t) for t in found_numbers]
+                        found_numbers = re.findall(r"[0-9.]+", config[section][key])
+                        self.hidden_sizes = [float(t) for t in found_numbers]
 
                     if key == "activation_functions":
                         self.activation_functions = re.findall(
