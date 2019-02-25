@@ -56,16 +56,17 @@ class ConfigManager(object):
             handle[0] = os.path.join(dir_data, handle[0])
             handle[1] = os.path.join(dir_data, handle[1])
 
-    def load_config(self):
+    def load_config(self, path: str = CONFIG_PATH):
         """
         Loads the config file and saves all found variables
 
         NOTE: If no config file was found, the default configs will be loaded instead
 
+        :type path: The path of the config file to load
         :return: A boolean - True if the config file was loaded, False if defaults were loaded
         """
 
-        if not os.path.isfile(CONFIG_PATH):
+        if not os.path.isfile(path):
             self.load_defaults()
             return False
 
@@ -144,10 +145,11 @@ class ConfigManager(object):
 
         return string
 
-    def create_config(self):
+    def create_config(self, path: str = CONFIG_PATH):
         """
         Creates a config file and saves all necessary variables
 
+        :type path: The path of the config file to save to
         :return:
         """
 
@@ -171,6 +173,5 @@ class ConfigManager(object):
         config_string += "learning_rate: " + str(self.learning_rate) + "\n"
         config_string += "embedding_size: " + str(self.embedding_size) + "\n"
 
-        file = open(CONFIG_PATH, "w")
-        file.write(config_string)
-        file.close()
+        with open(path, "w") as file:
+            file.write(config_string)

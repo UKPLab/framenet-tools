@@ -2,6 +2,7 @@ import nltk
 from nltk.stem import WordNetLemmatizer
 from nltk.tree import Tree
 
+
 # lemmatizer = WordNetLemmatizer()
 
 # Static definitions

@@ -193,8 +193,14 @@ class FrameIdentifier(object):
         :return:
         """
 
+        # Saving the current config
+        self.cM.create_config(name + ".cfg")
+
+        # Saving all Vocabs
         pickle.dump(self.output_field.vocab, open(name + ".out_voc", "wb"))
         pickle.dump(self.input_field.vocab, open(name + ".in_voc", "wb"))
+
+        # Saving the actual network
         self.network.save_model(name + ".ph")
 
     def load_model(self, name: str):
@@ -207,6 +213,10 @@ class FrameIdentifier(object):
         :return:
         """
 
+        # Loading config
+        self.cM.load_config(name + ".cfg")
+
+        # Loading Vocabs
         out_voc = pickle.load(open(name + ".out_voc", "rb"))
         in_voc = pickle.load(open(name + ".in_voc", "rb"))
 
@@ -267,6 +277,8 @@ class FrameIdentifier(object):
 
         train_iter = self.prepare_dataset(xs, ys)
 
+        dev_iter = self.get_iter(self.cM.eval_files[0])
+
         self.input_field.vocab.load_vectors("glove.6B.300d")
 
         num_classes = len(self.output_field.vocab)
@@ -275,4 +287,15 @@ class FrameIdentifier(object):
 
         self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
-        self.network.train_model(train_iter, dataset_size, self.cM.batch_size)
+        self.network.train_model(train_iter, dev_iter)
+
+    def get_iter(self, file: str):
+        """
+
+        :param file:
+        :return:
+        """
+
+        xs, ys = self.get_dataset(file, False)
+
+        return self.prepare_dataset(xs, ys)

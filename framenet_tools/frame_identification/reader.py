@@ -1,6 +1,7 @@
 import nltk
 
 from framenet_tools.frame_identification.feeidentifier import FeeIdentifier
+from framenet_tools.frame_identification.utils import download_resources
 
 
 class Annotation(object):
@@ -17,6 +18,8 @@ class Annotation(object):
         self.position = position
         self.fee_raw = fee_raw
         self.sentence = sentence
+
+        download_resources()
 
     def create_handle(self):
         return [self.frame, self.fee, self.position, self.fee_raw, self.sentence]

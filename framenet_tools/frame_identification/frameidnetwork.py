@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchtext
 from torch.autograd import Variable
 from tqdm import tqdm
+from tensorboardX import SummaryWriter
 
 from framenet_tools.config import ConfigManager
 
@@ -129,7 +130,9 @@ class FrameIDNetwork(object):
         )
 
     def train_model(
-        self, train_iter: torchtext.data.Iterator, dataset_size: int, batch_size: int
+        self,
+        train_iter: torchtext.data.Iterator,
+        dev_iter: torchtext.data.Iterator = None,
     ):
         """
         Trains the model with the given dataset
@@ -143,14 +146,17 @@ class FrameIDNetwork(object):
 
         # batch_count = sum(1 for _ in train_iter)
 
+        writer = SummaryWriter()
+
         for epoch in range(self.cM.num_epochs):
 
             total_loss = 0
+            total_hits = 0
             count = 0
 
-            pbar = tqdm(train_iter)
+            progress_bar = tqdm(train_iter)
 
-            for batch in pbar:
+            for batch in progress_bar:
 
                 sent = batch.Sentence
                 labels = Variable(batch.Frame[0]).to(self.device)
@@ -165,11 +171,41 @@ class FrameIDNetwork(object):
 
                 total_loss += loss.item()
 
+                _, predicted = torch.max(outputs.data, 1)
+                total_hits += (predicted == labels).sum().item()
+
+                # print(total_hits)
+                # print(labels)
+
                 count += 1
 
                 # Just update every 20 iterations
                 if count % 20 == 0:
-                    pbar.set_description("Epoch %d/%d Loss: %f" %((epoch+1), self.cM.num_epochs, (total_loss/count)))
+                    progress_bar.set_description(
+                        "Epoch %d/%d Loss: %f Acc: %f"
+                        % ((epoch + 1), self.cM.num_epochs, (total_loss / count), (total_hits / count))
+                    )
+
+            train_loss = (total_loss / count)
+            train_acc, _ = self.eval_model(train_iter)
+            dev_acc, dev_loss = self.eval_model(dev_iter)
+
+            writer.add_scalars(
+                "data/loss",
+                {"train_loss": train_loss, "dev_loss": dev_loss},
+                epoch
+            )
+
+            writer.add_scalars(
+                "data/acc",
+                {"train_acc": train_acc, "dev_acc": dev_acc},
+                epoch
+            )
+
+
+
+        writer.export_scalars_to_json("data/logging/t_loss.json")
+        writer.close()
 
     def predict(self, dataset_iter: torchtext.data.Iterator):
         """
@@ -193,31 +229,48 @@ class FrameIDNetwork(object):
     def eval_model(self, dev_iter: torchtext.data.Iterator):
         """ Evaluates the model on the given dataset
 
+            UPDATE: again required and integrated for evaluating the accuracy during training.
+            Still not recommended for final evaluation purposes.
+
             NOTE: only works on gold FEEs, therefore deprecated
                   use f1 evaluation instead
 
             :param dev_iter: The dataset to evaluate on
             :return: The accuracy reached on the given dataset
         """
+
+        eval_criterion = nn.CrossEntropyLoss()
+
         correct = 0.0
         total = 0.0
+
+        loss = 0.0
+
         for batch in iter(dev_iter):
             sent = batch.Sentence
-            sent = torch.tensor(sent, dtype=torch.long)
+            # sent = torch.tensor(sent, dtype=torch.long)
+            # Variable(batch.Frame[0]).to(self.device)
             labels = Variable(batch.Frame[0]).to(self.device)
 
             outputs = self.net(sent)
+            batch_loss = eval_criterion(outputs, labels)
+
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum()
+
+            # batch_loss.backward()
+
+            loss += batch_loss.item()
 
         correct = correct.item()
 
         print(correct)
         print(total)
         accuracy = correct / total
+        loss = loss / total
 
-        return accuracy
+        return accuracy, loss
 
     def save_model(self, path: str):
         """
@@ -226,6 +279,7 @@ class FrameIDNetwork(object):
         :param path: The path to save the model at
         :return:
         """
+
         torch.save(self.net.state_dict(), path)
 
     def load_model(self, path: str):
@@ -235,4 +289,5 @@ class FrameIDNetwork(object):
         :param path: The path from where to load the model
         :return:
         """
+
         self.net.load_state_dict(torch.load(path))
