@@ -290,7 +290,7 @@ class FrameIdentifier(object):
 
         self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
-        self.network.train_model(train_iter, dev_iter)
+        self.network.train_model(dataset_size, train_iter, dev_iter)
 
     def get_iter(self, file: str):
         """

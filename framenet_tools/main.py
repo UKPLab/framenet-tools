@@ -3,110 +3,39 @@
 import argparse
 import logging
 import os
-from subprocess import call
-from typing import List
 
-#from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
+from typing import List
+from subprocess import call
+
+# from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
     evaluate_frame_identification,
-    evaluate_fee_identification,
+    evaluate_fee_identification
 )
-from framenet_tools.frame_identification.utils import extract7z, download_file
+from framenet_tools.frame_identification.utils import download
 
+dirs = ["/scripts", "/lib", "/resources", "/data"]
 
-def extract_file(file_path: str):
-    """
-    Extracts a zipped file
-    :param file_path: The file to extract
-    :return:
-    """
-    call(["7z", "x", file_path])
-
-    # TODO extract using python, NOTE ran into trouble because of 7z
-    # raw = open(file_path,"rb")
-    # archive = Archive7z(raw)
-    # data = archive.getmember(archive.getnames()[0]).read()
-    # raw.close()
-
-    # Cleanup
-    os.remove(file_path)
-
-
-def download_scripts():
-    """
-    Helper function for downloading the scripts
-
-    NOTE : The paths should NOT be changed in order for pyfn to work
-
-    :return:
-    """
-    url = "https://github.com/akb89/pyfn/releases/download/v1.0.0/scripts.7z"
-    file_path = "scripts.7z"
-    print("Downloading scripts:")
-
-    download_file(url, file_path)
-    extract_file(file_path)
-
-
-def download_lib():
-    url = "https://github.com/akb89/pyfn/releases/download/v1.0.0/lib.7z"
-    file_path = "lib.7z"
-    print("Downloading lib:")
-
-    download_file(url, file_path)
-    extract_file(file_path)
-
-
-def download_resources():
-    url = "https://github.com/akb89/pyfn/releases/download/v1.0.0/resources.7z"
-    file_path = "resources.7z"
-    print("Downloading resources:")
-
-    download_file(url, file_path)
-    extract_file(file_path)
-
-
-def download_data():
-    url = "https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z"
-    file_path = "data.7z"
-    print("Downloading data:")
-
-    download_file(url, file_path)
-    extract_file(file_path)
+required_files = [
+    "https://github.com/akb89/pyfn/releases/download/v1.0.0/scripts.7z",
+    "https://github.com/akb89/pyfn/releases/download/v1.0.0/lib.7z",
+    "https://github.com/akb89/pyfn/releases/download/v1.0.0/resources.7z",
+    "https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z"
+]
 
 
 def check_files(path):
-    print("SRLPackage: Checking for required files:")
-    script_path = path + "/scripts"
-    lib_path = path + "/lib"
-    resources_path = path + "/resources"
-    data_path = path + "/data"
+    logging.info(f"SRLPackage: Checking for required files:")
 
-    if os.path.isdir(script_path):
-        print("[Skip] Already found scripts!")
-    else:
-        # print(script_path)
-        download_scripts()
+    for dir, required_file in zip(dirs, required_files):
+        complete_path = path + dir
 
-    if os.path.isdir(lib_path):
-        print("[Skip] Already found lib!")
-    else:
-        # print("d")
-        download_lib()
-
-    if os.path.isdir(resources_path):
-        print("[Skip] Already found resources!")
-    else:
-        # print("d")
-        download_resources()
-
-    if os.path.isdir(data_path):
-        print("[Skip] Already found data!")
-    else:
-        # print("d")
-        download_data()
+        if os.path.isdir(complete_path):
+            logging.info(f"[Skip] Already found {complete_path}!")
+        else:
+            download(required_file)
 
 
 def create_argparser():
@@ -139,7 +68,9 @@ def create_argparser():
     return parser
 
 
-def eval_args(parser: argparse.ArgumentParser, cM: ConfigManager, args: List[str] = None):
+def eval_args(
+    parser: argparse.ArgumentParser, cM: ConfigManager, args: List[str] = None
+):
     """
     Evaluates the given arguments and runs to program accordingly.
 
@@ -226,7 +157,9 @@ def main():
     :return:
     """
 
-    logging.basicConfig(format='%(asctime)s-%(levelname)s-%(message)s', level=logging.DEBUG)
+    logging.basicConfig(
+        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG
+    )
 
     cM = ConfigManager()
     parser = create_argparser()
@@ -237,27 +170,27 @@ def main():
 # cM = ConfigManager()
 # parser = create_argparser()
 
-# logging.basicConfig(format='%(asctime)s-%(levelname)s-%(message)s', level=logging.DEBUG)
+# logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG)
 
 # eval_args(parser, cM, ["train"])
 
-# eval_args(parser, cM, ["download"])
+# eval_args(parser, cM, ["train"])
 
-#eval_args(parser, cM, ["predict", "--path", "data/example.txt", "--out_path", "data/test.json"])
+# eval_args(parser, cM, ["predict", "--path", "data/example.txt", "--out_path", "data/test.json"])
 
-#cM = ConfigManager()
-#f_i = FrameIdentifier(cM)
+# cM = ConfigManager()
+# f_i = FrameIdentifier(cM)
 
-#f_i.load_model(cM.saved_model)
-#f_i.write_predictions("data/example.txt", "data/out_fee.txt", True)
+# f_i.load_model(cM.saved_model)
+# f_i.write_predictions("data/example.txt", "data/out_fee.txt", True)
 
-#f_i.train(cM.train_files)
-#print(f_i.evaluate_file(cM.eval_files[0]))
-#f_i.save_model(cM.saved_model)
-#evaluate_frame_identification(cM)
-#print(evaluate_fee_identification(cM.eval_files[0]))
+# f_i.train(cM.train_files)
+# print(f_i.evaluate_file(cM.eval_files[0]))
+# f_i.save_model(cM.saved_model)
+# evaluate_frame_identification(cM)
+# print(evaluate_fee_identification(cM.eval_files[0]))
 
-#fiw = FeeIdentifierWrapper(cM)
-#fiw.train(cM.train_files)
-#print(fiw)
-#print(evaluate_fee_identification(cM.eval_files[0], fiw))
+# fiw = FeeIdentifierWrapper(cM)
+# fiw.train(cM.train_files)
+# print(fiw)
+# print(evaluate_fee_identification(cM.eval_files[0], fiw))

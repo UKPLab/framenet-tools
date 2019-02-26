@@ -144,6 +144,7 @@ class FrameIDNetwork(object):
 
     def train_model(
         self,
+        dataset_size: int,
         train_iter: torchtext.data.Iterator,
         dev_iter: torchtext.data.Iterator = None,
     ):
@@ -187,37 +188,36 @@ class FrameIDNetwork(object):
                 _, predicted = torch.max(outputs.data, 1)
                 total_hits += (predicted == labels).sum().item()
 
-                #print(predicted)
-                #print(labels)
-                #print(total_hits)
-                #print(count)
+                # print(predicted)
+                # print(labels)
+                # print(total_hits)
+                # print(count)
 
                 count += labels.size(0)
 
                 # Just update every 20 iterations
                 if count % 20 == 0:
+                    train_loss = round((total_loss / count), 4)
+                    train_acc = round((total_hits / count), 4)
                     progress_bar.set_description(
-                        "Epoch %d/%d Loss: %f Acc: %f"
-                        % ((epoch + 1), self.cM.num_epochs, (total_loss / count), (total_hits / count))
+                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Frames: {count}/{dataset_size}"
                     )
 
-            train_loss = (total_loss / count)
-            train_acc = (total_hits / count)
+            train_loss = total_loss / count
+            train_acc = total_hits / count
 
             dev_acc, dev_loss = self.eval_model(dev_iter)
 
-            logging.info(f"Train Acc: {train_acc}, Dev Acc: {dev_acc}, Train Loss: {train_loss}, Dev Loss: {dev_loss}")
-
-            writer.add_scalars(
-                "data/loss",
-                {"train_loss": train_loss, "dev_loss": dev_loss},
-                epoch
+            logging.info(
+                f"Train Acc: {train_acc}, Dev Acc: {dev_acc}, Train Loss: {train_loss}, Dev Loss: {dev_loss}"
             )
 
             writer.add_scalars(
-                "data/acc",
-                {"train_acc": train_acc, "dev_acc": dev_acc},
-                epoch
+                "data/loss", {"train_loss": train_loss, "dev_loss": dev_loss}, epoch
+            )
+
+            writer.add_scalars(
+                "data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch
             )
 
         writer.export_scalars_to_json("data/logging/t_loss.json")

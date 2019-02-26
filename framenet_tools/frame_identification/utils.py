@@ -6,6 +6,7 @@ import py7zlib
 import requests
 
 from typing import List
+from subprocess import call
 
 
 required_resources = [
@@ -13,7 +14,7 @@ required_resources = [
     ["tokenizers/", "punkt"],
     ["corpora/", "wordnet"],
     ["chunkers/", "maxent_ne_chunker"],
-    ["corpora/", "words"]
+    ["corpora/", "words"],
 ]
 
 
@@ -58,6 +59,7 @@ def extract7z(path: str):
 
     with open(path, "rb") as in_file:
         arch = py7zlib.Archive7z(in_file)
+        py7zlib.ArchiveFile
 
         for content in arch.getmembers():
 
@@ -79,3 +81,43 @@ def download_file(url: str, file_path: str):
         logging.info(f"Downloading {r.url} and saving to {file_path}")
         for chunk in r.iter_content(chunk_size=10 * 1024 * 1024):
             fd.write(chunk)
+
+
+def extract_file(file_path: str):
+    """
+    Extracts a zipped file
+
+    :param file_path: The file to extract
+    :return:
+    """
+
+    call(["7z", "x", file_path])
+
+    # TODO extract using python, NOTE ran into trouble because of 7z
+    # raw = open(file_path,"rb")
+    # archive = Archive7z(raw)
+    # data = archive.getmember(archive.getnames()[0]).read()
+    # raw.close()
+
+    # Cleanup
+    os.remove(file_path)
+
+
+def download(url: str):
+    """
+    Downloads and extracts a file given as a url.
+
+    NOTE: The paths should NOT be changed in order for pyfn to work
+    NOTE: Only extracts 7z files
+
+    :param url: The url from where to get the file
+    :return:
+    """
+
+    # Simply adopt filename
+    file_path = url.rsplit("/")[-1]
+
+    logging.info(f"Downloading {file_path}")
+
+    download_file(url, file_path)
+    extract_file(file_path)
