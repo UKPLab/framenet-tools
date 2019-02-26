@@ -3,7 +3,6 @@
 import argparse
 import logging
 import os
-import requests
 from subprocess import call
 from typing import List
 
@@ -14,22 +13,7 @@ from framenet_tools.evaluator import (
     evaluate_frame_identification,
     evaluate_fee_identification,
 )
-
-
-def download_file(url: str, file_path: str):
-    """
-    Downloads a file and saves at a given path
-
-    :param url: The URL of the file to download
-    :param file_path: The destination of the file
-    :return:
-    """
-
-    r = requests.get(url, stream=True)
-    with open(file_path, "wb") as fd:
-        logging.info("Downloading [%s] and saving to [%s]", r.url, file_path)
-        for chunk in r.iter_content(chunk_size=10 * 1024 * 1024):
-            fd.write(chunk)
+from framenet_tools.frame_identification.utils import extract7z, download_file
 
 
 def extract_file(file_path: str):
@@ -242,16 +226,24 @@ def main():
     :return:
     """
 
+    logging.basicConfig(format='%(asctime)s-%(levelname)s-%(message)s', level=logging.DEBUG)
+
     cM = ConfigManager()
     parser = create_argparser()
 
     eval_args(parser, cM)
 
 
-#cM = ConfigManager()
-#parser = create_argparser()
+# cM = ConfigManager()
+# parser = create_argparser()
 
-#eval_args(parser, cM, ["fee_predict", "--path", "data/example.txt", "--out_path", "data/test.json"])
+# logging.basicConfig(format='%(asctime)s-%(levelname)s-%(message)s', level=logging.DEBUG)
+
+# eval_args(parser, cM, ["train"])
+
+# eval_args(parser, cM, ["download"])
+
+#eval_args(parser, cM, ["predict", "--path", "data/example.txt", "--out_path", "data/test.json"])
 
 #cM = ConfigManager()
 #f_i = FrameIdentifier(cM)

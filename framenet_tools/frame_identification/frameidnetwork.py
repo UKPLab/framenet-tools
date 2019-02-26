@@ -1,3 +1,4 @@
+import logging
 import torch
 import torch.nn as nn
 import torchtext
@@ -30,7 +31,9 @@ class Net(nn.Module):
         # Programmatically add new layers according to the config file
         for i in range(len(hidden_sizes)):
 
-            print(hidden_sizes)
+            logging.debug(f"Hidden sizes: {hidden_sizes}")
+            logging.debug(f"Activation functions: {activation_functions}")
+
             if activation_functions[i].lower() == "dropout":
                 # Add dropout
                 self.add_module(str(i), nn.Dropout(hidden_sizes[i]))
@@ -117,7 +120,7 @@ class FrameIDNetwork(object):
         # Check for CUDA
         use_cuda = self.cM.use_cuda and torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
-        print("Device used: " + str(self.device))
+        logging.debug(f"Device used: {self.device}")
 
         self.embedding_layer = embedding_layer
         self.num_classes = num_classes
@@ -203,6 +206,8 @@ class FrameIDNetwork(object):
 
             dev_acc, dev_loss = self.eval_model(dev_iter)
 
+            logging.info(f"Train Acc: {train_acc}, Dev Acc: {dev_acc}, Train Loss: {train_loss}, Dev Loss: {dev_loss}")
+
             writer.add_scalars(
                 "data/loss",
                 {"train_loss": train_loss, "dev_loss": dev_loss},
@@ -278,8 +283,8 @@ class FrameIDNetwork(object):
 
         correct = correct.item()
 
-        # print(correct)
-        # print(total)
+        logging.debug(f"Correct predictions: {correct} Total examples: {total}")
+
         accuracy = correct / total
         loss = loss / total
 

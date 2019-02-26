@@ -1,10 +1,11 @@
+import os
 import pytest
 import random
 
 from typing import List
 
 from framenet_tools.evaluator import calc_f
-from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
+from framenet_tools.frame_identification.utils import shuffle_concurrent_lists, extract7z, download_file
 
 
 @pytest.mark.parametrize(
@@ -52,3 +53,20 @@ def test_shuffle(testdata: List[object], expected: List[object]):
         y = expected[i]
 
         assert (x, y) in [(s, t) for s, t in zip(testdata2, expected2)]
+
+
+def test_extraction():
+
+    testdir = "data/testing/"
+
+    # Setup test dir
+    if not os.path.exists(testdir):
+        os.makedirs(testdir)
+
+    url = "https://github.com/akb89/pyfn/releases/download/v1.0.0/scripts.7z"
+    file_path = testdir + "scripts.7z"
+    print("Downloading scripts:")
+
+    download_file(url, file_path)
+
+    extract7z(file_path)
