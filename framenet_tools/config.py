@@ -17,6 +17,7 @@ class ConfigManager(object):
         self.saved_model = os.path.join(dir_models, model_name)
 
         self.use_cuda = True
+        self.use_spacy = True
 
         self.all_files = self.train_files + self.eval_files
 
@@ -56,16 +57,17 @@ class ConfigManager(object):
             handle[0] = os.path.join(dir_data, handle[0])
             handle[1] = os.path.join(dir_data, handle[1])
 
-    def load_config(self):
+    def load_config(self, path: str = CONFIG_PATH):
         """
         Loads the config file and saves all found variables
 
         NOTE: If no config file was found, the default configs will be loaded instead
 
+        :type path: The path of the config file to load
         :return: A boolean - True if the config file was loaded, False if defaults were loaded
         """
 
-        if not os.path.isfile(CONFIG_PATH):
+        if not os.path.isfile(path):
             self.load_defaults()
             return False
 
@@ -94,12 +96,15 @@ class ConfigManager(object):
                     if key == "use_cuda":
                         self.use_cuda = config[section][key] == "True"
 
+                    if key == "use_spacy":
+                        self.use_spacy = config[section][key] == "True"
+
             if section == "HYPERPARAMETER":
                 for key in config[section]:
                     if key == "hidden_sizes":
                         # Find numbers and convert to int using regex
-                        found_numbers = re.findall(r"[0-9]+", config[section][key])
-                        self.hidden_sizes = [int(t) for t in found_numbers]
+                        found_numbers = re.findall(r"[0-9.]+", config[section][key])
+                        self.hidden_sizes = [float(t) for t in found_numbers]
 
                     if key == "activation_functions":
                         self.activation_functions = re.findall(
@@ -144,10 +149,11 @@ class ConfigManager(object):
 
         return string
 
-    def create_config(self):
+    def create_config(self, path: str = CONFIG_PATH):
         """
         Creates a config file and saves all necessary variables
 
+        :type path: The path of the config file to save to
         :return:
         """
 
@@ -160,6 +166,7 @@ class ConfigManager(object):
         config_string += "[VARIABLES]\n"
         config_string += "model_path: " + self.saved_model + "\n"
         config_string += "use_cuda: " + str(self.use_cuda) + "\n"
+        config_string += "use_spacy: " + str(self.use_spacy) + "\n"
 
         config_string += "\n[HYPERPARAMETER]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"
@@ -171,6 +178,5 @@ class ConfigManager(object):
         config_string += "learning_rate: " + str(self.learning_rate) + "\n"
         config_string += "embedding_size: " + str(self.embedding_size) + "\n"
 
-        file = open(CONFIG_PATH, "w")
-        file.write(config_string)
-        file.close()
+        with open(path, "w") as file:
+            file.write(config_string)

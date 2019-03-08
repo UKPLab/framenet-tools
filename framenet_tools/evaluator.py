@@ -1,3 +1,5 @@
+import logging
+
 from framenet_tools.config import ConfigManager
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.frame_identification.reader import DataReader
@@ -30,38 +32,49 @@ def calc_f(tp: int, fp: int, fn: int):
     return pr, re, f
 
 
-def evaluate_fee_identification(files: list):
+def evaluate_fee_identification(cM: ConfigManager):
     """
     Evaluates the F1-Score of the Frame Evoking Element Identification only
 
-    :param files: The Files to evaluate on
+    :param cM: The ConfigManager containing the saved model and evaluation files
     :return: A Triple of Precision, Recall and F1-Score
     """
-    m_data_reader = DataReader()
-    m_data_reader.read_data(files[0], files[1])
 
-    gold_sentences = m_data_reader.annotations.copy()
+    for file in cM.eval_files:
 
-    m_data_reader.predict_fees()
+        logging.info(f"Evaluating on: {file[0]}")
 
-    tp = fp = fn = 0
+        m_data_reader = DataReader(cM)
+        m_data_reader.read_data(file[0], file[1])
 
-    for gold_annotations, predictied_annotations in zip(
-        gold_sentences, m_data_reader.annotations
-    ):
-        for gold_annotation in gold_annotations:
-            if gold_annotation.fee_raw in [x.fee_raw for x in predictied_annotations]:
-                tp += 1
-            else:
-                fn += 1
+        gold_sentences = m_data_reader.annotations.copy()
 
-        for predicted_annotation in predictied_annotations:
-            if predicted_annotation not in [x.fee_raw for x in gold_annotations]:
-                fp += 1
+        m_data_reader.predict_fees()
 
-    print(tp, fp, fn)
+        tp = fp = fn = 0
 
-    return calc_f(tp, fp, fn)
+        for gold_annotations, predictied_annotations in zip(
+            gold_sentences, m_data_reader.annotations
+        ):
+            for gold_annotation in gold_annotations:
+                if gold_annotation.fee_raw in [x.fee_raw for x in predictied_annotations]:
+                    tp += 1
+                else:
+                    fn += 1
+
+            for predicted_annotation in predictied_annotations:
+                #print(predicted_annotation)
+                #print([x.fee_raw for x in gold_annotations])
+                if predicted_annotation.fee_raw not in [x.fee_raw for x in gold_annotations]:
+                    fp += 1
+
+        pr, re, f1 = calc_f(tp, fp, fn)
+
+        logging.info(f"FEE Evaluation complete!\n"
+                     f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
+                     f"Precision: {pr} Recall: {re} F1-Score: {f1}")
+
+    return pr, re, f1
 
 
 def evaluate_frame_identification(cM: ConfigManager):
@@ -69,21 +82,22 @@ def evaluate_frame_identification(cM: ConfigManager):
     Evaluates the F1-Score for a model on a given file set
 
     :param cM: The ConfigManager containing the saved model and evaluation files
-    :return:
+    :return: A Triple of Precision, Recall and F1-Score
     """
 
     f_i = FrameIdentifier(cM)
     f_i.load_model(cM.saved_model)
 
     for file in cM.eval_files:
-        print("Evaluating " + file[0])
+        logging.info(f"Evaluating on: {file[0]}")
         tp, fp, fn = f_i.evaluate_file(file)
         pr, re, f1 = calc_f(tp, fp, fn)
 
-        print(
-            "Evaluation complete!\n True Positives: %d False Postives: %d False Negatives: %d \n Precision: %f Recall: %f F1-Score: %f"
-            % (tp, fp, fn, pr, re, f1)
-        )
+        logging.info(f"Evaluation complete!\n"
+                     f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
+                     f"Precision: {pr} Recall: {re} F1-Score: {f1}")
+
+    return pr, re, f1
 
 
 """

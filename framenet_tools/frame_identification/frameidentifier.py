@@ -8,6 +8,7 @@ from typing import List
 from framenet_tools.frame_identification.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
+from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
 
 
 class FrameIdentifier(object):
@@ -35,7 +36,7 @@ class FrameIdentifier(object):
                 ys: A list of frames corresponding to the given sentences
         """
 
-        reader = DataReader()
+        reader = DataReader(self.cM)
         if len(file) == 2:
             reader.read_data(file[0], file[1])
         else:
@@ -193,8 +194,14 @@ class FrameIdentifier(object):
         :return:
         """
 
+        # Saving the current config
+        self.cM.create_config(name + ".cfg")
+
+        # Saving all Vocabs
         pickle.dump(self.output_field.vocab, open(name + ".out_voc", "wb"))
         pickle.dump(self.input_field.vocab, open(name + ".in_voc", "wb"))
+
+        # Saving the actual network
         self.network.save_model(name + ".ph")
 
     def load_model(self, name: str):
@@ -207,6 +214,10 @@ class FrameIdentifier(object):
         :return:
         """
 
+        # Loading config
+        self.cM.load_config(name + ".cfg")
+
+        # Loading Vocabs
         out_voc = pickle.load(open(name + ".out_voc", "rb"))
         in_voc = pickle.load(open(name + ".in_voc", "rb"))
 
@@ -227,7 +238,7 @@ class FrameIdentifier(object):
         :return: A Triple of True Positives, False Positives and False Negatives
         """
 
-        xs, ys = self.get_dataset(file, True)
+        xs, ys = self.get_dataset(file, False)
 
         iter = self.prepare_dataset(xs, ys, 1)
 
@@ -253,6 +264,8 @@ class FrameIdentifier(object):
             xs += new_xs
             ys += new_ys
 
+        shuffle_concurrent_lists([xs, ys])
+
         # Zip datasets and generate complete dictionary
         examples = [
             data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
@@ -267,6 +280,8 @@ class FrameIdentifier(object):
 
         train_iter = self.prepare_dataset(xs, ys)
 
+        dev_iter = self.get_iter(self.cM.eval_files[0])
+
         self.input_field.vocab.load_vectors("glove.6B.300d")
 
         num_classes = len(self.output_field.vocab)
@@ -275,4 +290,15 @@ class FrameIdentifier(object):
 
         self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
-        self.network.train_model(train_iter, dataset_size, self.cM.batch_size)
+        self.network.train_model(dataset_size, train_iter, dev_iter)
+
+    def get_iter(self, file: str):
+        """
+
+        :param file:
+        :return:
+        """
+
+        xs, ys = self.get_dataset(file, False)
+
+        return self.prepare_dataset(xs, ys)

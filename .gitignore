@@ -446,3 +446,7 @@ config.file
 *.ph
 *.in_voc
 *.out_voc
+
+### Tensorboard ###
+
+runs/

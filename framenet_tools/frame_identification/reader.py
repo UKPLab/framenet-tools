@@ -1,6 +1,6 @@
-import nltk
-
 from framenet_tools.frame_identification.feeidentifier import FeeIdentifier
+from framenet_tools.frame_identification.utils import download_resources, get_sentences
+from framenet_tools.config import ConfigManager
 
 
 class Annotation(object):
@@ -18,6 +18,8 @@ class Annotation(object):
         self.fee_raw = fee_raw
         self.sentence = sentence
 
+        download_resources()
+
     def create_handle(self):
         return [self.frame, self.fee, self.position, self.fee_raw, self.sentence]
 
@@ -32,8 +34,10 @@ class Annotation(object):
 
 class DataReader(object):
     def __init__(
-        self, path_sent: str = None, path_elements: str = None, raw_path: str = None
+        self, cM: ConfigManager, path_sent: str = None, path_elements: str = None, raw_path: str = None
     ):
+
+        self.cM = cM
 
         # Provides the ability to set the path at object creation (can also be done on load)
         self.path_sent = path_sent
@@ -116,11 +120,7 @@ class DataReader(object):
         raw = file.read()
         file.close()
 
-        sents = nltk.sent_tokenize(raw)
-
-        for sent in sents:
-            words = nltk.word_tokenize(sent)
-            self.sentences.append(words)
+        self.sentences += get_sentences(raw, self.cM.use_spacy)
 
         self.loaded(False)
 
