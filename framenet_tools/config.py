@@ -17,6 +17,7 @@ class ConfigManager(object):
         self.saved_model = os.path.join(dir_models, model_name)
 
         self.use_cuda = True
+        self.use_spacy = True
 
         self.all_files = self.train_files + self.eval_files
 
@@ -95,6 +96,9 @@ class ConfigManager(object):
                     if key == "use_cuda":
                         self.use_cuda = config[section][key] == "True"
 
+                    if key == "use_spacy":
+                        self.use_spacy = config[section][key] == "True"
+
             if section == "HYPERPARAMETER":
                 for key in config[section]:
                     if key == "hidden_sizes":
@@ -162,6 +166,7 @@ class ConfigManager(object):
         config_string += "[VARIABLES]\n"
         config_string += "model_path: " + self.saved_model + "\n"
         config_string += "use_cuda: " + str(self.use_cuda) + "\n"
+        config_string += "use_spacy: " + str(self.use_spacy) + "\n"
 
         config_string += "\n[HYPERPARAMETER]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"

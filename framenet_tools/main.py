@@ -149,6 +149,10 @@ def eval_args(
 
         evaluate_frame_identification(cM)
 
+    if parsed.action == "fee_evaluate":
+
+        evaluate_fee_identification(cM)
+
 
 def main():
     """
@@ -170,9 +174,9 @@ def main():
 # cM = ConfigManager()
 # parser = create_argparser()
 
-# logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG)
+# logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO)
 
-# eval_args(parser, cM, ["train"])
+# eval_args(parser, cM, ["fee_evaluate"])
 
 # eval_args(parser, cM, ["train"])
 

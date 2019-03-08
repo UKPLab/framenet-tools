@@ -1,9 +1,11 @@
+import en_core_web_sm
 import logging
 import nltk
 import random
 import os
 import py7zlib
 import requests
+import spacy
 
 from typing import List
 from subprocess import call
@@ -121,3 +123,58 @@ def download(url: str):
 
     download_file(url, file_path)
     extract_file(file_path)
+
+
+def get_sentences(raw: str, use_spacy: bool = False):
+    """
+
+    :param raw:
+    :param use_spacy:
+    :return:
+    """
+
+    if use_spacy:
+        return get_sentences_spacy(raw)
+
+    return get_sentences_nltk(raw)
+
+
+def get_sentences_spacy(raw: str):
+    """
+
+    :param raw:
+    :return:
+    """
+
+    nlp = en_core_web_sm.load()
+    doc = nlp(raw)
+    sents = [sent.string.strip() for sent in doc.sents]
+
+    tokenizer = spacy.tokenizer.Tokenizer(nlp.vocab)
+
+    sentences = []
+
+    for sent in sents:
+        tokens = nlp(sent)
+        words = [token.text for token in tokens]
+        sentences.append(words)
+
+    return sentences
+
+
+def get_sentences_nltk(raw: str):
+    """
+
+    :param raw:
+    :return:
+    """
+
+    sents = nltk.sent_tokenize(raw)
+
+    sentences = []
+
+    for sent in sents:
+        words = nltk.word_tokenize(sent)
+        sentences.append(words)
+
+    return sentences

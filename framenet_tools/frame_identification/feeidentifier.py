@@ -1,9 +1,10 @@
+import en_core_web_sm
+import logging
 import nltk
+
 from nltk.stem import WordNetLemmatizer
 from nltk.tree import Tree
 
-
-# lemmatizer = WordNetLemmatizer()
 
 # Static definitions
 punctuation = (".", ",", ";", ":", "!", "?", "/", "(", ")", "'")  # added
@@ -162,7 +163,13 @@ def should_include_token(p_data: list):
 
 class FeeIdentifier(object):
     def __init__(self):
-        self.lemmatizer = WordNetLemmatizer()
+
+        self.use_spacy = True
+
+        if self.use_spacy:
+            self.nlp = en_core_web_sm.load()
+        else:
+            self.lemmatizer = WordNetLemmatizer()
 
     def identify_targets(self, sentence: list):
         """
@@ -178,7 +185,52 @@ class FeeIdentifier(object):
 
         return targets
 
-    def get_tags(self, tokens: list):
+    def get_tags(self, tokens: str):
+        """
+
+        :param tokens:
+        :return:
+        """
+
+        if self.use_spacy:
+            return self.get_tags_spacy(tokens)
+
+        return self.get_tags_nltk(tokens)
+
+    def get_tags_spacy(self, tokens: str):
+        """
+
+        :param tokens:
+        :return:
+        """
+
+        sentence = ""
+
+        if len(tokens) > 0:
+            sentence = tokens[0]
+
+        for token in tokens:
+            sentence += " " + token
+
+        doc = self.nlp(sentence)
+        pData = []
+
+        for token in doc:
+            text = token.text
+            ne = token.ent_type_
+            tag = token.tag_
+            lemma = token.lemma_
+
+            logging.debug(f"Token: {text}, NE: {ne}, Tag: {tag}, Lemma: {lemma}")
+
+            if ne == "":
+                ne = "-"
+
+            pData.append([text, tag, lemma, ne])
+
+        return pData
+
+    def get_tags_nltk(self, tokens: list):
         """
         Gets lemma, pos and NE for each token
 
@@ -190,7 +242,9 @@ class FeeIdentifier(object):
         lemmas = []
         nes = []
         # print(tokens)
+
         tags = nltk.pos_tag(tokens)
+
         for tag in tags:
             pos_tags.append(tag[1])
             lemmas.append(
@@ -203,10 +257,11 @@ class FeeIdentifier(object):
             else:
                 nes.append("-")
         pData = []
+
         for t, p, l, n in zip(tokens, pos_tags, lemmas, nes):
             pData.append([t, p, l, n])
 
-        return (pData, pos_tags, lemmas)
+        return pData
 
     """
     def load_dataset(self, file):
@@ -227,7 +282,8 @@ class FeeIdentifier(object):
 
         tokens = x[0]
 
-        pData, postags, lemmas = self.get_tags(tokens)
+        pData = self.get_tags(tokens)
+
         possible_fees = should_include_token(pData)
 
         return possible_fees

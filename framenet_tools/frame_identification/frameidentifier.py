@@ -36,7 +36,7 @@ class FrameIdentifier(object):
                 ys: A list of frames corresponding to the given sentences
         """
 
-        reader = DataReader()
+        reader = DataReader(self.cM)
         if len(file) == 2:
             reader.read_data(file[0], file[1])
         else:

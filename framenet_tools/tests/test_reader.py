@@ -4,13 +4,15 @@ import random
 import string
 from typing import List
 
+from framenet_tools.config import ConfigManager
 from framenet_tools.frame_identification.reader import Annotation, DataReader
 
+cM = ConfigManager()
 
 class RandomFiles(object):
 
     def __init__(self, max_sentence_length: int):
-        self.m_reader = DataReader()
+        self.m_reader = DataReader(cM)
         self.files = []
 
         self.create_and_load(max_sentence_length)
@@ -154,7 +156,7 @@ def test_reader_no_file():
     """
 
     with pytest.raises(Exception):
-        m_reader = DataReader()
+        m_reader = DataReader(cM)
         m_reader.read_data()
 
 
