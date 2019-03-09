@@ -5,7 +5,7 @@ import string
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.frame_identification.reader import Annotation, DataReader
+from framenet_tools.data_handler.reader import Annotation, DataReader
 
 cM = ConfigManager()
 
