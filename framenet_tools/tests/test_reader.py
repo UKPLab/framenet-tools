@@ -71,7 +71,7 @@ def create_random_string(possible_chars: str = string.ascii_lowercase, seq_lengt
     return "".join(random.choice(possible_chars) for _ in range(random.randint(1, seq_length)))
 
 
-def create_frames_file(sentence_count: int, max_frame_count: int):
+def create_frames_file(sentence_count: int, max_frame_count: int, max_role_count: int = 5):
     """
     Helper function for generating a well formatted random "frames file"
 
@@ -79,6 +79,7 @@ def create_frames_file(sentence_count: int, max_frame_count: int):
 
     :param sentence_count: The number of sentences
     :param max_frame_count: The maximum amount of frames to generate per sentence
+    :param max_role_count: The maximum amount of roles per frame to generate
     :return: The name of the generated file
     """
 
@@ -101,7 +102,13 @@ def create_frames_file(sentence_count: int, max_frame_count: int):
             # Raw FEE
             content += create_random_string(string.ascii_letters + string.digits, 20) + "\t"
             # Sentence number (starting at 0) and new line
-            content += str(i) + "\n"
+            content += str(i)
+
+            for g in range(random.randint(1, max_role_count)):
+                content += "\t" + create_random_string(string.ascii_letters + string.digits, 20) + "\t"
+                content += "1"
+
+            content += "\n"
 
     with open(file_name, "w") as file:
         file.write(content)
@@ -248,7 +255,14 @@ def test_frames_correctness():
 
             line = [x for x in line.rsplit("\t") if x != ""]
 
-            orig_annotation = Annotation(line[3], line[4], line[5], line[6], get_sentence(sentences, int(line[7])))
+            roles = []
+            role_positions = []
+
+            for i in range(8, len(line), 2):
+                roles.append(line[i])
+                role_positions.append((int(line[i+1]), int(line[i+1])))
+
+            orig_annotation = Annotation(line[3], line[4], line[5], line[6], get_sentence(sentences, int(line[7])), roles, role_positions)
             # annotation = Annotation(line[3], line[4], line[5], line[6], int(line[7]))
             assert annotation == orig_annotation
 

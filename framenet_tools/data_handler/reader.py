@@ -1,5 +1,6 @@
 import logging
 
+from tqdm import tqdm
 from typing import List
 
 from framenet_tools.frame_identification.feeidentifier import FeeIdentifier
@@ -216,7 +217,9 @@ class DataReader(object):
         logging.debug(f"Predicting Spans")
         span_identifier = SpanIdentifier(self.cM)
 
-        for i in range(len(self.sentences)):
+        num_sentences = range(len(self.sentences))
+
+        for i in tqdm(num_sentences):
             for annotation in self.annotations[i]:
 
                 p_role_positions = span_identifier.query(annotation)
