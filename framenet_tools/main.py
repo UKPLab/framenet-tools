@@ -12,8 +12,8 @@ from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
     evaluate_frame_identification,
-    evaluate_fee_identification
-)
+    evaluate_fee_identification,
+    evaluate_span_identification)
 from framenet_tools.frame_identification.utils import download
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
@@ -174,9 +174,11 @@ def main():
 # cM = ConfigManager()
 # parser = create_argparser()
 
-# logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO)
+# logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG)
 
-# eval_args(parser, cM, ["fee_evaluate"])
+# evaluate_span_identification(cM)
+
+# eval_args(parser, cM, ["convert"])
 
 # eval_args(parser, cM, ["train"])
 
