@@ -8,6 +8,7 @@ from typing import List
 from subprocess import call
 
 # from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
+from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
@@ -15,6 +16,7 @@ from framenet_tools.evaluator import (
     evaluate_fee_identification,
     evaluate_span_identification)
 from framenet_tools.frame_identification.utils import download
+from framenet_tools.role_identification.spanidentifier import SpanIdentifier
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
 
@@ -171,16 +173,24 @@ def main():
     eval_args(parser, cM)
 
 
-# cM = ConfigManager()
-# parser = create_argparser()
+cM = ConfigManager()
+parser = create_argparser()
 
-# logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG)
-
-# evaluate_span_identification(cM)
-
-# eval_args(parser, cM, ["convert"])
+logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG)
 
 # eval_args(parser, cM, ["train"])
+# evaluate_span_identification(cM)
+
+file = cM.train_files[0]
+m_data_reader = DataReader(cM)
+m_data_reader.read_data(file[0], file[1])
+
+span_identifier = SpanIdentifier(cM)
+span_identifier.train(m_data_reader.sentences, m_data_reader.annotations)
+evaluate_span_identification(cM, span_identifier)
+# eval_args(parser, cM, ["convert"])
+
+#
 
 # eval_args(parser, cM, ["predict", "--path", "data/example.txt", "--out_path", "data/test.json"])
 

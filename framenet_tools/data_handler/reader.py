@@ -208,21 +208,25 @@ class DataReader(object):
 
             self.annotations.append(predicted_annotations)
 
-    def predict_spans(self):
+    def predict_spans(self, span_identifier: SpanIdentifier = None):
         """
 
         :return:
         """
 
         logging.debug(f"Predicting Spans")
-        span_identifier = SpanIdentifier(self.cM)
+        use_static = False
+
+        if span_identifier is None:
+            span_identifier = SpanIdentifier(self.cM)
+            use_static = True
 
         num_sentences = range(len(self.sentences))
 
         for i in tqdm(num_sentences):
             for annotation in self.annotations[i]:
 
-                p_role_positions = span_identifier.query(annotation)
+                p_role_positions = span_identifier.query(annotation, use_static)
 
                 annotation.role_positions = p_role_positions
                 annotation.roles = []

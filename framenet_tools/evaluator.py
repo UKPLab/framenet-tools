@@ -5,6 +5,7 @@ from copy import deepcopy
 from framenet_tools.config import ConfigManager
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.role_identification.spanidentifier import SpanIdentifier
 
 
 def calc_f(tp: int, fp: int, fn: int):
@@ -33,7 +34,7 @@ def calc_f(tp: int, fp: int, fn: int):
         f = 2.0 * pr * re / (pr + re)
     return pr, re, f
 
-def evaluate_span_identification(cM: ConfigManager):
+def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentifier = None):
     """
 
     :param cM:
@@ -51,7 +52,7 @@ def evaluate_span_identification(cM: ConfigManager):
 
         gold_sentences = deepcopy(m_data_reader.annotations)
 
-        m_data_reader.predict_spans()
+        m_data_reader.predict_spans(span_identifier)
 
         tp = fp = fn = 0
 
