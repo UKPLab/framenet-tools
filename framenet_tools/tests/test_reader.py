@@ -5,23 +5,45 @@ import string
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.frame_identification.reader import Annotation, DataReader
+from framenet_tools.data_handler.reader import Annotation, DataReader
+from framenet_tools.data_handler.semeval_reader import SemevalReader
 
 cM = ConfigManager()
 
-class RandomFiles(object):
 
-    def __init__(self, max_sentence_length: int):
+class RandomFiles(object):
+    def __init__(self, max_sentence_length: int, raw_file: bool = False):
         self.m_reader = DataReader(cM)
         self.files = []
 
-        self.create_and_load(max_sentence_length)
+        if raw_file:
+            self.create_and_load_raw(max_sentence_length)
+        else:
+            self.create_and_load(max_sentence_length)
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
         self.clean_up()
+
+    def create_and_load_raw(self, max_sentence_length: int):
+        """
+        A Helper function which creates and loads a RAW file, that simply contains text.
+
+        NOTE: Randomized!
+
+        :param max_sentence_length: The maximum possible amount of sentences
+        :return: A DataReader-Object and a list of the two file names
+        """
+
+        num_sentences = random.randint(1, max_sentence_length)
+
+        raw_file = create_raw_file(num_sentences, 10)
+
+        self.m_reader.read_raw_text(raw_file)
+
+        self.files = [raw_file]
 
     def create_and_load(self, max_sentence_length: int):
         """
@@ -57,7 +79,9 @@ class RandomFiles(object):
                 os.remove(file)
 
 
-def create_random_string(possible_chars: str = string.ascii_lowercase, seq_length: int = 8):
+def create_random_string(
+    possible_chars: str = string.ascii_lowercase, seq_length: int = 8
+):
     """
     Helper function for generation of random strings.
 
@@ -68,10 +92,14 @@ def create_random_string(possible_chars: str = string.ascii_lowercase, seq_lengt
     :return:
     """
 
-    return "".join(random.choice(possible_chars) for _ in range(random.randint(1, seq_length)))
+    return "".join(
+        random.choice(possible_chars) for _ in range(random.randint(1, seq_length))
+    )
 
 
-def create_frames_file(sentence_count: int, max_frame_count: int):
+def create_frames_file(
+    sentence_count: int, max_frame_count: int, max_role_count: int = 5
+):
     """
     Helper function for generating a well formatted random "frames file"
 
@@ -79,6 +107,7 @@ def create_frames_file(sentence_count: int, max_frame_count: int):
 
     :param sentence_count: The number of sentences
     :param max_frame_count: The maximum amount of frames to generate per sentence
+    :param max_role_count: The maximum amount of roles per frame to generate
     :return: The name of the generated file
     """
 
@@ -93,15 +122,33 @@ def create_frames_file(sentence_count: int, max_frame_count: int):
             # Static part
             content += "1\t0.0\t" + str(random.randint(0, 5)) + "\t"
             # Frame
-            content += create_random_string(string.ascii_letters + string.digits, 20) + "\t"
+            content += (
+                create_random_string(string.ascii_letters + string.digits, 20) + "\t"
+            )
             # FEE
-            content += create_random_string(string.ascii_letters + string.digits, 20) + "\t"
-            # TODO Position in the sentence
+            content += (
+                create_random_string(string.ascii_letters + string.digits, 20) + "\t"
+            )
+            # Static position
             content += "5\t"
             # Raw FEE
-            content += create_random_string(string.ascii_letters + string.digits, 20) + "\t"
+            content += (
+                create_random_string(string.ascii_letters + string.digits, 20) + "\t"
+            )
             # Sentence number (starting at 0) and new line
-            content += str(i) + "\n"
+            content += str(i)
+
+            for g in range(random.randint(1, max_role_count)):
+                # Random role
+                content += (
+                    "\t"
+                    + create_random_string(string.ascii_letters + string.digits, 20)
+                    + "\t"
+                )
+                # Static position
+                content += "1"
+
+            content += "\n"
 
     with open(file_name, "w") as file:
         file.write(content)
@@ -135,7 +182,35 @@ def create_sentences_file(sentence_count: int, max_word_count: int):
     return file_name
 
 
-def test_reader_simple():
+def create_raw_file(sentence_count: int, max_word_count: int):
+    """
+    Helper Function for generation of random ".txt" files.
+    No line formatting guaranteed! Just plain text.
+
+    NOTE: Randomized!
+
+    :param sentence_count: The max possible amount of lines/sentences in the file
+    :param max_word_count: The max possible amount of words in a line/sentence
+    :return: The name of the generated file
+    """
+
+    file_name = create_random_string(string.ascii_lowercase, 8)
+    content = ""
+
+    for i in range(sentence_count):
+        for j in range(random.randint(1, max_word_count)):
+            content += create_random_string(string.ascii_letters + string.digits) + " "
+
+        content += ". "
+
+    with open(file_name, "w") as file:
+        file.write(content)
+
+    return file_name
+
+
+@pytest.mark.parametrize("raw", [True, False])
+def test_reader_simple(raw: bool):
     """
     A simple reader test
 
@@ -144,7 +219,7 @@ def test_reader_simple():
     :return:
     """
 
-    m_rndfiles = RandomFiles(10)
+    m_rndfiles = RandomFiles(10, raw)
     m_rndfiles.clean_up()
 
 
@@ -181,6 +256,30 @@ def test_reader_sizes():
             line_count = sum(1 for line in raw if line != "")
 
             assert len(handler[i]) == line_count
+
+
+@pytest.mark.parametrize("use_spacy", [True, False])
+def test_reader_sizes_raw(use_spacy: bool):
+    """
+    Test the reader for raw text input. Checks if everything was loaded and nothing was lost.
+
+    NOTE: Randomized and Parametrized (using nltk and spacy)
+
+    :return:
+    """
+
+    cM.use_spacy = use_spacy
+
+    with RandomFiles(10, True) as m_rndfiles:
+        handler = m_rndfiles.m_reader.sentences
+
+        with open(m_rndfiles.files[0]) as file:
+            raw = file.read()
+            raw = raw.replace(" ", "")
+
+        word_count = sum(len(sent) for sent in raw)
+
+        assert sum(len(token) for sent in handler for token in sent) == word_count
 
 
 def test_sentences_correctness():
@@ -233,13 +332,11 @@ def test_frames_correctness():
 
     with RandomFiles(10) as m_rndfiles:
 
-        file = open(m_rndfiles.files[1])
-        raw = file.read()
-        file.close()
+        with open(m_rndfiles.files[1]) as file:
+            raw = file.read()
 
-        file = open(m_rndfiles.files[0])
-        sentences = file.read().rsplit("\n")
-        file.close()
+        with open(m_rndfiles.files[0]) as file:
+            sentences = file.read().rsplit("\n")
 
         raw = raw.rsplit("\n")
         reader_annotations = [x for y in m_rndfiles.m_reader.annotations for x in y]
@@ -248,7 +345,87 @@ def test_frames_correctness():
 
             line = [x for x in line.rsplit("\t") if x != ""]
 
-            orig_annotation = Annotation(line[3], line[4], line[5], line[6], get_sentence(sentences, int(line[7])))
+            roles = []
+            role_positions = []
+
+            for i in range(8, len(line), 2):
+                roles.append(line[i])
+                role_positions.append((int(line[i + 1]), int(line[i + 1])))
+
+            orig_annotation = Annotation(
+                line[3],
+                line[4],
+                (int(line[5]), int(line[5])),
+                line[6],
+                get_sentence(sentences, int(line[7])),
+                roles,
+                role_positions,
+            )
             # annotation = Annotation(line[3], line[4], line[5], line[6], int(line[7]))
             assert annotation == orig_annotation
 
+
+def test_semeval_reader_sentences():
+    """
+    Tests if both systems have read in the exact same sentence data.
+    Due to the previous tests for the DataReader this test eases the check for SemevalReader.
+
+    NOTE: Requires semafor and semeval train files!
+
+    :return:
+    """
+
+    s_reader = SemevalReader(cM)
+    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+
+    d_reader = DataReader(cM)
+    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
+                       "../data/experiments/xp_001/data/train.frame.elements")
+
+    assert s_reader.sentences == d_reader.sentences
+
+
+def test_semeval_reader_annotation_size():
+    """
+    Tests if both systems have read in the same NUMBER of annotations.
+    Also the dimensions of the sublists are checked.
+
+    NOTE: Requires semafor and semeval train files!
+
+    :return:
+    """
+
+    s_reader = SemevalReader(cM)
+    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+
+    d_reader = DataReader(cM)
+    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
+                       "../data/experiments/xp_001/data/train.frame.elements")
+
+    assert len(s_reader.annotations) == len(d_reader.annotations)
+
+    for s_annos, d_annos in zip(s_reader.annotations, d_reader.annotations):
+        assert len(s_annos) == len(d_annos)
+
+
+def test_semeval_reader_annotations():
+    """
+    Tests the correctness that both systems have read in the exact same annotations.
+
+    NOTE: Requires semafor and semeval train files!
+
+    :return:
+    """
+
+    s_reader = SemevalReader(cM)
+    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+
+    d_reader = DataReader(cM)
+    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
+                       "../data/experiments/xp_001/data/train.frame.elements")
+
+    assert len(s_reader.annotations) == len(d_reader.annotations)
+
+    for s_annos, d_annos in zip(s_reader.annotations, d_reader.annotations):
+        for s_anno, d_anno in zip(s_annos, d_annos):
+            assert s_anno == d_anno

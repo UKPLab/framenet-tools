@@ -179,6 +179,8 @@ class FrameIDNetwork(object):
                 self.optimizer.zero_grad()  # zero the gradient buffer
                 outputs = self.net(sent)
 
+                # print(labels)
+                # print(outputs)
                 loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()

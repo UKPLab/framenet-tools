@@ -7,6 +7,8 @@ from nltk.tree import Tree
 
 
 # Static definitions
+from framenet_tools.config import ConfigManager
+
 punctuation = (".", ",", ";", ":", "!", "?", "/", "(", ")", "'")  # added
 forbidden_words = (
     "a",
@@ -162,11 +164,11 @@ def should_include_token(p_data: list):
 
 
 class FeeIdentifier(object):
-    def __init__(self):
+    def __init__(self, cM: ConfigManager):
 
-        self.use_spacy = True
+        self.cM = cM
 
-        if self.use_spacy:
+        if self.cM.use_spacy:
             self.nlp = en_core_web_sm.load()
         else:
             self.lemmatizer = WordNetLemmatizer()
@@ -192,7 +194,7 @@ class FeeIdentifier(object):
         :return:
         """
 
-        if self.use_spacy:
+        if self.cM.use_spacy:
             return self.get_tags_spacy(tokens)
 
         return self.get_tags_nltk(tokens)

@@ -5,7 +5,7 @@ from torchtext import data
 import pickle
 from typing import List
 
-from framenet_tools.frame_identification.reader import DataReader
+from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
 from framenet_tools.frame_identification.utils import shuffle_concurrent_lists

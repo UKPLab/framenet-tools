@@ -1,35 +1,13 @@
+import logging
+
+from tqdm import tqdm
+from typing import List
+
 from framenet_tools.frame_identification.feeidentifier import FeeIdentifier
 from framenet_tools.frame_identification.utils import download_resources, get_sentences
 from framenet_tools.config import ConfigManager
-
-
-class Annotation(object):
-    def __init__(
-        self,
-        frame: str = "Default",
-        fee: str = None,
-        position: int = None,
-        fee_raw: str = None,
-        sentence: list = None,
-    ):
-        self.frame = frame
-        self.fee = fee
-        self.position = position
-        self.fee_raw = fee_raw
-        self.sentence = sentence
-
-        download_resources()
-
-    def create_handle(self):
-        return [self.frame, self.fee, self.position, self.fee_raw, self.sentence]
-
-    def __eq__(self, x):
-        equal = True
-
-        for h1, h2 in zip(self.create_handle(), x.create_handle()):
-            equal &= h1 == h2
-
-        return equal
+from framenet_tools.role_identification.spanidentifier import SpanIdentifier
+from framenet_tools.data_handler.annotation import Annotation
 
 
 class DataReader(object):
@@ -53,6 +31,8 @@ class DataReader(object):
 
         self.dataset = []
 
+        download_resources()
+
     def digest_raw_data(self, elements: list, sentences: list):
         """
         Converts the raw elements and sentences into a nicely structured dataset
@@ -67,7 +47,7 @@ class DataReader(object):
         # Append sentences
         for sentence in sentences:
             words = sentence.split(" ")
-            if "" in words:
+            while "" in words:
                 words.remove("")
             self.sentences.append(words)
 
@@ -77,17 +57,50 @@ class DataReader(object):
 
             frame = element_data[3]  # Frame
             fee = element_data[4]  # Frame evoking element
-            position = element_data[5]  # Position of word in sentence
-            fee_raw = element_data[6]  # Frame evoking element as it appeared
+            position = element_data[5].rsplit("_")  # Position of word in sentence
+            position = (int(position[0]), int(position[-1]))
+            fee_raw = element_data[6].rsplit(" ")[0]  # Frame evoking element as it appeared
 
             sent_num = int(element_data[7])  # Sentence number
 
             if sent_num >= len(self.annotations):
                 self.annotations.append([])
 
+            roles, role_positions = self.digest_role_data(element)
+
             self.annotations[sent_num].append(
-                Annotation(frame, fee, position, fee_raw, self.sentences[sent_num])
+                Annotation(frame, fee, position, fee_raw, self.sentences[sent_num], roles, role_positions)
             )
+
+    def digest_role_data(self, element: str):
+        """
+
+        :param element:
+        :return:
+        """
+
+        roles = []
+        role_positions = []
+
+        element_data = element.split("\t")
+        c = 8
+
+        while len(element_data) > c:
+            role = element_data[c]
+            role_position = element_data[c+1]
+            if ":" in role_position:
+                role_position = role_position.rsplit(":")
+                role_position = (role_position[0], role_position[1])
+            else:
+                role_position = (role_position, role_position)
+            role_position = (int(role_position[0]), int(role_position[1]))
+
+            role_positions.append(role_position)
+            roles.append(role)
+
+            c += 2
+
+        return roles, role_positions
 
     def loaded(self, is_annotated: bool):
         """
@@ -142,18 +155,16 @@ class DataReader(object):
             self.path_elements = path_elements
 
         if self.path_sent is None:
-            raise Exception("Found no sentences-file to read")
+            raise Exception("Found no sentences-file to read!")
 
         if self.path_elements is None:
-            raise Exception("Found no elements-file to read")
+            raise Exception("Found no elements-file to read!")
 
-        file = open(self.path_sent, "r")
-        sentences = file.read()
-        file.close()
+        with open(self.path_sent, "r") as file:
+            sentences = file.read()
 
-        file = open(self.path_elements, "r")
-        elements = file.read()
-        file.close()
+        with open(self.path_elements, "r") as file:
+            elements = file.read()
 
         sentences = sentences.split("\n")
         elements = elements.split("\n")
@@ -182,7 +193,7 @@ class DataReader(object):
         """
 
         self.annotations = []
-        fee_finder = FeeIdentifier()
+        fee_finder = FeeIdentifier(self.cM)
 
         for sentence in self.sentences:
             possible_fees = fee_finder.query([sentence])
@@ -196,8 +207,41 @@ class DataReader(object):
 
             self.annotations.append(predicted_annotations)
 
-    # print(possible_fees)
+    def predict_spans(self, span_identifier: SpanIdentifier = None):
+        """
 
-    def get_annotations(self, sentence=None):
-        # TODO
+        :return:
+        """
+
+        logging.debug(f"Predicting Spans")
+        use_static = False
+
+        if span_identifier is None:
+            span_identifier = SpanIdentifier(self.cM)
+            use_static = True
+
+        num_sentences = range(len(self.sentences))
+
+        for i in tqdm(num_sentences):
+            for annotation in self.annotations[i]:
+
+                p_role_positions = span_identifier.query(annotation, use_static)
+
+                annotation.role_positions = p_role_positions
+                annotation.roles = []
+
+        logging.debug(f"Done predicting Spans")
+
+    def get_annotations(self, sentence: List[str] = None):
+        """
+
+        :param sentence: The sentence to retrieve the annotations for.
+        :return:
+        """
+
+        for i in len(self.sentences):
+
+            if self.sentences[i] == sentence:
+                return self.annotations[i]
+
         return None

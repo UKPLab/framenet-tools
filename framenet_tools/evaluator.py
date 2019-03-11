@@ -1,8 +1,11 @@
 import logging
 
+from copy import deepcopy
+
 from framenet_tools.config import ConfigManager
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
-from framenet_tools.frame_identification.reader import DataReader
+from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.role_identification.spanidentifier import SpanIdentifier
 
 
 def calc_f(tp: int, fp: int, fn: int):
@@ -30,6 +33,53 @@ def calc_f(tp: int, fp: int, fn: int):
     else:
         f = 2.0 * pr * re / (pr + re)
     return pr, re, f
+
+def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentifier = None):
+    """
+
+    :param cM:
+    :return:
+    """
+
+    logging.info(f"Evaluating Span Identification:")
+
+    for file in cM.train_files:
+
+        logging.info(f"Evaluating on: {file[0]}")
+
+        m_data_reader = DataReader(cM)
+        m_data_reader.read_data(file[0], file[1])
+
+        gold_sentences = deepcopy(m_data_reader.annotations)
+
+        m_data_reader.predict_spans(span_identifier)
+
+        tp = fp = fn = 0
+
+        for i in range(len(m_data_reader.sentences)):
+
+            gold_annotations = gold_sentences[i]
+            predictied_annotations = m_data_reader.annotations[i]
+
+            for gold_annotation, predictied_annotation in zip(gold_annotations, predictied_annotations):
+
+                for role_posistion in gold_annotation.role_positions:
+                    if role_posistion in predictied_annotation.role_positions:
+                        tp += 1
+                    else:
+                        fn += 1
+
+                for role_posistion in predictied_annotation.role_positions:
+                    if role_posistion not in gold_annotation.role_positions:
+                        fp += 1
+
+        pr, re, f1 = calc_f(tp, fp, fn)
+
+        logging.info(f"FEE Evaluation complete!\n"
+                     f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
+                     f"Precision: {pr} Recall: {re} F1-Score: {f1}")
+
+    return pr, re, f1
 
 
 def evaluate_fee_identification(cM: ConfigManager):
