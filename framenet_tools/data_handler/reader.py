@@ -47,7 +47,7 @@ class DataReader(object):
         # Append sentences
         for sentence in sentences:
             words = sentence.split(" ")
-            if "" in words:
+            while "" in words:
                 words.remove("")
             self.sentences.append(words)
 
@@ -154,18 +154,16 @@ class DataReader(object):
             self.path_elements = path_elements
 
         if self.path_sent is None:
-            raise Exception("Found no sentences-file to read")
+            raise Exception("Found no sentences-file to read!")
 
         if self.path_elements is None:
-            raise Exception("Found no elements-file to read")
+            raise Exception("Found no elements-file to read!")
 
-        file = open(self.path_sent, "r")
-        sentences = file.read()
-        file.close()
+        with open(self.path_sent, "r") as file:
+            sentences = file.read()
 
-        file = open(self.path_elements, "r")
-        elements = file.read()
-        file.close()
+        with open(self.path_elements, "r") as file:
+            elements = file.read()
 
         sentences = sentences.split("\n")
         elements = elements.split("\n")

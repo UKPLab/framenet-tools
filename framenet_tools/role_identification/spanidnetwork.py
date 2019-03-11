@@ -66,6 +66,7 @@ class Net(nn.Module):
 
         return outputs
 
+
 class SpanIdNetwork(object):
     def __init__(
         self, cM: ConfigManager, embedding_layer: torch.nn.Embedding, num_classes: int
@@ -146,9 +147,10 @@ class SpanIdNetwork(object):
 
             for batch in progress_bar:
 
+                output_dim = len(batch.BIO)
                 sent = batch.Sentence
                 # print(batch.BIO)
-                labels = torch.reshape(batch.BIO, (1, len(batch.BIO)))
+                labels = torch.reshape(batch.BIO, (1, output_dim))
                 labels = Variable(labels).to(self.device)
 
                 self.net.hidden = self.net.init_hidden()
@@ -166,7 +168,7 @@ class SpanIdNetwork(object):
                 self.optimizer.zero_grad()  # zero the gradient buffer
                 outputs = self.net(sent)
 
-                outputs = torch.reshape(outputs, (1, 5, len(outputs[0])))
+                outputs = torch.reshape(outputs, (1, 5, output_dim))
 
                 #print(outputs)
 
@@ -184,7 +186,7 @@ class SpanIdNetwork(object):
                 # print(total_hits)
                 # print(count)
 
-                count += labels.size(0)
+                count += output_dim #labels.size(0)
 
                 # Just update every 20 iterations
                 if count % 20 == 0:
