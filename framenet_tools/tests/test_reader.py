@@ -6,6 +6,7 @@ from typing import List
 
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.reader import Annotation, DataReader
+from framenet_tools.data_handler.semeval_reader import SemevalReader
 
 cM = ConfigManager()
 
@@ -354,7 +355,7 @@ def test_frames_correctness():
             orig_annotation = Annotation(
                 line[3],
                 line[4],
-                line[5],
+                (int(line[5]), int(line[5])),
                 line[6],
                 get_sentence(sentences, int(line[7])),
                 roles,
@@ -362,3 +363,69 @@ def test_frames_correctness():
             )
             # annotation = Annotation(line[3], line[4], line[5], line[6], int(line[7]))
             assert annotation == orig_annotation
+
+
+def test_semeval_reader_sentences():
+    """
+    Tests if both systems have read in the exact same sentence data.
+    Due to the previous tests for the DataReader this test eases the check for SemevalReader.
+
+    NOTE: Requires semafor and semeval train files!
+
+    :return:
+    """
+
+    s_reader = SemevalReader(cM)
+    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+
+    d_reader = DataReader(cM)
+    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
+                       "../data/experiments/xp_001/data/train.frame.elements")
+
+    assert s_reader.sentences == d_reader.sentences
+
+
+def test_semeval_reader_annotation_size():
+    """
+    Tests if both systems have read in the same NUMBER of annotations.
+    Also the dimensions of the sublists are checked.
+
+    NOTE: Requires semafor and semeval train files!
+
+    :return:
+    """
+
+    s_reader = SemevalReader(cM)
+    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+
+    d_reader = DataReader(cM)
+    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
+                       "../data/experiments/xp_001/data/train.frame.elements")
+
+    assert len(s_reader.annotations) == len(d_reader.annotations)
+
+    for s_annos, d_annos in zip(s_reader.annotations, d_reader.annotations):
+        assert len(s_annos) == len(d_annos)
+
+
+def test_semeval_reader_annotations():
+    """
+    Tests the correctness that both systems have read in the exact same annotations.
+
+    NOTE: Requires semafor and semeval train files!
+
+    :return:
+    """
+
+    s_reader = SemevalReader(cM)
+    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+
+    d_reader = DataReader(cM)
+    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
+                       "../data/experiments/xp_001/data/train.frame.elements")
+
+    assert len(s_reader.annotations) == len(d_reader.annotations)
+
+    for s_annos, d_annos in zip(s_reader.annotations, d_reader.annotations):
+        for s_anno, d_anno in zip(s_annos, d_annos):
+            assert s_anno == d_anno

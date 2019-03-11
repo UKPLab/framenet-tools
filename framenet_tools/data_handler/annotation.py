@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 
 class Annotation(object):
@@ -10,7 +10,7 @@ class Annotation(object):
         fee_raw: str = None,
         sentence: list = None,
         roles: List[str] = None,
-        role_positions: List[tuple[int, int]] = None
+        role_positions: List[Tuple[int, int]] = None
     ):
         self.frame = frame
         self.fee = fee
@@ -24,9 +24,11 @@ class Annotation(object):
         """
         Helper function for ease of programmatic comparison
 
+        NOTE: FEE is not compared due to possible differences during preprocessing!
+
         :return: A handle consisting of all data saved in this object
         """
-        return [self.frame, self.fee, self.position, self.fee_raw, self.sentence, self.roles, self.role_positions]
+        return [self.frame, self.position, self.fee_raw, self.sentence, self.roles, self.role_positions]
 
     def __eq__(self, x):
         """

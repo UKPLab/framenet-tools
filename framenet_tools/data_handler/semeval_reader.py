@@ -28,11 +28,8 @@ def char_pos_to_sentence_pos(start_char: int, end_char: int, words: List[str]):
         if start == -1 and start_char <= chars:
             start = i
 
-        if end == -1 and end_char <= chars:
-            end = i-1
-
-        if end != -1 and start != -1:
-            return start, end
+        if end == -1 and end_char < chars:
+            return start, max(i-1, start)
 
         if i == len(words):
             break
@@ -88,7 +85,6 @@ class SemevalReader(DataReader):
         for sentences in root.findall(".documents/document/paragraphs/paragraph/sentences/sentence"):
             sentence = sentences.find("text").text
 
-            sent_num += 1
             raw_sent = sentence
             words = raw_sent.split(" ")
 
@@ -101,16 +97,28 @@ class SemevalReader(DataReader):
                 frame = annotation.get("frameName")
 
                 data = annotation.findall("./layers/layer")
-                fee = data[0].findall(".labels/label")[0]
-                print(fee.attrib)
+                fee_node = data[0].findall(".labels/label")
+                # print(fee.attrib)
 
-                start_char = int(fee.get("start"))
-                end_char = int(fee.get("end"))
+                start_char = int(fee_node[0].get("start"))
+                end_char = int(fee_node[-1].get("end"))
                 start, end = char_pos_to_sentence_pos(start_char, end_char, words)
 
-                position = start
-                fee = words[position]
-                fee_raw = words[position]
+                position = (start, end)
+
+                fee = words[start]
+                fee_raw = words[start]
+
+                '''
+                for fee_part in fee_node[1:]:
+                    start_char = int(fee_part.get("start"))
+                    end_char = int(fee_part.get("end"))
+
+                    start, end = char_pos_to_sentence_pos(start_char, end_char, words)
+
+                    fee += " " + words[start]
+                    fee_raw += " " + words[start]
+                '''
 
                 roles = []
                 role_positions = []
@@ -132,5 +140,7 @@ class SemevalReader(DataReader):
                 self.annotations[sent_num].append(
                     Annotation(frame, fee, position, fee_raw, self.sentences[sent_num], roles, role_positions)
                 )
+
+            sent_num += 1
 
 

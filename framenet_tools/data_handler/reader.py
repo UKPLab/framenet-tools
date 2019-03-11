@@ -57,8 +57,9 @@ class DataReader(object):
 
             frame = element_data[3]  # Frame
             fee = element_data[4]  # Frame evoking element
-            position = element_data[5]  # Position of word in sentence
-            fee_raw = element_data[6]  # Frame evoking element as it appeared
+            position = element_data[5].rsplit("_")  # Position of word in sentence
+            position = (int(position[0]), int(position[-1]))
+            fee_raw = element_data[6].rsplit(" ")[0]  # Frame evoking element as it appeared
 
             sent_num = int(element_data[7])  # Sentence number
 
