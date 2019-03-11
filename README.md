@@ -45,7 +45,14 @@ annotates the given raw text file located at
 - `framenet_tools evaluate`  
 evaluates the F1-Score of the model on the evaluation files.
 
+## Logging
+
+Training automatically logs the loss and accuracy of the train- and devset in [TensorBoard][3] format. 
+- `tensorboard --logdir=runs`
+can be used to run TensorBoard and visualize the data.
+
 
 
 [1]: https://pypi.org/project/pyfn/
 [2]: https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z
+[3]: https://www.tensorflow.org/guide/summaries_and_tensorboard

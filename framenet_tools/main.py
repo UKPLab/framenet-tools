@@ -9,6 +9,7 @@ from subprocess import call
 
 # from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
 from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.data_handler.semeval_reader import SemevalReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
@@ -113,6 +114,24 @@ def eval_args(
             ]
         )
 
+        for dataset in ["train", "dev", "test"]:
+            call(
+                [
+                    "pyfn",
+                    "convert",
+                    "--from",
+                    "fnxml",
+                    "--to",
+                    "semeval",
+                    "--source",
+                    "data/fndata-1.5-with-dev",
+                    "--target",
+                    "data/experiments/xp_001/data",
+                    "--splits",
+                    dataset,
+                ]
+            )
+
     if parsed.action == "train":
 
         f_i = FrameIdentifier(cM)
@@ -172,41 +191,3 @@ def main():
 
     eval_args(parser, cM)
 
-
-cM = ConfigManager()
-parser = create_argparser()
-
-logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG)
-
-# eval_args(parser, cM, ["train"])
-# evaluate_span_identification(cM)
-
-file = cM.train_files[0]
-m_data_reader = DataReader(cM)
-m_data_reader.read_data(file[0], file[1])
-
-span_identifier = SpanIdentifier(cM)
-span_identifier.train(m_data_reader.sentences, m_data_reader.annotations)
-evaluate_span_identification(cM, span_identifier)
-# eval_args(parser, cM, ["convert"])
-
-#
-
-# eval_args(parser, cM, ["predict", "--path", "data/example.txt", "--out_path", "data/test.json"])
-
-# cM = ConfigManager()
-# f_i = FrameIdentifier(cM)
-
-# f_i.load_model(cM.saved_model)
-# f_i.write_predictions("data/example.txt", "data/out_fee.txt", True)
-
-# f_i.train(cM.train_files)
-# print(f_i.evaluate_file(cM.eval_files[0]))
-# f_i.save_model(cM.saved_model)
-# evaluate_frame_identification(cM)
-# print(evaluate_fee_identification(cM.eval_files[0]))
-
-# fiw = FeeIdentifierWrapper(cM)
-# fiw.train(cM.train_files)
-# print(fiw)
-# print(evaluate_fee_identification(cM.eval_files[0], fiw))
