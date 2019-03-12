@@ -209,6 +209,10 @@ class DataReader(object):
 
     def predict_spans(self, span_identifier: SpanIdentifier = None):
         """
+        Predicts the spans of the currently loaded dataset.
+        The predictions are saved in the annotations.
+
+        NOTE: All loaded spans and roles are overwritten!
 
         :return:
         """

@@ -54,7 +54,7 @@ def create_argparser():
 
     parser.add_argument(
         "action",
-        help="Actions to perform, namely: download, convert, train, predict, evaluate, fee_predict",
+        help=f"Actions to perform, namely: download, convert, train, predict, evaluate, fee_predict, span_evaluate",
     )
     parser.add_argument(
         "--path", help="A path specification used by some actions.", type=str
@@ -173,6 +173,10 @@ def eval_args(
     if parsed.action == "fee_evaluate":
 
         evaluate_fee_identification(cM)
+
+    if parsed.action == "span_evaluate":
+
+        evaluate_span_identification(cM)
 
 
 def main():

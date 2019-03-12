@@ -34,11 +34,14 @@ def calc_f(tp: int, fp: int, fn: int):
         f = 2.0 * pr * re / (pr + re)
     return pr, re, f
 
+
 def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentifier = None):
     """
+    Evaluates the span identification for its F1 score
 
-    :param cM:
-    :return:
+    :param cM: The ConfigManager containing the evaluation files
+    :param span_identifier: Optionally an instance of a SpanIdentifier
+    :return: A Triple of Precision, Recall and F1-Score
     """
 
     logging.info(f"Evaluating Span Identification:")

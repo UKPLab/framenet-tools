@@ -1,11 +1,31 @@
-import os
 import configparser
+import os
 import re
+
+from typing import List
 
 CONFIG_PATH = "config.file"
 
 
 class ConfigManager(object):
+
+    saved_model: str
+
+    train_files: List[List[str]]
+    eval_files: List[List[str]]
+    all_files: List[List[str]]
+
+    use_cuda: bool
+    use_spacy: bool
+    syntax_only_mode: bool
+
+    hidden_sizes: List[int]
+    activation_functions: List[str]
+    batch_size: int
+    num_epochs: int
+    learning_rate: float
+    embedding_size: int
+
     def __init__(self):
 
         self.train_files = []
@@ -18,6 +38,7 @@ class ConfigManager(object):
 
         self.use_cuda = True
         self.use_spacy = True
+        self.syntax_only_mode = True
 
         self.all_files = self.train_files + self.eval_files
 
@@ -99,6 +120,9 @@ class ConfigManager(object):
                     if key == "use_spacy":
                         self.use_spacy = config[section][key] == "True"
 
+                    if key == "syntax_only_mode":
+                        self.syntax_only_mode = config[section][key] == "True"
+
             if section == "HYPERPARAMETER":
                 for key in config[section]:
                     if key == "hidden_sizes":
@@ -125,7 +149,7 @@ class ConfigManager(object):
 
         return True
 
-    def paths_to_string(self, files: list):
+    def paths_to_string(self, files: List[List[str]]):
         """
         Helper function for turning a list of file paths into a structured string
 
@@ -167,6 +191,7 @@ class ConfigManager(object):
         config_string += "model_path: " + self.saved_model + "\n"
         config_string += "use_cuda: " + str(self.use_cuda) + "\n"
         config_string += "use_spacy: " + str(self.use_spacy) + "\n"
+        config_string += "syntax_only_mode: " + str(self.syntax_only_mode) + "\n"
 
         config_string += "\n[HYPERPARAMETER]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"

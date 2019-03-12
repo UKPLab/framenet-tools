@@ -246,7 +246,7 @@ class FrameIdentifier(object):
 
         return self.evaluate(predictions, xs, file)
 
-    def train(self, files: List[str]):
+    def train(self, files: List[List[str]]):
         """
         Trains the model on given files
 
