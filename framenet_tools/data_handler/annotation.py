@@ -8,9 +8,9 @@ class Annotation(object):
         fee: str = None,
         position: int = None,
         fee_raw: str = None,
-        sentence: list = None,
-        roles: List[str] = None,
-        role_positions: List[Tuple[int, int]] = None
+        sentence: List[str] = [],
+        roles: List[str] = [],
+        role_positions: List[Tuple[int, int]] = []
     ):
         self.frame = frame
         self.fee = fee

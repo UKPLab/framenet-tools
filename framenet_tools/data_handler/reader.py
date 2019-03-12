@@ -217,7 +217,7 @@ class DataReader(object):
         :return:
         """
 
-        logging.debug(f"Predicting Spans")
+        logging.info(f"Predicting Spans")
         use_static = False
 
         if span_identifier is None:
@@ -234,7 +234,7 @@ class DataReader(object):
                 annotation.role_positions = p_role_positions
                 annotation.roles = []
 
-        logging.debug(f"Done predicting Spans")
+        logging.info(f"Done predicting Spans")
 
     def get_annotations(self, sentence: List[str] = None):
         """

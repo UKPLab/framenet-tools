@@ -3,6 +3,7 @@ import logging
 from copy import deepcopy
 
 from framenet_tools.config import ConfigManager
+from framenet_tools.data_handler.semeval_reader import SemevalReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.role_identification.spanidentifier import SpanIdentifier
@@ -46,12 +47,12 @@ def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentif
 
     logging.info(f"Evaluating Span Identification:")
 
-    for file in cM.train_files:
+    for file in cM.semeval_files:
 
-        logging.info(f"Evaluating on: {file[0]}")
+        logging.info(f"Evaluating on: {file}")
 
-        m_data_reader = DataReader(cM)
-        m_data_reader.read_data(file[0], file[1])
+        m_data_reader = SemevalReader(cM)
+        m_data_reader.read_data(file)
 
         gold_sentences = deepcopy(m_data_reader.annotations)
 

@@ -1,4 +1,5 @@
 import configparser
+import logging
 import os
 import re
 
@@ -13,6 +14,7 @@ class ConfigManager(object):
 
     train_files: List[List[str]]
     eval_files: List[List[str]]
+    semeval_files: List[str]
     all_files: List[List[str]]
 
     use_cuda: bool
@@ -30,6 +32,7 @@ class ConfigManager(object):
 
         self.train_files = []
         self.eval_files = []
+        self.semeval_files = []
 
         # NOTE: model is actually saved in three individual files (.ph, .in_voc, .out_voc)
         model_name = "model"
@@ -70,6 +73,12 @@ class ConfigManager(object):
         self.train_files = [train_files]
         self.eval_files = [dev_files, test_files]
 
+        self.semeval_files = [
+            "data/experiments/xp_001/data/train.gold.xml",
+            "data/experiments/xp_001/data/dev.gold.xml",
+            "data/experiments/xp_001/data/test.gold.xml",
+        ]
+
         for handle in self.train_files:
             handle[0] = os.path.join(dir_data, handle[0])
             handle[1] = os.path.join(dir_data, handle[1])
@@ -89,6 +98,7 @@ class ConfigManager(object):
         """
 
         if not os.path.isfile(path):
+            logging.info(f"Config not found, creating Config file!")
             self.load_defaults()
             return False
 
@@ -108,6 +118,10 @@ class ConfigManager(object):
 
                     path = config[section][key].rsplit("\t")
                     self.eval_files.append(path)
+
+            if section == "SEMEVAL":
+                for key in config[section]:
+                    self.semeval_files.append(config[section][key])
 
             if section == "VARIABLES":
                 for key in config[section]:
@@ -187,7 +201,11 @@ class ConfigManager(object):
         config_string += "[EVALPATHS]\n"
         config_string += self.paths_to_string(self.eval_files)
 
-        config_string += "[VARIABLES]\n"
+        config_string += "[SEMEVAL]\n"
+        for file_path in self.semeval_files:
+            config_string += file_path.rsplit("/")[-1].rsplit(".")[0] + ": " + file_path + "\n"
+
+        config_string += "\n[VARIABLES]\n"
         config_string += "model_path: " + self.saved_model + "\n"
         config_string += "use_cuda: " + str(self.use_cuda) + "\n"
         config_string += "use_spacy: " + str(self.use_spacy) + "\n"

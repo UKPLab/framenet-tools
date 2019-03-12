@@ -2,6 +2,7 @@ import pytest
 import random
 import torch
 import torch.nn as nn
+
 from typing import List
 
 from framenet_tools.config import ConfigManager
