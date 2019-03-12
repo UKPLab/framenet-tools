@@ -146,7 +146,7 @@ def create_frames_file(
                     + "\t"
                 )
                 # Static position
-                content += "1"
+                content += "0"
 
             content += "\n"
 

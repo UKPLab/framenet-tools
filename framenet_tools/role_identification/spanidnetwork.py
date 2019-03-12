@@ -6,19 +6,20 @@ import torchtext
 
 from torch.autograd import Variable
 from tqdm import tqdm
+from typing import List
 
 from framenet_tools.config import ConfigManager
 
 
 class Net(nn.Module):
     def __init__(
-            self,
-            embedding_size: int,
-            hidden_sizes: list,
-            activation_functions: list,
-            num_classes: int,
-            embedding_layer: torch.nn.Embedding,
-            device: torch.device,
+        self,
+        embedding_size: int,
+        hidden_sizes: list,
+        activation_functions: list,
+        num_classes: int,
+        embedding_layer: torch.nn.Embedding,
+        device: torch.device,
     ):
         super(Net, self).__init__()
 
@@ -28,7 +29,7 @@ class Net(nn.Module):
         self.input_size = embedding_size * 2
         self.hidden_size = hidden_sizes[0]
 
-        #print(embedding_size)
+        # print(embedding_size)
         self.lstm = nn.LSTM(self.input_size, hidden_sizes[0])
 
         self.hidden_to_tag = nn.Linear(hidden_sizes[0], num_classes)
@@ -47,20 +48,15 @@ class Net(nn.Module):
         lookup_tensor = x.to(self.device)
         x = self.embedding_layer(lookup_tensor)
 
-        # print(x)
-
-        for i in range(len(x)-1):
+        for i in range(len(x) - 1):
             word = torch.cat((x[i], x[-1]), 0)
 
-            # print(word)
-
-            #x = Variable(self.embedding_layer(x)).to(self.device)
-            #print(x)
             word = word.view(1, 1, self.input_size)
             lstm_out, self.hidden = self.lstm(word, self.hidden)
 
             lstm_out = self.hidden_to_tag(lstm_out)
-            outputs += [lstm_out] # [F.log_softmax(lstm_out, dim=1)]
+            outputs += [lstm_out]
+            # [F.log_softmax(lstm_out, dim=1)]
 
         outputs = torch.stack(outputs, 1).squeeze(2)
 
@@ -99,11 +95,12 @@ class SpanIdNetwork(object):
             self.net.parameters(), lr=self.cM.learning_rate
         )
 
-    def predict(self, sent: int):
+    def predict(self, sent: List[int]):
         """
+        Predicts the BIO-Tags of a given sentence.
 
-        :param word:
-        :return:
+        :param sent: The sentence to predict (already converted by the vocab)
+        :return: A list of possibilities for each word for each tag
         """
 
         sent = torch.tensor(sent, dtype=torch.long)
@@ -115,6 +112,7 @@ class SpanIdNetwork(object):
 
     def reset_hidden(self):
         """
+        Resets the hidden states of the LSTM.
 
         :return:
         """
@@ -133,7 +131,6 @@ class SpanIdNetwork(object):
 
         :param train_iter: The train dataset iterator including all data for training
         :param dataset_size: The size of the dataset
-        :param batch_size: The batchsize to use for training
         :return:
         """
 
@@ -155,38 +152,20 @@ class SpanIdNetwork(object):
 
                 self.net.hidden = self.net.init_hidden()
 
-                #print("new sent!")
-
-                #for i in range(len(sent)-1):
-                #for word, label in zip(sent, labels):
-
-                # word = torch.tensor([sent[i]] + [sent[-1]])
-                # label = labels[i]
-                #print(sent)
-                #print(labels)
                 # Forward + Backward + Optimize
                 self.optimizer.zero_grad()  # zero the gradient buffer
                 outputs = self.net(sent)
 
                 outputs = torch.reshape(outputs, (1, 5, output_dim))
 
-                #print(outputs)
-
-                #print(labels)
-                #label = torch.tensor([label], dtype=torch.long).to(self.device)
-                #print(label)
                 loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
                 _, predicted = torch.max(outputs.data, 1)
                 total_hits += (predicted == labels).sum().item()
-                # print(predicted)
-                # print(labels)
-                # print(total_hits)
-                # print(count)
 
-                count += output_dim #labels.size(0)
+                count += output_dim  # labels.size(0)
 
                 # Just update every 20 iterations
                 if count % 20 == 0:
