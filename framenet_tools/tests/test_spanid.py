@@ -16,17 +16,18 @@ N = 10
 
 def create_random_sentence(n: int):
     """
+    Creates a random sentence with the length of n.
 
-    :param n:
-    :return:
+    NOTE: Randomized!
+
+    :param n: The length of the sentence to generate
+    :return: A list of random words
     """
 
-    t = ""
+    t = []
 
     for i in range(n):
-        t += create_random_string() + " "
-
-    t = t.rsplit(" ")[:n]
+        t.append(create_random_string())
 
     return t
 
@@ -38,12 +39,13 @@ def create_network(
     cM: ConfigManager = ConfigManager(),
 ):
     """
-    
-    :param embedding_vocab_size:
-    :param embedding_dim:
-    :param num_classes:
-    :param cM:
-    :return:
+    Creates a instance of SpanIdNetwork with the given parameters.
+
+    :param embedding_vocab_size: The size of the embedding vocab
+    :param embedding_dim: The dimension of the embeddings
+    :param num_classes: The number of different classes
+    :param cM: A instance of ConfigManager
+    :return: A SpanIdNetwork object
     """
 
     cM.embedding_size = embedding_dim
@@ -68,9 +70,12 @@ def test_span_identifier():
     assert isinstance(sI, SpanIdentifier)
 
 
-def test_query_all_format():
+@pytest.mark.parametrize("runs", range(N))
+def test_query_all_format(runs: int):
     """
     Checks if the returned spans of the query_all-function are of the right type and well formatted.
+
+    NOTE: Randomized!
 
     :return:
     """
@@ -90,6 +95,9 @@ def test_query_all_format():
 @pytest.mark.parametrize("n", range(N))
 def test_query_all(n: int):
     """
+    Tests if the size of the spans returned by query_all equals the expected size.
+
+    NOTE: Randomized!
 
     :return:
     """
@@ -104,9 +112,12 @@ def test_query_all(n: int):
     assert len(predicted_spans) == n * (n + 1) / 2
 
 
-def test_query_static_format():
+@pytest.mark.parametrize("runs", range(N))
+def test_query_static_format(runs: int):
     """
     Checks if the returned spans of the static-function are of the right type and well formatted.
+
+    NOTE: Randomized!
 
     :return:
     """
@@ -151,6 +162,7 @@ def test_query_static(n: int):
 
 def test_span_id_network():
     """
+    Simple test if the SpanIdNetwork can be created.
 
     :return:
     """
@@ -160,23 +172,28 @@ def test_span_id_network():
     assert isinstance(span_id_network, SpanIdNetwork)
 
 
-def test_predict_nn():
+@pytest.mark.parametrize("runs", range(10))
+def test_predict_nn(runs: int):
     """
+    Tests whether the prediction format and sizes match the expected.
+
+    NOTE: Randomized!
 
     :return:
     """
 
     n = 20
-    num_classes = 5
+    num_classes = 2
 
     cM = ConfigManager()
     cM.use_cuda = False
 
-    span_identifier_network = create_network(num_classes=num_classes, cM=cM)
+    span_identifier_network = create_network(embedding_vocab_size=n, num_classes=num_classes, cM=cM)
 
     test_str = [random.randint(0, num_classes+1)] * n
 
     predicted_spans = span_identifier_network.predict(test_str)
+    # print(predicted_spans)
 
     assert predicted_spans.shape == torch.Size([1, n-1, num_classes])
 
