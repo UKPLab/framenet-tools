@@ -1,6 +1,5 @@
 import spacy
 
-import en_core_web_sm
 import torch
 import torch.nn as nn
 
@@ -26,7 +25,7 @@ class SpanIdentifier(object):
         self.cM = cM
         self.network = None
 
-        self.nlp = en_core_web_sm.load()
+        self.nlp = spacy.load("en_core_web_sm")
 
     def query(self, annotation: Annotation, use_static: bool = True):
         """

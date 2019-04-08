@@ -105,6 +105,20 @@ def extract_file(file_path: str):
     os.remove(file_path)
 
 
+def get_spacy_en_model():
+    """
+    Installs the required en_core_web_sm model
+
+    NOTE: Solution for Windows? TODO
+    :return:
+    """
+    call(["python",
+          "m",
+          "spacy",
+          "download",
+          "en_core_web_sm"])
+
+
 def download(url: str):
     """
     Downloads and extracts a file given as a url.

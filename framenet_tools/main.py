@@ -16,7 +16,7 @@ from framenet_tools.evaluator import (
     evaluate_frame_identification,
     evaluate_fee_identification,
     evaluate_span_identification)
-from framenet_tools.frame_identification.utils import download
+from framenet_tools.frame_identification.utils import download, get_spacy_en_model
 from framenet_tools.role_identification.spanidentifier import SpanIdentifier
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
@@ -93,6 +93,8 @@ def eval_args(
             check_files(os.path.join(os.getcwd(), parsed.download))
         else:
             check_files(os.getcwd())
+
+        get_spacy_en_model()
 
     if parsed.action == "convert":
 

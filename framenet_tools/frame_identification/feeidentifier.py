@@ -1,6 +1,6 @@
-import en_core_web_sm
 import logging
 import nltk
+import spacy
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tree import Tree
@@ -169,7 +169,7 @@ class FeeIdentifier(object):
         self.cM = cM
 
         if self.cM.use_spacy:
-            self.nlp = en_core_web_sm.load()
+            self.nlp = spacy.load("en_core_web_sm")
         else:
             self.lemmatizer = WordNetLemmatizer()
 
