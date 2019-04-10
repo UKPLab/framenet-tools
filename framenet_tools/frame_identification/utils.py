@@ -1,4 +1,3 @@
-import en_core_web_sm
 import logging
 import nltk
 import random
@@ -141,10 +140,12 @@ def download(url: str):
 
 def get_sentences(raw: str, use_spacy: bool = False):
     """
+    Parses a raw string of text into structured sentences.
+    This is either done via nltk or spacy; default being nltk.
 
-    :param raw:
-    :param use_spacy:
-    :return:
+    :param raw: A raw string of text
+    :param use_spacy: True to use spacy, otherwise nltk
+    :return: A list of sentences, consisting of tokens
     """
 
     if use_spacy:
@@ -155,12 +156,13 @@ def get_sentences(raw: str, use_spacy: bool = False):
 
 def get_sentences_spacy(raw: str):
     """
+    The spacy version of the get_sentences method.
 
-    :param raw:
-    :return:
+    :param raw: A raw string of text
+    :return: A list of sentences, consisting of tokens
     """
 
-    nlp = en_core_web_sm.load()
+    nlp = spacy.load("en_core_web_sm")
     doc = nlp(raw)
     sents = [sent.string.strip() for sent in doc.sents]
 
@@ -178,9 +180,10 @@ def get_sentences_spacy(raw: str):
 
 def get_sentences_nltk(raw: str):
     """
+    The nltk version of the get_sentences method.
 
-    :param raw:
-    :return:
+    :param raw: A raw string of text
+    :return: A list of sentences, consisting of tokens
     """
 
     sents = nltk.sent_tokenize(raw)
