@@ -4,7 +4,7 @@ from tqdm import tqdm
 from typing import List
 
 from framenet_tools.frame_identification.feeidentifier import FeeIdentifier
-from framenet_tools.frame_identification.utils import download_resources, get_sentences
+from framenet_tools.frame_identification.utils import download_resources, get_sentences, get_spacy_en_model
 from framenet_tools.config import ConfigManager
 from framenet_tools.role_identification.spanidentifier import SpanIdentifier
 from framenet_tools.data_handler.annotation import Annotation
@@ -32,6 +32,7 @@ class DataReader(object):
         self.dataset = []
 
         download_resources()
+        get_spacy_en_model()
 
     def digest_raw_data(self, elements: list, sentences: list):
         """

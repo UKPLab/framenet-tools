@@ -111,8 +111,9 @@ def get_spacy_en_model():
     NOTE: Solution for Windows? TODO
     :return:
     """
-    call(["python",
-          "m",
+
+    call(["python3",
+          "-m",
           "spacy",
           "download",
           "en_core_web_sm"])
