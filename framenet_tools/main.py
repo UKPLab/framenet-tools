@@ -197,3 +197,20 @@ def main():
 
     eval_args(parser, cM)
 
+
+logging.basicConfig(
+        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
+    )
+
+cM = ConfigManager()
+
+parser = create_argparser()
+
+file = cM.train_files[0]
+m_data_reader = DataReader(cM)
+m_data_reader.read_data(file[0], file[1])
+
+span_identifier = SpanIdentifier(cM)
+span_identifier.train(m_data_reader.annotations)
+evaluate_span_identification(cM, span_identifier)
+

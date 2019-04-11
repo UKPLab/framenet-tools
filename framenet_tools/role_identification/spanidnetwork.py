@@ -26,13 +26,14 @@ class Net(nn.Module):
         self.device = device
         self.embedding_layer = embedding_layer
 
+        self.dropout = nn.Dropout(p=0.2)
         self.input_size = embedding_size * 2
         self.hidden_size = hidden_sizes[0]
 
         # print(embedding_size)
-        self.lstm = nn.LSTM(self.input_size, hidden_sizes[0])
+        self.lstm = nn.LSTM(self.input_size, hidden_sizes[0], bidirectional=True)
 
-        self.hidden_to_tag = nn.Linear(hidden_sizes[0], num_classes)
+        self.hidden_to_tag = nn.Linear(hidden_sizes[0] * 1 * 2, num_classes)
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
@@ -47,6 +48,35 @@ class Net(nn.Module):
 
         lookup_tensor = x.to(self.device)
         x = self.embedding_layer(lookup_tensor)
+
+        words = []
+
+        for i in range(len(x) - 1):
+            word = torch.cat((x[i], x[-1]), 1)
+
+            words += [word]
+
+        words = torch.stack(words)
+
+        # b = torch.Tensor(len(x)-1, 1, 600)
+        # torch.cat(words, out=b)
+
+        # b = b.to(self.device)
+
+        y, (h_n, c_n) = self.lstm(words)
+        # print(y)
+
+        for i in y:
+            # word = torch.cat((x[i], x[-1]), 0)
+
+            outputs += [self.hidden_to_tag(i)]
+
+        #outputs = outputs[:-1]
+
+        #y = self.hidden_to_tag(self.dropout(torch.cat([c_n[i,:, :] for i in range(c_n.shape[0])], dim=1)))
+        outputs = torch.stack(outputs, 1).squeeze(2)
+
+        return outputs
 
         for i in range(len(x) - 1):
             word = torch.cat((x[i], x[-1]), 0)
@@ -102,6 +132,8 @@ class SpanIdNetwork(object):
         :param sent: The sentence to predict (already converted by the vocab)
         :return: A list of possibilities for each word for each tag
         """
+
+        sent = [[t] for t in sent]
 
         sent = torch.tensor(sent, dtype=torch.long)
 

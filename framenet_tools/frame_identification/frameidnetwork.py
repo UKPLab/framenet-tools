@@ -76,7 +76,7 @@ class Net(nn.Module):
         lookup_tensor = sent.to(self.device)
         embedded_sent = self.embedding_layer(lookup_tensor)
 
-        averaged_sent = embedded_sent.mean(dim=0)
+        averaged_sent = embedded_sent.mean(dim=1)
 
         # Reappend the FEE
 
@@ -98,6 +98,7 @@ class Net(nn.Module):
         :return: The prediction of the network
         """
 
+        x = torch.transpose(x, 0, 1)
         x = Variable(self.average_sentence(x)).to(self.device)
 
         # Programmatically pass x through all layers
@@ -222,7 +223,6 @@ class FrameIDNetwork(object):
                 "data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch
             )
 
-        writer.export_scalars_to_json("data/logging/t_loss.json")
         writer.close()
 
     def predict(self, dataset_iter: torchtext.data.Iterator):
@@ -275,7 +275,7 @@ class FrameIDNetwork(object):
 
             _, predicted = torch.max(outputs.data, 1)
 
-            total += 1
+            total += self.cM.batch_size
 
             correct += (predicted == labels).sum()
 

@@ -240,7 +240,7 @@ class SpanIdentifier(object):
             b = role_position[0]
             bio[b] = 0
 
-            for i in range(b, role_position[1]):
+            for i in range(b+1, role_position[1]+1):
                 bio[i] = 1
 
         return bio
