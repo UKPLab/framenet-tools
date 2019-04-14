@@ -2,9 +2,11 @@ import logging
 import torch
 import torch.nn as nn
 import torchtext
+
 from torch.autograd import Variable
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
+from typing import List
 
 from framenet_tools.config import ConfigManager
 
@@ -224,6 +226,21 @@ class FrameIDNetwork(object):
             )
 
         writer.close()
+
+    def query(self, x: List[int]):
+        """
+        Query a single sentence
+        
+        :param x:
+        :return:
+        """
+
+        x = torch.tensor(x)
+
+        output = self.net(x)
+        _, predicted = torch.max(output.data, 1)
+
+        return predicted.to("cpu")
 
     def predict(self, dataset_iter: torchtext.data.Iterator):
         """

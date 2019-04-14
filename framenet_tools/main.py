@@ -9,7 +9,6 @@ from subprocess import call
 
 # from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
 from framenet_tools.data_handler.reader import DataReader
-from framenet_tools.data_handler.semeval_reader import SemevalReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
@@ -17,8 +16,7 @@ from framenet_tools.evaluator import (
     evaluate_fee_identification,
     evaluate_span_identification)
 from framenet_tools.frame_identification.utils import download, get_spacy_en_model
-from framenet_tools.lexicon.lexicon_runner import create_lexicon, load_lexicon
-from framenet_tools.role_identification.spanidentifier import SpanIdentifier
+from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
 

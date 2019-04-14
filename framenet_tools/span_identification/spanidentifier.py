@@ -9,7 +9,7 @@ from typing import List
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
-from framenet_tools.role_identification.spanidnetwork import SpanIdNetwork
+from framenet_tools.span_identification.spanidnetwork import SpanIdNetwork
 
 
 class SpanIdentifier(object):

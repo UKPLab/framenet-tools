@@ -52,6 +52,8 @@ class ConfigManager(object):
         self.learning_rate = 0.001
         self.embedding_size = 300
 
+        self.level = 3
+
         if not self.load_config():
             self.create_config()
 
@@ -137,6 +139,9 @@ class ConfigManager(object):
                     if key == "syntax_only_mode":
                         self.syntax_only_mode = config[section][key] == "True"
 
+                    if key == "level":
+                        self.level = int(config[section][key])
+
             if section == "HYPERPARAMETER":
                 for key in config[section]:
                     if key == "hidden_sizes":
@@ -210,6 +215,7 @@ class ConfigManager(object):
         config_string += "use_cuda: " + str(self.use_cuda) + "\n"
         config_string += "use_spacy: " + str(self.use_spacy) + "\n"
         config_string += "syntax_only_mode: " + str(self.syntax_only_mode) + "\n"
+        config_string += "level: " + str(self.level) + "\n"
 
         config_string += "\n[HYPERPARAMETER]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"

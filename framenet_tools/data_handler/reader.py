@@ -1,12 +1,13 @@
+import json
 import logging
 
 from tqdm import tqdm
 from typing import List
 
-from framenet_tools.frame_identification.feeidentifier import FeeIdentifier
+from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
 from framenet_tools.frame_identification.utils import download_resources, get_sentences, get_spacy_en_model
 from framenet_tools.config import ConfigManager
-from framenet_tools.role_identification.spanidentifier import SpanIdentifier
+from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 from framenet_tools.data_handler.annotation import Annotation
 
 
@@ -184,6 +185,36 @@ class DataReader(object):
         self.digest_raw_data(elements, sentences)
 
         self.loaded(True)
+
+    def export_to_json(self, path: str):
+
+        out_data = []
+        sent_count = 0
+
+        for annotations in self.annotations:
+            data_dict = dict()
+            data_dict["sentence"] = annotations[0].sentence
+            data_dict["sentence_id"] = sent_count
+            data_dict["prediction"] = []
+
+            sent_count += 1
+
+            frame_count = 0
+
+            for annotation in annotations:
+
+                prediction_dict = dict()
+                prediction_dict["id"] = frame_count
+                prediction_dict["fee"] = annotation.fee_raw
+                prediction_dict["frame"] = annotation.frame
+
+                data_dict["prediction"].append(prediction_dict)
+                frame_count += 1
+
+            out_data.append(data_dict)
+
+        with open(path, "w") as out:
+            json.dump(out_data, out, indent=4)
 
     def predict_fees(self):
         """

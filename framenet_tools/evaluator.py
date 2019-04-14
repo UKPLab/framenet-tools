@@ -6,7 +6,7 @@ from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.semeval_reader import SemevalReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.data_handler.reader import DataReader
-from framenet_tools.role_identification.spanidentifier import SpanIdentifier
+from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
 
 def calc_f(tp: int, fp: int, fn: int):

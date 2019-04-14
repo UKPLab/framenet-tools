@@ -5,6 +5,7 @@ from torchtext import data
 import pickle
 from typing import List
 
+from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
@@ -130,6 +131,22 @@ class FrameIdentifier(object):
             found = False
 
         return tp, fp, fn
+
+    def query(self, annotation: Annotation):
+        """
+
+        :param annotation:
+        :return:
+        """
+
+        x = [annotation.fee_raw] + annotation.sentence
+
+        x = [[self.input_field.vocab.stoi[t]] for t in x]
+
+        frame = self.network.query(x)
+        frame = self.output_field.vocab.itos[frame.item()]
+
+        return frame
 
     def write_predictions(self, file: str, out_file: str, fee_only: bool = False):
         """

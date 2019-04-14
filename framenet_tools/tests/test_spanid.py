@@ -3,13 +3,11 @@ import torch
 import torch.nn as nn
 import random
 
-from typing import List
-
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.annotation import Annotation
-from framenet_tools.role_identification.spanidnetwork import Net, SpanIdNetwork
-from framenet_tools.role_identification.spanidentifier import SpanIdentifier
-from framenet_tools.tests.test_reader import RandomFiles, create_random_string
+from framenet_tools.span_identification.spanidnetwork import SpanIdNetwork
+from framenet_tools.span_identification.spanidentifier import SpanIdentifier
+from framenet_tools.tests.test_reader import create_random_string
 
 N = 10
 
