@@ -24,13 +24,13 @@ def create_lexicon(lexicon=LexiconDataSet()):
     """
 
     # TODO paths
-    lexicalUnitDir = "data/raw/framenet/framenet_v15/lu"
-    lexicalFrameDir = "data/raw/framenet/framenet_v15/frame"
+    lexicalUnitDir = "data/fndata-1.5-with-dev/train/lu"
+    lexicalFrameDir = "data/fndata-1.5-with-dev/frame"
     lexicon.createLexicon(lexicalUnitDir)
     lexicon.createFrameToFE(lexicalFrameDir)
 
     lexicon.loaded = True
-    lexicon.save("lexicon.file")
+    lexicon.save("data/lexicon.file")
 
 
 def create_salsa_lexicon(lexicon=LexiconDataSet()):

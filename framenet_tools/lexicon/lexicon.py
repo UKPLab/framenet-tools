@@ -98,7 +98,7 @@ class LexiconDataSet(object):
         :return:
         """
 
-        print(fullPath)
+        logging.info(f'{fullPath}')
         self.loadSalsa(fullPath)
 
     def createLexicon(self, lexicalUnitDir):
@@ -111,7 +111,7 @@ class LexiconDataSet(object):
         for file in os.listdir(lexicalUnitDir):
             if file.endswith(".xml"):
                 fullPath = os.path.join(lexicalUnitDir, file)
-                print(fullPath)
+                logging.info(f'{fullPath}')
                 self.loadFileToLexicon(fullPath)
 
     def save(self, lexiconFile):
@@ -122,9 +122,9 @@ class LexiconDataSet(object):
         """
 
         if self.loaded:
-            logging.error('Saving dataset to [%s]', lexiconFile)
+            logging.info(f'Saving dataset to {lexiconFile}')
             with lzma.open(lexiconFile, 'wb') as f:
                 pickle.dump(self, f)
         else:
-            logging.error('Dataset not loaded, call "build" method first!')
+            logging.error(f'Dataset not loaded, call "build" method first!')
 

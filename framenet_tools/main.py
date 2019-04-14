@@ -17,6 +17,7 @@ from framenet_tools.evaluator import (
     evaluate_fee_identification,
     evaluate_span_identification)
 from framenet_tools.frame_identification.utils import download, get_spacy_en_model
+from framenet_tools.lexicon.lexicon_runner import create_lexicon, load_lexicon
 from framenet_tools.role_identification.spanidentifier import SpanIdentifier
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
@@ -205,6 +206,12 @@ logging.basicConfig(
 cM = ConfigManager()
 
 parser = create_argparser()
+
+#create_lexicon()
+
+#lex = load_lexicon("data/lexicon.file")
+
+#print(lex)
 
 file = cM.train_files[0]
 m_data_reader = DataReader(cM)

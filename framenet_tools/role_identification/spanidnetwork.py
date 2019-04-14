@@ -31,7 +31,7 @@ class Net(nn.Module):
         self.hidden_size = hidden_sizes[0]
 
         # print(embedding_size)
-        self.lstm = nn.LSTM(self.input_size, hidden_sizes[0], bidirectional=True)
+        self.lstm = nn.LSTM(self.input_size, hidden_sizes[0], 2, bidirectional=True, dropout=0.25)
 
         self.hidden_to_tag = nn.Linear(hidden_sizes[0] * 1 * 2, num_classes)
         self.hidden = self.init_hidden()
@@ -188,7 +188,7 @@ class SpanIdNetwork(object):
                 self.optimizer.zero_grad()  # zero the gradient buffer
                 outputs = self.net(sent)
 
-                outputs = torch.reshape(outputs, (1, 5, output_dim))
+                outputs = torch.reshape(outputs, (1, 3, output_dim))
 
                 loss = self.criterion(outputs, labels)
                 loss.backward()

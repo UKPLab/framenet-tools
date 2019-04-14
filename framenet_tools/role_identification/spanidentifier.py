@@ -19,7 +19,7 @@ class SpanIdentifier(object):
         self.input_field = data.Field(
             dtype=torch.long, use_vocab=True, preprocessing=None
         )
-        self.output_field = data.Field(dtype=torch.long)
+        self.output_field = data.Field(dtype=torch.long, pad_token=None, unk_token=None)
         self.data_fields = [("Sentence", self.input_field), ("BIO", self.output_field)]
 
         self.cM = cM
@@ -70,15 +70,19 @@ class SpanIdentifier(object):
 
         bio_tags = torch.argmax(bio_tags, 1)
 
-        for bio_tag in bio_tags:
-            bio_tag = self.output_field.vocab.itos[bio_tag]
+        bio_tags = [self.output_field.vocab.itos[bio_tag] for bio_tag in bio_tags]
 
-            if bio_tag == 0:
+        for bio_tag in bio_tags:
+            #bio_tag = self.output_field.vocab.itos[bio_tag]
+
+            if bio_tag == "B":
                 new_span = count
 
-            if bio_tag == 2 and new_span != -1:
+            if bio_tag == "O" and new_span != -1:
                 possible_roles.append((new_span, count - 1))
                 new_span = -1
+
+            count += 1
 
         return possible_roles
 
@@ -234,14 +238,14 @@ class SpanIdentifier(object):
 
         sentence_length = len(annotation.sentence)
 
-        bio = [2] * sentence_length
+        bio = ["O"] * sentence_length
 
         for role_position in annotation.role_positions:
             b = role_position[0]
-            bio[b] = 0
+            bio[b] = "B"
 
             for i in range(b+1, role_position[1]+1):
-                bio[i] = 1
+                bio[i] = "I"
 
         return bio
 
@@ -294,6 +298,9 @@ class SpanIdentifier(object):
         """
 
         xs, ys = self.get_dataset(annotations)
+
+        # xs = xs[:100]
+        # ys = ys[:100]
 
         # Not needed atm...
         # ys = self.to_one_hot(ys)
