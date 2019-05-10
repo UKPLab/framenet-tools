@@ -1,9 +1,7 @@
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
-from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.pipelinestage import PipelineStage
 

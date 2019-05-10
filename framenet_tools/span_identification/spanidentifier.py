@@ -289,6 +289,35 @@ class SpanIdentifier(object):
 
         return iterator
 
+    def get_dataset_comb(self, annotations: List[List[Annotation]]):
+        xs = []
+        ys = []
+
+        for annotation_sentences in annotations:
+
+
+
+            for annotation in annotation_sentences:
+
+                sent_len = len(annotation.sentence)
+                spans = ["N"] * int((sent_len * (sent_len + 1) / 2))
+
+                for role_pos in annotation.role_positions:
+
+                    t = sum([sent_len - i for i in range(1, role_pos[0])]) + role_pos[1] - 1
+
+                    #print(t)
+                    #print(role_pos)
+                    #print(sent_len)
+                    spans[t] = "Y"
+
+                ys.append(spans)
+
+                sentence = annotation.sentence + [annotation.fee_raw]
+                xs.append(sentence)
+
+        return xs, ys
+
     def train(self, annotations: List[List[Annotation]]):
         """
         Trains the model on all of the given annotations.
@@ -297,7 +326,8 @@ class SpanIdentifier(object):
         :return:
         """
 
-        xs, ys = self.get_dataset(annotations)
+        # xs, ys = self.get_dataset(annotations)
+        xs, ys = self.get_dataset_comb(annotations)
 
         # xs = xs[:100]
         # ys = ys[:100]

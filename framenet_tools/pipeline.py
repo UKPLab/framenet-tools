@@ -55,6 +55,7 @@ class Pipeline(object):
         for stage in self.stages:
             stage.predict(m_reader)
 
+        m_reader.predict_spans()
         m_reader.export_to_json("test.json")
 
 

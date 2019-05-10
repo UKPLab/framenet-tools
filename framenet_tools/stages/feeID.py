@@ -15,12 +15,14 @@ class FeeID(PipelineStage):
     def train(self, data: List[str]):
 
         # Nothing to train on this stage
-
         return
 
     def predict(self, m_reader: DataReader):
+        """
 
-        # m_reader.predict_fees()
+        :param m_reader:
+        :return:
+        """
 
         annotations = []
         fee_finder = FeeIdentifier(self.cM)
@@ -38,24 +40,3 @@ class FeeID(PipelineStage):
             annotations.append(predicted_annotations)
 
         m_reader.annotations = annotations
-
-        """
-        annotations = []
-
-        for annotation in data:
-            sentence = annotation.sentence
-
-            possible_fees = self.fee_finder.query([sentence])
-
-            predicted_annotations = []
-
-            # Create new Annotation for each possible frame evoking element
-            for possible_fee in possible_fees:
-                predicted_annotations.append(
-                    Annotation(fee_raw=possible_fee, sentence=sentence)
-                )
-
-            annotations.append(predicted_annotations)
-
-        data = annotations
-        """

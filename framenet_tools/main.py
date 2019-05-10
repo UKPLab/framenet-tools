@@ -216,6 +216,6 @@ m_data_reader = DataReader(cM)
 m_data_reader.read_data(file[0], file[1])
 
 span_identifier = SpanIdentifier(cM)
-span_identifier.train(m_data_reader.annotations)
-evaluate_span_identification(cM, span_identifier)
+#span_identifier.train(m_data_reader.annotations)
+evaluate_span_identification(cM)
 

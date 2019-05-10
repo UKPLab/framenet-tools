@@ -66,10 +66,17 @@ class Net(nn.Module):
         y, (h_n, c_n) = self.lstm(words)
         # print(y)
 
-        for i in y:
-            # word = torch.cat((x[i], x[-1]), 0)
+        for ci in range(len(y)):
+            i = y[ci]
 
-            outputs += [self.hidden_to_tag(i)]
+            for cj in range(ci, len(y)):
+                j = y[cj]
+                # word = torch.cat((x[i], x[-1]), 0)
+
+                f = i + j
+                #f = torch.cat(((i+j), (i-j)), 0) # [i+j, i-j]
+
+                outputs += [self.hidden_to_tag(f)]
 
         #outputs = outputs[:-1]
 
@@ -78,11 +85,16 @@ class Net(nn.Module):
 
         return outputs
 
+        hidden_states = []
+
         for i in range(len(x) - 1):
             word = torch.cat((x[i], x[-1]), 0)
 
             word = word.view(1, 1, self.input_size)
             lstm_out, self.hidden = self.lstm(word, self.hidden)
+
+            hidden_states.append(self.hidden)
+
 
             lstm_out = self.hidden_to_tag(lstm_out)
             outputs += [lstm_out]
@@ -171,6 +183,7 @@ class SpanIdNetwork(object):
             total_loss = 0
             total_hits = 0
             count = 0
+            occ = 0
 
             progress_bar = tqdm(train_iter)
 
@@ -188,13 +201,17 @@ class SpanIdNetwork(object):
                 self.optimizer.zero_grad()  # zero the gradient buffer
                 outputs = self.net(sent)
 
-                outputs = torch.reshape(outputs, (1, 3, output_dim))
+                outputs = torch.reshape(outputs, (1, 2, output_dim))
 
                 loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
                 _, predicted = torch.max(outputs.data, 1)
+
+                su = sum(predicted[0])
+
+                occ += su # /len(predicted[0])
                 total_hits += (predicted == labels).sum().item()
 
                 count += output_dim  # labels.size(0)
@@ -204,5 +221,5 @@ class SpanIdNetwork(object):
                     train_loss = round((total_loss / count), 4)
                     train_acc = round((total_hits / count), 4)
                     progress_bar.set_description(
-                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Frames: {count}/{dataset_size}"
+                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Frames: {count}/{dataset_size} OccSpans: {occ}"
                     )

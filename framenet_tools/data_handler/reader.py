@@ -1,6 +1,10 @@
 import json
 import logging
+import re
 
+import nltk
+import spacy
+from allennlp.predictors.predictor import Predictor
 from tqdm import tqdm
 from typing import List
 
@@ -34,6 +38,8 @@ class DataReader(object):
 
         download_resources()
         get_spacy_en_model()
+
+        self.nlp = spacy.load("en_core_web_sm")
 
     def digest_raw_data(self, elements: list, sentences: list):
         """
@@ -187,6 +193,12 @@ class DataReader(object):
         self.loaded(True)
 
     def export_to_json(self, path: str):
+        """
+        Exports the list of annotations to a json file
+
+        :param path: The path of the json file
+        :return:
+        """
 
         out_data = []
         sent_count = 0
@@ -239,6 +251,75 @@ class DataReader(object):
 
             self.annotations.append(predicted_annotations)
 
+    def pred_allen(self):
+        """
+
+        :return:
+        """
+
+        print("starting")
+
+        predictor = Predictor.from_path(
+            "https://s3-us-west-2.amazonaws.com/allennlp/models/srl-model-2018.05.25.tar.gz")
+
+        num_sentences = range(len(self.sentences))
+
+        for i in tqdm(num_sentences):
+
+            sentence = " ".join(self.sentences[i])
+
+            prediction = predictor.predict(sentence)
+
+            verbs = [t["verb"] for t in prediction["verbs"]]
+
+            for annotation in self.annotations[i]:
+
+                spans = []
+
+                if annotation.fee_raw in verbs:
+                    #print("d")
+                    desc = prediction["verbs"][verbs.index(annotation.fee_raw)]["description"]
+
+                    c = 0
+
+
+                    while re.search("\[ARG[" + str(c) + "]: [^\]]*", desc) is not None:
+
+                        span = re.search("\[ARG[" + str(c) + "]: [^\]]*", desc).span()
+
+                        arg = desc[span[0]+7:span[1]]
+
+                        # arg = nltk.word_tokenize(arg)
+                        arg = self.nlp(arg)
+
+                        for j in range(len(annotation.sentence)):
+
+                            word = annotation.sentence[j]
+
+                            if word == arg[0].text:
+                                saved = j
+
+                                for arg_word in arg:
+
+                                    if not arg_word.text == annotation.sentence[j]:
+                                        break
+
+                                    saved2 = j
+                                    j+=1
+
+
+                        #annotation.sentence.index()
+
+                        spans.append((saved, saved2))
+
+                        c += 1
+
+                annotation.role_positions = spans
+
+
+                # print(prediction["verbs"])
+
+
     def predict_spans(self, span_identifier: SpanIdentifier = None):
         """
         Predicts the spans of the currently loaded dataset.
@@ -248,6 +329,10 @@ class DataReader(object):
 
         :return:
         """
+
+        self.pred_allen()
+
+        return
 
         logging.info(f"Predicting Spans")
         use_static = False
