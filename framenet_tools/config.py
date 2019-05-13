@@ -5,6 +5,9 @@ import re
 
 from typing import List
 
+from framenet_tools.data_handler.frame_embedding_manager import FrameEmbeddingManager
+from framenet_tools.data_handler.word_embedding_manager import WordEmbeddingManager
+
 CONFIG_PATH = "config.file"
 
 
@@ -56,6 +59,9 @@ class ConfigManager(object):
 
         if not self.load_config():
             self.create_config()
+
+        self.wEM = WordEmbeddingManager()
+        self.fEM = FrameEmbeddingManager()
 
     def load_defaults(self):
         """

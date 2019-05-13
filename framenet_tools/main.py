@@ -202,9 +202,14 @@ logging.basicConfig(
     )
 
 cM = ConfigManager()
+cM.fEM.read_frame_embeddings()
+
+print(cM.fEM.frames["Practice"])
+cM.wEM.read_word_embeddings()
 
 parser = create_argparser()
 
+exit()
 #create_lexicon()
 
 #lex = load_lexicon("data/lexicon.file")

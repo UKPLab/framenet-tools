@@ -1,5 +1,7 @@
 import logging
 
+from tqdm import tqdm
+
 
 class FrameEmbeddingManager(object):
     def __init__(
@@ -9,6 +11,29 @@ class FrameEmbeddingManager(object):
         self.path = path
         self.frames = dict()
 
+    def string_to_array(self, string: str):
+        """
+        Helper function
+        Converts a string of an array back into an array
+
+        NOTE: specified for float arrays !!!
+
+        :param string: The string of an array
+        :return: The array
+        """
+
+        array = []
+
+        string = string.replace('[', '')
+        string = string.replace(']', '')
+        string = string.rsplit(',')
+
+        for element in string:
+            array.append(float(element))
+
+        # print(array)
+        return array
+
     def read_frame_embeddings(self):
         """
         Loads the previously specified frame embedding file into a dictionary
@@ -16,13 +41,12 @@ class FrameEmbeddingManager(object):
 
         logging.info("Loading frame embeddings")
 
-        file = open(self.path, "r")
-        raw = file.read()
-        file.close()
+        with open(self.path, "r") as file:
+            raw = file.read()
 
         data = raw.rsplit("\n")
 
-        for line in data:
+        for line in tqdm(data):
             line = line.rsplit("\t")
 
             if len(line) > 1:
