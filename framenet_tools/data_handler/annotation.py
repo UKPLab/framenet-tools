@@ -19,6 +19,7 @@ class Annotation(object):
         self.sentence = sentence
         self.roles = roles
         self.role_positions = role_positions
+        self.embedded_frame = None
 
     def create_handle(self):
         """

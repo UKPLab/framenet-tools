@@ -30,6 +30,9 @@ class DataReader(object):
         self.sentences = []
         self.annotations = []
 
+        # Embedded
+        self.embedded_sentences = []
+
         # Flags
         self.is_annotated = None
         self.is_loaded = False
@@ -352,6 +355,68 @@ class DataReader(object):
                 annotation.roles = []
 
         logging.info(f"Done predicting Spans")
+
+    def embed_word(self, word: str):
+        """
+
+        :param word:
+        :return:
+        """
+
+        embedded = self.cM.wEM.embed(word)
+
+        return embedded
+
+    def embed_words(self):
+        """
+
+        NOTE: erases previously embedded data
+        :return:
+        """
+
+        self.embedded_sentences = []
+
+        logging.info("Embedding sentences")
+
+        for sentence in tqdm(self.sentences):
+            embedded_sentence = []
+
+            for word in sentence:
+                embedded_sentence.append(self.embed_word(word))
+
+            self.embedded_sentences.append(embedded_sentence)
+
+
+        logging.info("[Done] embedding sentences")
+
+    def embed_frame(self, frame: str):
+        """
+
+        :param frame:
+        :return:
+        """
+
+        embedded = self.cM.fEM.embed(frame)
+
+        return embedded
+
+
+    def embed_frames(self):
+        """
+
+        NOTE: overrides embedded data inside of the annotation objects
+        :return:
+        """
+
+        logging.info("Embedding sentences")
+
+        for annotations in tqdm(self.annotations):
+
+            for annotation in annotations:
+
+                annotation.embedded_frame = self.embed_frame(annotation.frame)
+
+        logging.info("[Done] embedding sentences")
 
     def get_annotations(self, sentence: List[str] = None):
         """

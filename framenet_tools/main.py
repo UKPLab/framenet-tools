@@ -209,6 +209,13 @@ cM.wEM.read_word_embeddings()
 
 parser = create_argparser()
 
+file = cM.train_files[0]
+m_data_reader = DataReader(cM)
+m_data_reader.read_data(file[0], file[1])
+
+m_data_reader.embed_words()
+m_data_reader.embed_frames()
+
 exit()
 #create_lexicon()
 
@@ -216,9 +223,7 @@ exit()
 
 #print(lex)
 
-file = cM.train_files[0]
-m_data_reader = DataReader(cM)
-m_data_reader.read_data(file[0], file[1])
+
 
 span_identifier = SpanIdentifier(cM)
 #span_identifier.train(m_data_reader.annotations)
