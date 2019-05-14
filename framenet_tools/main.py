@@ -9,6 +9,7 @@ from subprocess import call
 
 # from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
 from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.data_handler.semeval_reader import SemevalReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
@@ -216,7 +217,13 @@ m_data_reader.read_data(file[0], file[1])
 m_data_reader.embed_words()
 m_data_reader.embed_frames()
 
-exit()
+file = cM.semeval_files[0]
+m_data_reader_dev = SemevalReader(cM)
+m_data_reader_dev.read_data(file)
+m_data_reader_dev.embed_words()
+m_data_reader_dev.embed_frames()
+
+# exit()
 #create_lexicon()
 
 #lex = load_lexicon("data/lexicon.file")
@@ -226,6 +233,6 @@ exit()
 
 
 span_identifier = SpanIdentifier(cM)
-#span_identifier.train(m_data_reader.annotations)
-evaluate_span_identification(cM)
+span_identifier.train(m_data_reader, m_data_reader_dev)
+evaluate_span_identification(cM, span_identifier)
 

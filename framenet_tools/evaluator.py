@@ -53,6 +53,8 @@ def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentif
 
         m_data_reader = SemevalReader(cM)
         m_data_reader.read_data(file)
+        m_data_reader.embed_words()
+        m_data_reader.embed_frames()
 
         gold_sentences = deepcopy(m_data_reader.annotations)
 

@@ -18,22 +18,20 @@ class Net(nn.Module):
         hidden_sizes: list,
         activation_functions: list,
         num_classes: int,
-        embedding_layer: torch.nn.Embedding,
         device: torch.device,
     ):
         super(Net, self).__init__()
 
         self.device = device
-        self.embedding_layer = embedding_layer
 
         self.dropout = nn.Dropout(p=0.2)
-        self.input_size = embedding_size * 2
+        self.input_size = 400
         self.hidden_size = hidden_sizes[0]
 
         # print(embedding_size)
         self.lstm = nn.LSTM(self.input_size, hidden_sizes[0], 2, bidirectional=True, dropout=0.25)
 
-        self.hidden_to_tag = nn.Linear(hidden_sizes[0] * 1 * 2, num_classes)
+        self.hidden_to_tag = nn.Linear(hidden_sizes[0] * 2, num_classes)
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
@@ -46,41 +44,34 @@ class Net(nn.Module):
 
         outputs = []
 
-        lookup_tensor = x.to(self.device)
-        x = self.embedding_layer(lookup_tensor)
+        x = torch.cat(x).view(len(x), 1, -1)
 
-        words = []
+        x = Variable(x).to(self.device)
 
-        for i in range(len(x) - 1):
-            word = torch.cat((x[i], x[-1]), 1)
+        #lookup_tensor = x.to(self.device)
+        #x = self.embedding_layer(lookup_tensor)
 
-            words += [word]
+        #words = []
 
-        words = torch.stack(words)
+        #for i in range(len(x) - 1):
+        #    word = torch.cat((x[i], x[-1]), 1)
+
+        #    words += [word]
+
+        #words = torch.stack(words)
 
         # b = torch.Tensor(len(x)-1, 1, 600)
         # torch.cat(words, out=b)
 
         # b = b.to(self.device)
 
-        y, (h_n, c_n) = self.lstm(words)
+        y, (h_n, c_n) = self.lstm(x)
         # print(y)
+        outputs = []
 
-        for ci in range(len(y)):
-            i = y[ci]
+        for i in y:
+            outputs.append(self.hidden_to_tag(i))
 
-            for cj in range(ci, len(y)):
-                j = y[cj]
-                # word = torch.cat((x[i], x[-1]), 0)
-
-                f = i + j
-                #f = torch.cat(((i+j), (i-j)), 0) # [i+j, i-j]
-
-                outputs += [self.hidden_to_tag(f)]
-
-        #outputs = outputs[:-1]
-
-        #y = self.hidden_to_tag(self.dropout(torch.cat([c_n[i,:, :] for i in range(c_n.shape[0])], dim=1)))
         outputs = torch.stack(outputs, 1).squeeze(2)
 
         return outputs
@@ -107,7 +98,7 @@ class Net(nn.Module):
 
 class SpanIdNetwork(object):
     def __init__(
-        self, cM: ConfigManager, embedding_layer: torch.nn.Embedding, num_classes: int
+        self, cM: ConfigManager, num_classes: int
     ):
 
         self.cM = cM
@@ -117,7 +108,7 @@ class SpanIdNetwork(object):
         self.device = torch.device("cuda" if use_cuda else "cpu")
         logging.debug(f"Device used: {self.device}")
 
-        self.embedding_layer = embedding_layer
+        #self.embedding_layer = embedding_layer
         self.num_classes = num_classes
 
         self.net = Net(
@@ -125,7 +116,6 @@ class SpanIdNetwork(object):
             [250],
             self.cM.activation_functions,
             num_classes,
-            embedding_layer,
             self.device,
         )
 
@@ -145,9 +135,11 @@ class SpanIdNetwork(object):
         :return: A list of possibilities for each word for each tag
         """
 
-        sent = [[t] for t in sent]
+        #sent = [[t] for t in sent]
 
-        sent = torch.tensor(sent, dtype=torch.long)
+        #sent = torch.tensor(sent, dtype=torch.long)
+
+        self.reset_hidden()
 
         outputs = self.net(sent)
         # _, predicted = torch.max(outputs.data, 1)
@@ -165,9 +157,7 @@ class SpanIdNetwork(object):
 
     def train_model(
         self,
-        dataset_size: int,
-        train_iter: torchtext.data.Iterator,
-        dev_iter: torchtext.data.Iterator = None,
+        xs, ys, dev_xs, dev_ys
     ):
         """
         Trains the model with the given dataset
@@ -182,26 +172,34 @@ class SpanIdNetwork(object):
 
             total_loss = 0
             total_hits = 0
+            perf_match = 0
             count = 0
             occ = 0
+            dataset_size = len(xs)
 
-            progress_bar = tqdm(train_iter)
+            progress_bar = tqdm(zip(xs, ys))
 
-            for batch in progress_bar:
+            for x, y in progress_bar:
 
-                output_dim = len(batch.BIO)
-                sent = batch.Sentence
+                output_dim = len(x)
+                #sent = batch.Sentence
                 # print(batch.BIO)
-                labels = torch.reshape(batch.BIO, (1, output_dim))
-                labels = Variable(labels).to(self.device)
+
+                #labels = []
+
+                labels = Variable(torch.tensor(y)).to(self.device)
+                labels = torch.reshape(labels, (1, output_dim))
+
+                #x = Variable(x).to(self.device)
 
                 self.net.hidden = self.net.init_hidden()
 
                 # Forward + Backward + Optimize
                 self.optimizer.zero_grad()  # zero the gradient buffer
-                outputs = self.net(sent)
+                outputs = self.net(x)
 
-                outputs = torch.reshape(outputs, (1, 2, output_dim))
+                outputs = torch.reshape(outputs, (1, 3, output_dim))
+
 
                 loss = self.criterion(outputs, labels)
                 loss.backward()
@@ -212,14 +210,44 @@ class SpanIdNetwork(object):
                 su = sum(predicted[0])
 
                 occ += su # /len(predicted[0])
-                total_hits += (predicted == labels).sum().item()
+                total_hits += (predicted == labels).sum().item()/len(predicted[0])
+                if (predicted == labels).sum().item() == len(predicted[0]):
+                    perf_match += 1
 
-                count += output_dim  # labels.size(0)
+                count += 1  # labels.size(0)
 
                 # Just update every 20 iterations
                 if count % 20 == 0:
                     train_loss = round((total_loss / count), 4)
                     train_acc = round((total_hits / count), 4)
+                    perf_acc = round((perf_match / count), 4)
                     progress_bar.set_description(
-                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Frames: {count}/{dataset_size} OccSpans: {occ}"
+                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Perfect: {perf_acc} Frames: {count}/{dataset_size} OccSpans: {occ}"
                     )
+
+            self.eval_dev(dev_xs, dev_ys)
+
+    def eval_dev(self, xs, ys):
+        """
+
+        :param xs:
+        :param ys:
+        :return:
+        """
+
+        hits = 0
+        span_hits = 0
+        total = 0
+
+        for x, y in zip(xs, ys):
+            bio_tags =self.predict(x)[0]
+
+            bio_tags = torch.argmax(bio_tags, 1)
+
+            for gold, pred in zip(y, bio_tags):
+                if gold == pred:
+                    hits += 1
+
+            total += len(y)
+
+        print(f"DEV-Acc: {round((hits/total),4)} Span-acc: {round((span_hits/total),4)}")

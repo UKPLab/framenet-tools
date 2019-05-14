@@ -16,18 +16,18 @@ class SpanIdentifier(object):
     def __init__(self, cM: ConfigManager):
 
         # Create fields
-        self.input_field = data.Field(
-            dtype=torch.long, use_vocab=True, preprocessing=None
-        )
-        self.output_field = data.Field(dtype=torch.long, pad_token=None, unk_token=None)
-        self.data_fields = [("Sentence", self.input_field), ("BIO", self.output_field)]
+        #self.input_field = data.Field(
+        #    dtype=torch.long, use_vocab=True, preprocessing=None
+        #)
+        #self.output_field = data.Field(dtype=torch.long, pad_token=None, unk_token=None)
+        #self.data_fields = [("Sentence", self.input_field), ("BIO", self.output_field)]
 
         self.cM = cM
         self.network = None
 
-        self.nlp = spacy.load("en_core_web_sm")
+        #self.nlp = spacy.load("en_core_web_sm")
 
-    def query(self, annotation: Annotation, use_static: bool = True):
+    def query(self, embedded_sentence: List[float], annotation: Annotation, use_static: bool = True):
         """
         Predicts a possible span set for a given sentence.
 
@@ -41,9 +41,9 @@ class SpanIdentifier(object):
         if use_static:
             return self.query_static(annotation)
         else:
-            return self.query_nn(annotation)
+            return self.query_nn(embedded_sentence, annotation)
 
-    def query_nn(self, annotation: Annotation):
+    def query_nn(self, embedded_sentence: List[float], annotation: Annotation):
         """
         Predicts the possible spans using the LSTM.
 
@@ -53,32 +53,34 @@ class SpanIdentifier(object):
         :return: A list of possible span tuples
         """
 
-        self.network.reset_hidden()
+        #self.network.reset_hidden()
 
         possible_roles = []
         count = 0
         new_span = -1
         sent = []
 
-        for word in annotation.sentence:
+        #for word in annotation.sentence:
 
-            sent.append(self.input_field.vocab.stoi[word])
+        #    sent.append(self.input_field.vocab.stoi[word])
 
-        sent.append(self.input_field.vocab.stoi[annotation.fee_raw])
+        combined = [torch.tensor([word + annotation.embedded_frame]) for word in embedded_sentence]
 
-        bio_tags = self.network.predict(sent)[0]
+        #sent.append(self.input_field.vocab.stoi[annotation.fee_raw])
+
+        bio_tags = self.network.predict(combined)[0]
 
         bio_tags = torch.argmax(bio_tags, 1)
 
-        bio_tags = [self.output_field.vocab.itos[bio_tag] for bio_tag in bio_tags]
+        #bio_tags = [self.output_field.vocab.itos[bio_tag] for bio_tag in bio_tags]
 
         for bio_tag in bio_tags:
             #bio_tag = self.output_field.vocab.itos[bio_tag]
 
-            if bio_tag == "B":
+            if bio_tag == 0:
                 new_span = count
 
-            if bio_tag == "O" and new_span != -1:
+            if bio_tag == 2 and new_span != -1:
                 possible_roles.append((new_span, count - 1))
                 new_span = -1
 
@@ -289,36 +291,38 @@ class SpanIdentifier(object):
 
         return iterator
 
-    def get_dataset_comb(self, annotations: List[List[Annotation]]):
+    def get_dataset_comb(self, mReader):
         xs = []
         ys = []
 
-        for annotation_sentences in annotations:
+        for annotations_sentence, sentence in zip(mReader.annotations, mReader.embedded_sentences):
 
 
 
-            for annotation in annotation_sentences:
+            for annotation in annotations_sentence:
 
                 sent_len = len(annotation.sentence)
-                spans = ["N"] * int((sent_len * (sent_len + 1) / 2))
+                spans = [2] * sent_len
 
                 for role_pos in annotation.role_positions:
 
-                    t = sum([sent_len - i for i in range(1, role_pos[0])]) + role_pos[1] - 1
+                    spans[role_pos[0]] = 0
 
+                    for i in range(role_pos[0]+1, role_pos[1]+1):
+                        spans[i] = 1
                     #print(t)
                     #print(role_pos)
                     #print(sent_len)
-                    spans[t] = "Y"
+                    #spans[t] = "Y"
 
                 ys.append(spans)
 
-                sentence = annotation.sentence + [annotation.fee_raw]
-                xs.append(sentence)
+                combined = [torch.tensor([word + annotation.embedded_frame]) for word in sentence]
+                xs.append(combined)
 
         return xs, ys
 
-    def train(self, annotations: List[List[Annotation]]):
+    def train(self, mReader, mReaderDev):
         """
         Trains the model on all of the given annotations.
 
@@ -327,7 +331,9 @@ class SpanIdentifier(object):
         """
 
         # xs, ys = self.get_dataset(annotations)
-        xs, ys = self.get_dataset_comb(annotations)
+        xs, ys = self.get_dataset_comb(mReader)
+
+        dev_xs, dev_ys = self.get_dataset_comb(mReaderDev)
 
         # xs = xs[:100]
         # ys = ys[:100]
@@ -338,27 +344,27 @@ class SpanIdentifier(object):
         shuffle_concurrent_lists([xs, ys])
 
         # Zip datasets and generate complete dictionary
-        examples = [
-            data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
-        ]
+        #examples = [
+        #    data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
+        #]
 
-        dataset = data.Dataset(examples, fields=self.data_fields)
+        #dataset = data.Dataset(examples, fields=self.data_fields)
 
-        self.input_field.build_vocab(dataset)
-        self.output_field.build_vocab(dataset)
+        #self.input_field.build_vocab(dataset)
+        #self.output_field.build_vocab(dataset)
 
-        dataset_size = len(xs)
+        # dataset_size = len(xs)
 
-        train_iter = self.prepare_dataset(xs, ys)
+        #train_iter = self.prepare_dataset(xs, ys)
 
         # dev_iter = self.get_iter(self.cM.eval_files[0])
 
-        self.input_field.vocab.load_vectors("glove.6B.300d")
+        #self.input_field.vocab.load_vectors("glove.6B.300d")
 
-        num_classes = len(self.output_field.vocab)
+        num_classes = 3 # len(self.output_field.vocab)
 
-        embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
+        #embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
 
-        self.network = SpanIdNetwork(self.cM, embed, num_classes)
+        self.network = SpanIdNetwork(self.cM, num_classes)
 
-        self.network.train_model(dataset_size, train_iter)
+        self.network.train_model(xs, ys, dev_xs, dev_ys)

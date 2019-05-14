@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import re
 
 import nltk
@@ -333,9 +334,9 @@ class DataReader(object):
         :return:
         """
 
-        self.pred_allen()
+        #self.pred_allen()
 
-        return
+        #return
 
         logging.info(f"Predicting Spans")
         use_static = False
@@ -349,7 +350,7 @@ class DataReader(object):
         for i in tqdm(num_sentences):
             for annotation in self.annotations[i]:
 
-                p_role_positions = span_identifier.query(annotation, use_static)
+                p_role_positions = span_identifier.query(self.embedded_sentences[i], annotation, use_static)
 
                 annotation.role_positions = p_role_positions
                 annotation.roles = []
@@ -364,6 +365,18 @@ class DataReader(object):
         """
 
         embedded = self.cM.wEM.embed(word)
+
+        if embedded is None:
+            embedded = self.cM.wEM.embed(word.lower())
+
+        #if embedded is None:
+        #    embedded = self.cM.wEM.embed(fee)
+
+        #if embedded is None:
+        #    embedded = self.cM.wEM.embed(fee.lower())
+
+        if embedded is None:
+            embedded = [random.random()/10 for _ in range(300)]
 
         return embedded
 
@@ -397,6 +410,9 @@ class DataReader(object):
         """
 
         embedded = self.cM.fEM.embed(frame)
+
+        if embedded is None:
+            embedded = [random.random()/6 for _ in range(100)]
 
         return embedded
 
