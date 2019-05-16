@@ -1,20 +1,23 @@
 import json
 import logging
 import random
-import re
 
-from allennlp.predictors.predictor import Predictor
 from tqdm import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.utils.postagger import PosTagger
 
 
 class DataReader(object):
+    """
+    The top-level DataReader
+
+    Stores all loaded data from every reader.
+    """
+
     def __init__(
-        self, cM: ConfigManager, path_sent: str = None, path_elements: str = None, raw_path: str = None
+        self, cM: ConfigManager
     ):
 
         self.cM = cM
@@ -90,80 +93,12 @@ class DataReader(object):
         with open(path, "w") as out:
             json.dump(out_data, out, indent=4)
 
-    def pred_allen(self):
-        """
-
-        :return:
-        """
-
-        print("starting")
-
-        predictor = Predictor.from_path(
-            "https://s3-us-west-2.amazonaws.com/allennlp/models/srl-model-2018.05.25.tar.gz")
-
-        num_sentences = range(len(self.sentences))
-
-        for i in tqdm(num_sentences):
-
-            sentence = " ".join(self.sentences[i])
-
-            prediction = predictor.predict(sentence)
-
-            verbs = [t["verb"] for t in prediction["verbs"]]
-
-            for annotation in self.annotations[i]:
-
-                spans = []
-
-                if annotation.fee_raw in verbs:
-                    #print("d")
-                    desc = prediction["verbs"][verbs.index(annotation.fee_raw)]["description"]
-
-                    c = 0
-
-
-                    while re.search("\[ARG[" + str(c) + "]: [^\]]*", desc) is not None:
-
-                        span = re.search("\[ARG[" + str(c) + "]: [^\]]*", desc).span()
-
-                        arg = desc[span[0]+7:span[1]]
-
-                        # arg = nltk.word_tokenize(arg)
-                        arg = self.nlp(arg)
-
-                        for j in range(len(annotation.sentence)):
-
-                            word = annotation.sentence[j]
-
-                            if word == arg[0].text:
-                                saved = j
-
-                                for arg_word in arg:
-
-                                    if not arg_word.text == annotation.sentence[j]:
-                                        break
-
-                                    saved2 = j
-                                    j+=1
-
-
-                        #annotation.sentence.index()
-
-                        spans.append((saved, saved2))
-
-                        c += 1
-
-                annotation.role_positions = spans
-
-
-                # print(prediction["verbs"])
-
-
     def embed_word(self, word: str):
         """
+        Embeds a single word
 
-        :param word:
-        :return:
+        :param word: The word to embed
+        :return: The vector of the embedding
         """
 
         embedded = self.cM.wEM.embed(word)
@@ -171,23 +106,24 @@ class DataReader(object):
         if embedded is None:
             embedded = self.cM.wEM.embed(word.lower())
 
-        #if embedded is None:
-        #    embedded = self.cM.wEM.embed(fee)
-
-        #if embedded is None:
-        #    embedded = self.cM.wEM.embed(fee.lower())
-
         if embedded is None:
             embedded = [random.random()/10 for _ in range(300)]
 
         return embedded
 
-    def embed_words(self):
+    def embed_words(self, force: bool = False):
         """
+        Embeds all words of all sentences that are currently saved in "sentences".
 
-        NOTE: erases previously embedded data
+        NOTE: Can erase all previously embedded data!
+
+        :param force: If true, all previously saved embeddings will be overwritten!
         :return:
         """
+
+        # not not - meaning if the list is NOT empty!
+        if not not self.embedded_sentences and not force:
+            return
 
         self.cM.wEM.read_word_embeddings()
 
@@ -208,9 +144,12 @@ class DataReader(object):
 
     def embed_frame(self, frame: str):
         """
+        Embeds a single frame.
 
-        :param frame:
-        :return:
+        NOTE: if the embeddings of the frame can not be found, a random set of values is generated.
+
+        :param frame: The frame to embed
+        :return: The embedding of the frame
         """
 
         embedded = self.cM.fEM.embed(frame)
@@ -220,13 +159,18 @@ class DataReader(object):
 
         return embedded
 
-
-    def embed_frames(self):
+    def embed_frames(self, force: bool = False):
         """
+        Embeds all the sentences that are currently loaded.
 
-        NOTE: overrides embedded data inside of the annotation objects
+        NOTE: if forced, overrides embedded data inside of the annotation objects
+
+        :param force: If true, embeddings are generate even if they already exist
         :return:
         """
+
+        if (not self.annotations[0].embedded_frame is None) and not force:
+            return
 
         self.cM.fEM.read_frame_embeddings()
 
@@ -240,14 +184,22 @@ class DataReader(object):
 
         logging.info("[Done] embedding sentences")
 
-    def generate_pos_tags(self):
+    def generate_pos_tags(self, force: bool = False):
         """
+        Generates the POS-tags of all sentences that are currently saved.
 
+        :param force: If true, the POS-tags will overwrite previously saved tags.
         :return:
         """
 
+        # not not - meaning if the list is NOT empty!
+        if not not self.pos_tags and not force:
+            return
+
         pos_tagger = PosTagger(self.cM.use_spacy)
         count = 0
+
+        self.pos_tags = []
 
         for sentence in self.sentences:
             tags = pos_tagger.get_tags(sentence)
@@ -256,16 +208,12 @@ class DataReader(object):
             if len(sentence) != len(tags):
                 count += 1
 
-        print(count)
-        print(len(self.sentences))
-        #exit()
-
-
     def get_annotations(self, sentence: List[str] = None):
         """
+        Returns the annotation object for a given sentence.
 
         :param sentence: The sentence to retrieve the annotations for.
-        :return:
+        :return: A annoation object
         """
 
         for i in len(self.sentences):

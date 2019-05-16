@@ -4,6 +4,10 @@ from tqdm import tqdm
 
 
 class FrameEmbeddingManager(object):
+    """
+    Loads and provides the specified frame-embeddings
+    """
+
     def __init__(
         self, path: str = "data/frame_embeddings/dict_frame_to_emb_100dim_wsb_list.txt"
     ):
@@ -31,7 +35,6 @@ class FrameEmbeddingManager(object):
         for element in string:
             array.append(float(element))
 
-        # print(array)
         return array
 
     def read_frame_embeddings(self):

@@ -5,8 +5,9 @@
 
 A summarization of the SRL process.  
 Provides functionality to find Frame Evoking Elements in raw text and predict 
-their corresponding frames.  
-Models can be trained either on given files or on any annotated file in CoNLL format.  
+their corresponding frames. Furthermore possible spans of roles can be found and assigned. 
+Models can be trained either on the given files or on any annotated file in a supported format (For more information
+look at the section formats).  
 - Based on (and using) [pyfn][1]
 
 ## Installation
@@ -39,7 +40,18 @@ and adjust the path inside the script.
 
 The following functions both require a pretrained model,  
 generate using `framenet_tools train` as explained above.
-- `framenet_tools predict --path --out_path`  
+- Stages: The System is split into 4 distinct pipeline stages, namely:
+    - 1  Frame evoking element identification
+    - 2 Frame identification
+    - 3 Span identification
+    - 4 Role identification
+    
+The level of the stages can be specified by `--level [level]` where the level is represented as the
+number of the given stage. This can be done for every option.
+NOTE: A usage of `evaluate` or `predict` requires a previous training of the same (or higher)
+ stage level! 
+    
+- `framenet_tools predict --path [path] --out_path [out_path]`  
 annotates the given raw text file located at
  `--path` and writes the output to `--out_path`
 - `framenet_tools evaluate`  
@@ -58,3 +70,13 @@ can be used to run TensorBoard and visualize the data.
 [1]: https://pypi.org/project/pyfn/
 [2]: https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z
 [3]: https://www.tensorflow.org/guide/summaries_and_tensorboard
+
+##Formats
+
+Currently support formats include:
+
+- Raw text
+- SEMEVAL XML: the format of the SEMEVAL 2007 shared task 19 on frame semantic structure extraction
+- SEMAFOR CoNLL: the format used by the SEMAFOR parser
+
+NOTE: If the format is not supported, [pyfn][1] might be providing a conversion.

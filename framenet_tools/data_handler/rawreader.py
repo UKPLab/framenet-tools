@@ -4,6 +4,12 @@ from framenet_tools.config import ConfigManager
 
 
 class RawReader(DataReader):
+    """
+    A reader for raw text files.
+
+    Inherits from DataReader
+    """
+
     def __init__(
         self, cM: ConfigManager, raw_path: str = None
     ):

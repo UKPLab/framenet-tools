@@ -41,6 +41,11 @@ def char_pos_to_sentence_pos(start_char: int, end_char: int, words: List[str]):
 
 
 class SemevalReader(DataReader):
+    """
+    A reader for the Semeval format.
+
+    Inherits from DataReader
+    """
 
     def __init__(self, cM: ConfigManager, path_xml: str = None):
         DataReader.__init__(self, cM)
@@ -73,7 +78,7 @@ class SemevalReader(DataReader):
 
     def digest_tree(self, root: xml.etree.ElementTree):
         """
-        Parses the xml-tree into a datareader object.
+        Parses the xml-tree into a DataReader object.
 
         :param root: The root node of the tree
         :return:
@@ -98,7 +103,6 @@ class SemevalReader(DataReader):
 
                 data = annotation.findall("./layers/layer")
                 fee_node = data[0].findall(".labels/label")
-                # print(fee.attrib)
 
                 start_char = int(fee_node[0].get("start"))
                 end_char = int(fee_node[-1].get("end"))
@@ -108,17 +112,6 @@ class SemevalReader(DataReader):
 
                 fee = words[start]
                 fee_raw = words[start]
-
-                '''
-                for fee_part in fee_node[1:]:
-                    start_char = int(fee_part.get("start"))
-                    end_char = int(fee_part.get("end"))
-
-                    start, end = char_pos_to_sentence_pos(start_char, end_char, words)
-
-                    fee += " " + words[start]
-                    fee_raw += " " + words[start]
-                '''
 
                 roles = []
                 role_positions = []

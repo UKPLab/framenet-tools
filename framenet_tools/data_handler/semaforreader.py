@@ -4,6 +4,12 @@ from framenet_tools.data_handler.annotation import Annotation
 
 
 class SemaforReader(DataReader):
+    """
+    A reader for the Semafor ConLL format
+
+    Inherits from DataReader
+    """
+
     def __init__(
         self, cM: ConfigManager, path_sent: str = None, path_elements: str = None
     ):

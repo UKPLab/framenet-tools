@@ -1,5 +1,3 @@
-from typing import List
-
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
@@ -7,6 +5,9 @@ from framenet_tools.pipelinestage import PipelineStage
 
 
 class FrameID(PipelineStage):
+    """
+    The Frame Identification stage
+    """
 
     def __init__(self, cM: ConfigManager):
         super().__init__(cM)

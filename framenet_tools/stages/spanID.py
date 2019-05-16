@@ -7,6 +7,9 @@ from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
 
 class SpanID(PipelineStage):
+    """
+    The Span Identifiaction stage
+    """
 
     def __init__(self, cM: ConfigManager):
         super().__init__(cM)
@@ -18,7 +21,6 @@ class SpanID(PipelineStage):
 
         m_reader.embed_words()
         m_reader.embed_frames()
-
 
         m_reader_dev.generate_pos_tags()
 

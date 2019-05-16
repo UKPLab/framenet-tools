@@ -8,6 +8,11 @@ from typing import List
 
 
 class PosTagger(object):
+    """
+    PosTagger provides options for assigning POS-tags to sentences.
+
+    Either by spacy or nltk.
+    """
 
     def __init__(self, use_spacy: bool):
 
@@ -18,23 +23,25 @@ class PosTagger(object):
         else:
             self.lemmatizer = WordNetLemmatizer()
 
-    def get_tags(self, tokens: str):
+    def get_tags(self, sentence: List[str]):
         """
+        Returns the POS-tags of a given sentence.
 
-        :param tokens:
-        :return:
+        :param sentence: The sentence, given as a list of words
+        :return: A list of POS-tags
         """
 
         if self.use_spacy:
-            return self.get_tags_spacy(tokens)
+            return self.get_tags_spacy(sentence)
 
-        return self.get_tags_nltk(tokens)
+        return self.get_tags_nltk(sentence)
 
-    def get_tags_spacy(self, tokens: str):
+    def get_tags_spacy(self, tokens: List[str]):
         """
+        The spacy version of the get_tags method
 
-        :param tokens:
-        :return:
+        :param tokens:The sentence, given as a list of words
+        :return: A list of POS-tags
         """
 
         sentence = ""
@@ -74,7 +81,6 @@ class PosTagger(object):
         pos_tags = []
         lemmas = []
         nes = []
-        # print(tokens)
 
         tags = nltk.pos_tag(tokens)
 

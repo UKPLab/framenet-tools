@@ -5,6 +5,9 @@ from framenet_tools.role_identification.roleidentifier import RoleIdentifier
 
 
 class RoleID(PipelineStage):
+    """
+    The Role Identification stage
+    """
 
     def __init__(self, cM: ConfigManager):
         super().__init__(cM)

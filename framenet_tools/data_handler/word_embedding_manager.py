@@ -5,6 +5,10 @@ from typing import List
 
 
 class WordEmbeddingManager(object):
+    """
+    Loads and provides the specified word-embeddings
+    """
+
     def __init__(
         self, path: str = "data/word_embeddings/levy_deps_300.w2vt"
     ):
@@ -19,7 +23,7 @@ class WordEmbeddingManager(object):
 
         NOTE: specified for float arrays !!!
 
-        :param string: The string of an array
+        :param strings: The strings of an array
         :return: The array
         """
 
@@ -28,7 +32,6 @@ class WordEmbeddingManager(object):
         for element in strings:
             array.append(float(element))
 
-        # print(array)
         return array
 
     def read_word_embeddings(self):
