@@ -51,7 +51,9 @@ Training automatically logs the loss and accuracy of the train- and devset in [T
 - `tensorboard --logdir=runs`
 can be used to run TensorBoard and visualize the data.
 
+##Architecture
 
+![alt text](Overview.png "Architecture")
 
 [1]: https://pypi.org/project/pyfn/
 [2]: https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z

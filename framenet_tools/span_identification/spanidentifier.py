@@ -1,16 +1,21 @@
-import nltk
+import logging
+
 import spacy
 
 import torch
-import torch.nn as nn
 
 from torchtext import data
+from tqdm import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.annotation import Annotation
+from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
-from framenet_tools.frame_identification.utils import shuffle_concurrent_lists, pos_to_int
+from framenet_tools.utils.static_utils import (
+    shuffle_concurrent_lists,
+    pos_to_int,
+)
 from framenet_tools.span_identification.spanidnetwork import SpanIdNetwork
 
 
@@ -51,7 +56,12 @@ class SpanIdentifier(object):
         else:
             return self.query_nn(embedded_sentence, annotation, pos_tags)
 
-    def query_nn(self, embedded_sentence: List[float], annotation: Annotation, pos_tags: List[str]):
+    def query_nn(
+        self,
+        embedded_sentence: List[float],
+        annotation: Annotation,
+        pos_tags: List[str],
+    ):
         """
         Predicts the possible spans using the LSTM.
 
@@ -72,9 +82,9 @@ class SpanIdentifier(object):
 
         #    sent.append(self.input_field.vocab.stoi[word])
 
-        #print(pos_tags)
-        #print(annotation.embedded_frame)
-        #print(embedded_sentence)
+        # print(pos_tags)
+        # print(annotation.embedded_frame)
+        # print(embedded_sentence)
 
         combined = [
             torch.tensor([word + annotation.embedded_frame + [pos_to_int(pos_tag[1])]])
@@ -340,7 +350,13 @@ class SpanIdentifier(object):
                 ys.append(spans)
 
                 combined = [
-                    torch.tensor([emb_word + annotation.embedded_frame + [pos_to_int(pos_tag[1])]])
+                    torch.tensor(
+                        [
+                            emb_word
+                            + annotation.embedded_frame
+                            + [pos_to_int(pos_tag[1])]
+                        ]
+                    )
                     for emb_word, pos_tag in zip(emb_sentence, pos_tags)
                 ]
                 xs.append(combined)
@@ -402,3 +418,38 @@ class SpanIdentifier(object):
         self.network = SpanIdNetwork(self.cM, num_classes)
 
         self.network.train_model(xs, ys, dev_xs, dev_ys)
+
+    def predict_spans(self, mReader: DataReader):
+        """
+        Predicts the spans of the currently loaded dataset.
+        The predictions are saved in the annotations.
+
+        NOTE: All loaded spans and roles are overwritten!
+
+        :return:
+        """
+
+        # self.pred_allen()
+
+        # return
+
+        logging.info(f"Predicting Spans")
+        use_static = False
+
+        # if span_identifier is None:
+        #    span_identifier = SpanIdentifier(self.cM)
+        #    use_static = True
+
+        num_sentences = range(len(mReader.sentences))
+
+        for i in tqdm(num_sentences):
+            for annotation in mReader.annotations[i]:
+
+                p_role_positions = self.query(
+                    mReader.embedded_sentences[i], annotation, mReader.pos_tags[i], use_static
+                )
+
+                annotation.role_positions = p_role_positions
+                annotation.roles = []
+
+        logging.info(f"Done predicting Spans")

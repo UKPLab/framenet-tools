@@ -1,15 +1,13 @@
 import logging
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torchtext
 
 from torch.autograd import Variable
 from tqdm import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
+from framenet_tools.utils.static_utils import shuffle_concurrent_lists
 
 
 class Net(nn.Module):

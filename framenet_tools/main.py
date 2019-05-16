@@ -7,16 +7,13 @@ import os
 from typing import List
 from subprocess import call
 
-# from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
-from framenet_tools.data_handler.reader import DataReader
-from framenet_tools.data_handler.semeval_reader import SemevalReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
 from framenet_tools.evaluator import (
     evaluate_frame_identification,
     evaluate_fee_identification,
     evaluate_span_identification)
-from framenet_tools.frame_identification.utils import download, get_spacy_en_model
+from framenet_tools.utils.static_utils import download, get_spacy_en_model
 from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
@@ -211,21 +208,21 @@ cM.wEM.read_word_embeddings()
 parser = create_argparser()
 
 file = "data/experiments/xp_001/data/train.gold.xml"
-m_data_reader = SemevalReader(cM)
-m_data_reader.read_data(file)
+#m_data_reader = SemevalReader(cM)
+#m_data_reader.read_data(file)
 
-m_data_reader.generate_pos_tags()
+#m_data_reader.generate_pos_tags()
 
-m_data_reader.embed_words()
-m_data_reader.embed_frames()
+#m_data_reader.embed_words()
+#m_data_reader.embed_frames()
 
-file = cM.semeval_files[0]
-m_data_reader_dev = SemevalReader(cM)
-m_data_reader_dev.read_data(file)
+#file = cM.semeval_files[0]
+#m_data_reader_dev = SemevalReader(cM)
+#m_data_reader_dev.read_data(file)
 
-m_data_reader_dev.generate_pos_tags()
-m_data_reader_dev.embed_words()
-m_data_reader_dev.embed_frames()
+#m_data_reader_dev.generate_pos_tags()
+#m_data_reader_dev.embed_words()
+#m_data_reader_dev.embed_frames()
 
 # exit()
 #create_lexicon()
