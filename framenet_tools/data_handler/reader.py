@@ -33,6 +33,7 @@ class DataReader(object):
 
         # Embedded
         self.embedded_sentences = []
+        self.pos_tags = []
 
         # Flags
         self.is_annotated = None
@@ -350,7 +351,7 @@ class DataReader(object):
         for i in tqdm(num_sentences):
             for annotation in self.annotations[i]:
 
-                p_role_positions = span_identifier.query(self.embedded_sentences[i], annotation, use_static)
+                p_role_positions = span_identifier.query(self.embedded_sentences[i], annotation, self.pos_tags[i], use_static)
 
                 annotation.role_positions = p_role_positions
                 annotation.roles = []
@@ -433,6 +434,27 @@ class DataReader(object):
                 annotation.embedded_frame = self.embed_frame(annotation.frame)
 
         logging.info("[Done] embedding sentences")
+
+    def generate_pos_tags(self):
+        """
+
+        :return:
+        """
+
+        feeID = FeeIdentifier(self.cM)
+        count = 0
+
+        for sentence in self.sentences:
+            tags = feeID.get_tags(sentence)
+            self.pos_tags.append(tags)
+
+            if len(sentence) != len(tags):
+                count += 1
+
+        print(count)
+        print(len(self.sentences))
+        #exit()
+
 
     def get_annotations(self, sentence: List[str] = None):
         """

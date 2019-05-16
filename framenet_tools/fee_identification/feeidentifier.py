@@ -211,7 +211,7 @@ class FeeIdentifier(object):
         if len(tokens) > 0:
             sentence = tokens[0]
 
-        for token in tokens:
+        for token in tokens[1:]:
             sentence += " " + token
 
         doc = self.nlp(sentence)

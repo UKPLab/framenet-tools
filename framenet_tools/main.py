@@ -210,9 +210,11 @@ cM.wEM.read_word_embeddings()
 
 parser = create_argparser()
 
-file = cM.train_files[0]
-m_data_reader = DataReader(cM)
-m_data_reader.read_data(file[0], file[1])
+file = "data/experiments/xp_001/data/train.gold.xml"
+m_data_reader = SemevalReader(cM)
+m_data_reader.read_data(file)
+
+m_data_reader.generate_pos_tags()
 
 m_data_reader.embed_words()
 m_data_reader.embed_frames()
@@ -220,6 +222,8 @@ m_data_reader.embed_frames()
 file = cM.semeval_files[0]
 m_data_reader_dev = SemevalReader(cM)
 m_data_reader_dev.read_data(file)
+
+m_data_reader_dev.generate_pos_tags()
 m_data_reader_dev.embed_words()
 m_data_reader_dev.embed_frames()
 
@@ -231,8 +235,8 @@ m_data_reader_dev.embed_frames()
 #print(lex)
 
 
-
 span_identifier = SpanIdentifier(cM)
-span_identifier.train(m_data_reader, m_data_reader_dev)
+span_identifier.load()
+#span_identifier.train(m_data_reader, m_data_reader_dev)
 evaluate_span_identification(cM, span_identifier)
 

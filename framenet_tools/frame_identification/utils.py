@@ -19,6 +19,46 @@ required_resources = [
 ]
 
 
+pos_dict = [
+    "CC",
+    "CD",
+    "DT",
+    "EX",
+    "FW",
+    "IN",
+    "JJ",
+    "JJR",
+    "JJS",
+    "LS",
+    "MD",
+    "NN",
+    "NNS",
+    "NNP",
+    "NNPS",
+    "PDT",
+    "POS",
+    "PRP",
+    "PRP$",
+    "RB",
+    "RBR",
+    "RBS",
+    "RP",
+    "SYM",
+    "TO",
+    "UH",
+    "VB",
+    "VBD",
+    "VBG",
+    "VBN",
+    "VBP",
+    "VBZ",
+    "WDT",
+    "WP",
+    "WP$",
+    "WRB",
+]
+
+
 def download_resources():
     """
     Checks if the required resources from nltk are installed, if not they are downloaded.
@@ -112,11 +152,7 @@ def get_spacy_en_model():
     :return:
     """
 
-    call(["python3",
-          "-m",
-          "spacy",
-          "download",
-          "en_core_web_sm"])
+    call(["python3", "-m", "spacy", "download", "en_core_web_sm"])
 
 
 def download(url: str):
@@ -212,12 +248,25 @@ def read_frame_embeddings(self, path: str):
     with open(path, "r") as file:
         raw = file.read()
 
-    data = raw.rsplit('\n')
+    data = raw.rsplit("\n")
 
     for line in data:
-        line = line.rsplit('\t')
+        line = line.rsplit("\t")
 
         if len(line) > 1:
             self.frames[line[0]] = self.string_to_array(line[1])
 
     return frame_embeddings
+
+
+def pos_to_int(pos: str):
+    """
+
+    :param pos:
+    :return:
+    """
+
+    if pos in pos_dict:
+        return pos_dict.index(pos)
+
+    return -1

@@ -9,6 +9,7 @@ from tqdm import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
+from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
 
 
 class Net(nn.Module):
@@ -25,19 +26,34 @@ class Net(nn.Module):
         self.device = device
 
         self.dropout = nn.Dropout(p=0.2)
-        self.input_size = 400
-        self.hidden_size = hidden_sizes[0]
+        self.input_size = 401
+        self.hidden_size = 250#hidden_sizes[0]
 
         # print(embedding_size)
-        self.lstm = nn.LSTM(self.input_size, hidden_sizes[0], 2, bidirectional=True, dropout=0.25)
+        #self.lstm = nn.LSTM(self.input_size, hidden_sizes[0], 2, bidirectional=True, dropout=0.25)
 
-        self.hidden_to_tag = nn.Linear(hidden_sizes[0] * 2, num_classes)
+        self.lstm1 = nn.LSTM(self.input_size, self.hidden_size, bidirectional=True)
+
+        self.dropout1 = nn.Dropout(p=0.4)
+
+        self.lstm2 = nn.LSTM(self.hidden_size * 2, 100, bidirectional=True)
+
+        self.dropout2 = nn.Dropout(p=0.2)
+
+        self.hidden_to_tag = nn.Linear(200, num_classes)
         self.hidden = self.init_hidden()
+        self.hidden2 = self.init_hidden2()
 
     def init_hidden(self):
         return (
             Variable(torch.zeros(1, 1, self.hidden_size)).to(self.device),
             Variable(torch.zeros(1, 1, self.hidden_size)).to(self.device),
+        )
+
+    def init_hidden2(self):
+        return (
+            Variable(torch.zeros(1, 1, 100)).to(self.device),
+            Variable(torch.zeros(1, 1, 100)).to(self.device),
         )
 
     def forward(self, x):
@@ -65,8 +81,15 @@ class Net(nn.Module):
 
         # b = b.to(self.device)
 
-        y, (h_n, c_n) = self.lstm(x)
+        y, (h_n, c_n) = self.lstm1(x)
         # print(y)
+
+        y = self.dropout1(y)
+
+        y, (h_n, c_n) = self.lstm2(y)
+
+        y = self.dropout2(y)
+
         outputs = []
 
         for i in y:
@@ -102,6 +125,7 @@ class SpanIdNetwork(object):
     ):
 
         self.cM = cM
+        self.best_acc = 0
 
         # Check for CUDA
         use_cuda = self.cM.use_cuda and torch.cuda.is_available()
@@ -154,6 +178,7 @@ class SpanIdNetwork(object):
         """
 
         self.net.hidden = self.net.init_hidden()
+        self.net.hidden2 = self.net.init_hidden2()
 
     def train_model(
         self,
@@ -177,6 +202,11 @@ class SpanIdNetwork(object):
             occ = 0
             dataset_size = len(xs)
 
+            shuffle_concurrent_lists([xs, ys])
+
+            #bxs = [xs[i: i+self.cM.batch_size] for i in range(0, len(xs), self.cM.batch_size)]
+            #bys = [ys[i: i + self.cM.batch_size] for i in range(0, len(ys), self.cM.batch_size)]
+
             progress_bar = tqdm(zip(xs, ys))
 
             for x, y in progress_bar:
@@ -192,7 +222,8 @@ class SpanIdNetwork(object):
 
                 #x = Variable(x).to(self.device)
 
-                self.net.hidden = self.net.init_hidden()
+                #self.net.hidden = self.net.init_hidden()
+                self.reset_hidden()
 
                 # Forward + Backward + Optimize
                 self.optimizer.zero_grad()  # zero the gradient buffer
@@ -250,4 +281,30 @@ class SpanIdNetwork(object):
 
             total += len(y)
 
-        print(f"DEV-Acc: {round((hits/total),4)} Span-acc: {round((span_hits/total),4)}")
+        acc = round((hits/total), 4)
+
+        print(f"DEV-Acc: {acc} Span-acc: {round((span_hits/total),4)}")
+
+        if acc > self.best_acc:
+            self.best_acc = acc
+            self.save_model("data/models/span_test.m")
+
+    def save_model(self, path: str):
+        """
+        Saves the current model at the given path
+
+        :param path: The path to save the model at
+        :return:
+        """
+
+        torch.save(self.net.state_dict(), path)
+
+    def load_model(self, path: str):
+        """
+        Loads the model from a given path
+
+        :param path: The path from where to load the model
+        :return:
+        """
+
+        self.net.load_state_dict(torch.load(path))
