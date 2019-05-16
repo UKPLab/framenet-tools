@@ -148,6 +148,8 @@ class FeeIdentifier(object):
 
         self.cM = cM
 
+        self.pos_tagger = PosTagger(self.cM.use_spacy)
+
     def identify_targets(self, sentence: list):
         """
         Identifies targets for a given sentence
@@ -157,8 +159,7 @@ class FeeIdentifier(object):
         """
 
         tokens = nltk.word_tokenize(sentence)
-        pos_tagger = PosTagger(self.cM.use_spacy)
-        p_data = pos_tagger.get_tags(tokens)
+        p_data = self.pos_tagger.get_tags(tokens)
         targets = should_include_token(p_data)
 
         return targets
@@ -182,7 +183,7 @@ class FeeIdentifier(object):
 
         tokens = x[0]
 
-        pData = self.get_tags(tokens)
+        pData = self.pos_tagger.get_tags(tokens)
 
         possible_fees = should_include_token(pData)
 

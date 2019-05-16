@@ -68,6 +68,19 @@ class DataReader(object):
                 prediction_dict["id"] = frame_count
                 prediction_dict["fee"] = annotation.fee_raw
                 prediction_dict["frame"] = annotation.frame
+                prediction_dict["roles"] = []
+
+                role_id = 0
+
+                for span in annotation.role_positions:
+
+                    span_dict = dict()
+                    span_dict["role_id"] = role_id
+                    span_dict["span"] = span
+
+                    role_id += 1
+
+                    prediction_dict["roles"].append(span_dict)
 
                 data_dict["prediction"].append(prediction_dict)
                 frame_count += 1

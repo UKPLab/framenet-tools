@@ -28,7 +28,7 @@ class FrameIdentifier(object):
         self.cM = cM
         self.network = None
 
-    def get_dataset(self, file: List[str], predict_fees: bool):
+    def get_dataset(self, reader: DataReader):
         """
         Loads the dataset and combines the necessary data
 
@@ -38,14 +38,14 @@ class FrameIdentifier(object):
                 ys: A list of frames corresponding to the given sentences
         """
 
-        reader = SemaforReader(self.cM)
-        if len(file) == 2:
-            reader.read_data(file[0], file[1])
-        else:
-            reader.read_raw_text(file[0])
+        #reader = SemaforReader(self.cM)
+        #if len(file) == 2:
+        #    reader.read_data(file[0], file[1])
+        #else:
+        #    reader.read_raw_text(file[0])
 
-        if predict_fees:
-            reader.predict_fees()
+        #if predict_fees:
+        #    reader.predict_fees()
 
         xs = []
         ys = []
@@ -264,7 +264,7 @@ class FrameIdentifier(object):
 
         return self.evaluate(predictions, xs, file)
 
-    def train(self, files: List[List[str]]):
+    def train(self, reader, reader_dev):
         """
         Trains the model on given files
 
@@ -277,10 +277,10 @@ class FrameIdentifier(object):
         xs = []
         ys = []
 
-        for file in files:
-            new_xs, new_ys = self.get_dataset(file, False)
-            xs += new_xs
-            ys += new_ys
+        #for file in files:
+        new_xs, new_ys = self.get_dataset(reader)
+        xs += new_xs
+        ys += new_ys
 
         shuffle_concurrent_lists([xs, ys])
 
@@ -298,7 +298,7 @@ class FrameIdentifier(object):
 
         train_iter = self.prepare_dataset(xs, ys)
 
-        dev_iter = self.get_iter(self.cM.eval_files[0])
+        dev_iter = self.get_iter(reader_dev)
 
         self.input_field.vocab.load_vectors("glove.6B.300d")
 
@@ -310,13 +310,13 @@ class FrameIdentifier(object):
 
         self.network.train_model(dataset_size, train_iter, dev_iter)
 
-    def get_iter(self, file: str):
+    def get_iter(self, reader: DataReader):
         """
 
         :param file:
         :return:
         """
 
-        xs, ys = self.get_dataset(file, False)
+        xs, ys = self.get_dataset(reader)
 
         return self.prepare_dataset(xs, ys)

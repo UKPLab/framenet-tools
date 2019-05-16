@@ -13,9 +13,9 @@ class FrameID(PipelineStage):
 
         self.f_i = FrameIdentifier(cM)
 
-    def train(self, data: List[str]):
+    def train(self, m_reader: DataReader, m_reader_dev: DataReader):
 
-        self.f_i.train(data)
+        self.f_i.train(m_reader, m_reader_dev)
 
         self.f_i.save_model(self.cM.saved_model)
 

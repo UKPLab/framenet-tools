@@ -12,6 +12,7 @@ from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
+from framenet_tools.utils.postagger import PosTagger
 from framenet_tools.utils.static_utils import (
     shuffle_concurrent_lists,
     pos_to_int,
@@ -320,14 +321,14 @@ class SpanIdentifier(object):
         xs = []
         ys = []
 
-        feeid = FeeIdentifier(self.cM)
+        pos_tagger = PosTagger(self.cM.use_spacy)
 
         for annotations_sentence, emb_sentence, sentence in zip(
             mReader.annotations, mReader.embedded_sentences, mReader.sentences
         ):
 
             # tokens = nltk.word_tokenize(sentence)
-            pos_tags = feeid.get_tags(sentence)
+            pos_tags = pos_tagger.get_tags(sentence)
 
             for annotation in annotations_sentence:
 

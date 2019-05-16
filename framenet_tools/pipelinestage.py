@@ -12,11 +12,12 @@ class PipelineStage(ABC):
         self.cM = cM
 
     @abstractmethod
-    def train(self, data: List[str]):
+    def train(self, m_reader: DataReader, m_reader_dev: DataReader):
         """
         Train the stage on the given data
 
-        :param data:
+        :param m_reader:
+        :param m_reader_dev:
         :return:
         """
 
