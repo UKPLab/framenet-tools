@@ -7,6 +7,7 @@ from typing import List
 
 from framenet_tools.data_handler.frame_embedding_manager import FrameEmbeddingManager
 from framenet_tools.data_handler.word_embedding_manager import WordEmbeddingManager
+from framenet_tools.utils.static_utils import download_resources, get_spacy_en_model
 
 CONFIG_PATH = "config.file"
 
@@ -58,6 +59,8 @@ class ConfigManager(object):
         self.level = 3
 
         if not self.load_config():
+            download_resources()
+            get_spacy_en_model()
             self.create_config()
 
         self.wEM = WordEmbeddingManager()

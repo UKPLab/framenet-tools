@@ -188,7 +188,7 @@ class FeeIdentifier(object):
 
         return possible_fees
 
-    def predict_fees(self, dataset: List[List[str]]):
+    def predict_fees_old(self, dataset: List[List[str]]):
         """
         Predicts all FEEs for a complete datset
 
@@ -249,4 +249,4 @@ class FeeIdentifier(object):
                     Annotation(fee_raw=possible_fee, sentence=sentence)
                 )
 
-            self.annotations.append(predicted_annotations)
+            mReader.annotations.append(predicted_annotations)

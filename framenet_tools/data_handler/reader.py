@@ -176,6 +176,8 @@ class DataReader(object):
         :return:
         """
 
+        self.cM.wEM.read_word_embeddings()
+
         self.embedded_sentences = []
 
         logging.info("Embedding sentences")
@@ -212,6 +214,8 @@ class DataReader(object):
         NOTE: overrides embedded data inside of the annotation objects
         :return:
         """
+
+        self.cM.fEM.read_frame_embeddings()
 
         logging.info("Embedding sentences")
 

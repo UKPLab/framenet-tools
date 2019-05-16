@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
 
 

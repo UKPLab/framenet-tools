@@ -7,6 +7,7 @@ from typing import List
 
 from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.data_handler.semaforreader import SemaforReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
 from framenet_tools.utils.static_utils import shuffle_concurrent_lists
@@ -37,7 +38,7 @@ class FrameIdentifier(object):
                 ys: A list of frames corresponding to the given sentences
         """
 
-        reader = DataReader(self.cM)
+        reader = SemaforReader(self.cM)
         if len(file) == 2:
             reader.read_data(file[0], file[1])
         else:

@@ -10,7 +10,7 @@ class WordEmbeddingManager(object):
     ):
 
         self.path = path
-        self.words = dict()
+        self.words = None
 
     def string_to_array(self, strings: List[str]):
         """
@@ -35,6 +35,11 @@ class WordEmbeddingManager(object):
         """
         Loads the previously specified frame embedding file into a dictionary
         """
+
+        if self.words is not None:
+            return
+
+        self.words = dict()
 
         logging.info("Loading word embeddings")
 

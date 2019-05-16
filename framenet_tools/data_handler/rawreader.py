@@ -1,5 +1,5 @@
 from framenet_tools.data_handler.reader import DataReader
-from framenet_tools.utils.utils import get_sentences
+from framenet_tools.utils.static_utils import get_sentences
 from framenet_tools.config import ConfigManager
 
 

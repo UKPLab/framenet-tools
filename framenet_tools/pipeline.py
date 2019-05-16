@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.data_handler.rawreader import RawReader
 from framenet_tools.stages.feeID import FeeID
 from framenet_tools.stages.frameID import FrameID
 
@@ -22,13 +22,11 @@ def get_stages(i: int, cM: ConfigManager):
     stages = [
         FeeID(cM),
         FrameID(cM),
-        # spanID(cM),
-        # roleID(cM)
+        # SpanID(cM),
+        # RoleID(cM)
     ]
 
     return stages
-
-
 
 
 class Pipeline(object):
@@ -46,17 +44,32 @@ class Pipeline(object):
 
     def predict(self, file: List[str]):
 
-        m_reader = DataReader(self.cM)
-        #if len(file) == 2:
-        #    reader.read_data(file[0], file[1])
-        #else:
+        m_reader = RawReader(self.cM)
+
         m_reader.read_raw_text(file[0])
 
         for stage in self.stages:
             stage.predict(m_reader)
 
-        m_reader.predict_spans()
         m_reader.export_to_json("test.json")
+
+    def load_dataset(self, files: List[str]):
+
+        m_data_reader = SemevalReader(cM)
+        m_data_reader.read_data(file)
+
+        m_data_reader.generate_pos_tags()
+
+        m_data_reader.embed_words()
+        m_data_reader.embed_frames()
+
+        file = cM.semeval_files[0]
+        m_data_reader_dev = SemevalReader(cM)
+        m_data_reader_dev.read_data(file)
+
+        m_data_reader_dev.generate_pos_tags()
+        m_data_reader_dev.embed_words()
+        m_data_reader_dev.embed_frames()
 
 
 logging.basicConfig(
@@ -66,6 +79,6 @@ logging.basicConfig(
 cM = ConfigManager()
 
 p = Pipeline(cM)
-# p.train(cM.train_files)
-p.predict(["example.txt"])
+p.train(cM.train_files)
+#p.predict(["example.txt"])
 

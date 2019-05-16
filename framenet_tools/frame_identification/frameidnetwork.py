@@ -155,13 +155,15 @@ class FrameIDNetwork(object):
         Trains the model with the given dataset
         Uses the model specified in net
 
+        :param dev_iter: The dev dataset for performance measuring
         :param train_iter: The train dataset iterator including all data for training
         :param dataset_size: The size of the dataset
-        :param batch_size: The batchsize to use for training
+        :param batch_size: The batch size to use for training
         :return:
         """
 
-        # batch_count = sum(1 for _ in train_iter)
+        highest_acc = 0
+        auto_stopper = True
 
         writer = SummaryWriter()
 
@@ -182,8 +184,6 @@ class FrameIDNetwork(object):
                 self.optimizer.zero_grad()  # zero the gradient buffer
                 outputs = self.net(sent)
 
-                # print(labels)
-                # print(outputs)
                 loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
@@ -192,11 +192,6 @@ class FrameIDNetwork(object):
 
                 _, predicted = torch.max(outputs.data, 1)
                 total_hits += (predicted == labels).sum().item()
-
-                # print(predicted)
-                # print(labels)
-                # print(total_hits)
-                # print(count)
 
                 count += labels.size(0)
 
@@ -212,6 +207,10 @@ class FrameIDNetwork(object):
             train_acc = total_hits / count
 
             dev_acc, dev_loss = self.eval_model(dev_iter)
+
+            if dev_acc > highest_acc:
+                highest_acc = dev_acc
+                self.save_model(self.cM.saved_model + ".auto")
 
             logging.info(
                 f"Train Acc: {train_acc}, Dev Acc: {dev_acc}, Train Loss: {train_loss}, Dev Loss: {dev_loss}"

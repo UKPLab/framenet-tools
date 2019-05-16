@@ -15,10 +15,7 @@ class FrameID(PipelineStage):
 
     def train(self, data: List[str]):
 
-        #if parsed.use_eval_files:
-        #    f_i.train(cM.all_files)
-        #else:
-        self.f_i.train(self.cM.train_files)
+        self.f_i.train(data)
 
         self.f_i.save_model(self.cM.saved_model)
 

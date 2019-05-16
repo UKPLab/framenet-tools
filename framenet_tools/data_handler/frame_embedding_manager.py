@@ -9,7 +9,7 @@ class FrameEmbeddingManager(object):
     ):
 
         self.path = path
-        self.frames = dict()
+        self.frames = None
 
     def string_to_array(self, string: str):
         """
@@ -38,6 +38,11 @@ class FrameEmbeddingManager(object):
         """
         Loads the previously specified frame embedding file into a dictionary
         """
+
+        if self.frames is not None:
+            return
+
+        self.frames = dict()
 
         logging.info("Loading frame embeddings")
 
