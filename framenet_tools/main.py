@@ -172,7 +172,7 @@ def main():
     """
 
     logging.basicConfig(
-        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG
+        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
     )
 
     cM = ConfigManager()
