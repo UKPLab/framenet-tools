@@ -26,12 +26,12 @@ class PipelineStage(ABC):
         """
 
     @abstractmethod
-    def predict(self, mReader: DataReader):
+    def predict(self, m_reader: DataReader):
         """
         Predict the given data
 
         NOTE: Changes the object itself
 
-        :param mReader: The DataReader object
+        :param m_reader: The DataReader object
         :return:
         """

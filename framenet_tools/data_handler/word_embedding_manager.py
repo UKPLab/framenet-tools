@@ -9,9 +9,7 @@ class WordEmbeddingManager(object):
     Loads and provides the specified word-embeddings
     """
 
-    def __init__(
-        self, path: str = "data/word_embeddings/levy_deps_300.w2vt"
-    ):
+    def __init__(self, path: str = "data/word_embeddings/levy_deps_300.w2vt"):
 
         self.path = path
         self.words = None

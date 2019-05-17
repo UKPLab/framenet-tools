@@ -234,36 +234,12 @@ def get_sentences_nltk(raw: str):
     return sentences
 
 
-def read_frame_embeddings(self, path: str):
-    """
-
-    :param self:
-    :param path:
-    :return:
-    """
-    # print('Loading frame embeddings')
-
-    frame_embeddings = dict()
-
-    with open(path, "r") as file:
-        raw = file.read()
-
-    data = raw.rsplit("\n")
-
-    for line in data:
-        line = line.rsplit("\t")
-
-        if len(line) > 1:
-            self.frames[line[0]] = self.string_to_array(line[1])
-
-    return frame_embeddings
-
-
 def pos_to_int(pos: str):
     """
+    Converts a pos tag to an integer according to the static dictionary.
 
-    :param pos:
-    :return:
+    :param pos: The pos tag
+    :return: The index of the pos tag
     """
 
     if pos in pos_dict:

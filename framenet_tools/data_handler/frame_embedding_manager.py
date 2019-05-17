@@ -28,9 +28,9 @@ class FrameEmbeddingManager(object):
 
         array = []
 
-        string = string.replace('[', '')
-        string = string.replace(']', '')
-        string = string.rsplit(',')
+        string = string.replace("[", "")
+        string = string.replace("]", "")
+        string = string.rsplit(",")
 
         for element in string:
             array.append(float(element))

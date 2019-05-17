@@ -8,10 +8,7 @@ from framenet_tools.stages.feeID import FeeID
 from framenet_tools.stages.frameID import FrameID
 from framenet_tools.stages.spanID import SpanID
 
-stage_names = ["feeID",
-               "frameID",
-               "spanID",
-               "roleID"]
+stage_names = ["feeID", "frameID", "spanID", "roleID"]
 
 
 def get_stages(i: int, cM: ConfigManager):
@@ -33,6 +30,12 @@ def get_stages(i: int, cM: ConfigManager):
 
 
 class Pipeline(object):
+    """
+    The SRL pipeline
+
+    Contains the stages of Frame evoking element identification, Frame identification,
+    Span identification and Role identification.
+    """
 
     def __init__(self, cM: ConfigManager, level):
         self.cM = cM
@@ -41,6 +44,12 @@ class Pipeline(object):
         self.stages = get_stages(self.level, cM)
 
     def train(self, data: List[str]):
+        """
+        Trains all stages up to the specified level
+
+        :param data: The data to train on TODO
+        :return:
+        """
 
         reader, reader_dev = self.load_dataset()
 
@@ -48,6 +57,16 @@ class Pipeline(object):
             stage.train(reader, reader_dev)
 
     def predict(self, file: str, out_path: str):
+        """
+        Predicts a raw file and exports the predictions to the given file.
+        Also only predicts up to the specified level.
+
+        NOTE: Prediction is only possible up to the level on which the pipeline was trained!
+
+        :param file: The raw input text file
+        :param out_path: The path to save the outputs to
+        :return:
+        """
 
         m_reader = RawReader(self.cM)
 
@@ -59,6 +78,12 @@ class Pipeline(object):
         m_reader.export_to_json(out_path)
 
     def load_dataset(self, files: List[str] = None):
+        """
+        Helper function for loading datasets
+
+        :param files:
+        :return:
+        """
 
         file = "data/experiments/xp_001/data/train.gold.xml"
 
@@ -78,15 +103,3 @@ class Pipeline(object):
         """
 
         # TODO
-
-
-logging.basicConfig(
-        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
-    )
-
-#cM = ConfigManager()
-
-#p = Pipeline(cM)
-#p.train(cM.train_files)
-#p.predict("example.txt", "test.json")
-

@@ -7,15 +7,9 @@ import os
 from typing import List
 from subprocess import call
 
-from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
-from framenet_tools.evaluator import (
-    evaluate_frame_identification,
-    evaluate_fee_identification,
-    evaluate_span_identification)
 from framenet_tools.pipeline import Pipeline
 from framenet_tools.utils.static_utils import download, get_spacy_en_model
-from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
 
@@ -23,7 +17,7 @@ required_files = [
     "https://github.com/akb89/pyfn/releases/download/v1.0.0/scripts.7z",
     "https://github.com/akb89/pyfn/releases/download/v1.0.0/lib.7z",
     "https://github.com/akb89/pyfn/releases/download/v1.0.0/resources.7z",
-    "https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z"
+    "https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z",
 ]
 
 
@@ -55,7 +49,9 @@ def create_argparser():
         help=f"Actions to perform, namely: download, convert, train, predict, evaluate",
     )
     parser.add_argument(
-        "--level", help="The upper bound for pipeline stages. (Default is 4, meaning all stages!)", type=int
+        "--level",
+        help="The upper bound for pipeline stages. (Default is 4, meaning all stages!)",
+        type=int,
     )
     parser.add_argument(
         "--path", help="A path specification used by some actions.", type=str
@@ -183,15 +179,3 @@ def main():
     parser = create_argparser()
 
     eval_args(parser, cM)
-
-
-logging.basicConfig(
-        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
-    )
-
-cM = ConfigManager()
-
-parser = create_argparser()
-eval_args(parser, cM, ["predict", "--level", "4", "--path", "example.txt", "--out_path", "test.json"])
-
-

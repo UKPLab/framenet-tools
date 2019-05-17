@@ -217,7 +217,9 @@ class ConfigManager(object):
 
         config_string += "[SEMEVAL]\n"
         for file_path in self.semeval_files:
-            config_string += file_path.rsplit("/")[-1].rsplit(".")[0] + ": " + file_path + "\n"
+            config_string += (
+                file_path.rsplit("/")[-1].rsplit(".")[0] + ": " + file_path + "\n"
+            )
 
         config_string += "\n[VARIABLES]\n"
         config_string += "model_path: " + self.saved_model + "\n"

@@ -230,8 +230,8 @@ class FrameIDNetwork(object):
         """
         Query a single sentence
         
-        :param x:
-        :return:
+        :param x: A list of ints representing words according to the embedding dictionary
+        :return: The prediction of the frame
         """
 
         x = torch.tensor(x)
@@ -252,7 +252,6 @@ class FrameIDNetwork(object):
 
         for batch in iter(dataset_iter):
             sent = batch.Sentence
-            # sent = torch.tensor(sent, dtype=torch.long)
 
             outputs = self.net(sent)
             _, predicted = torch.max(outputs.data, 1)
@@ -282,8 +281,7 @@ class FrameIDNetwork(object):
 
         for batch in iter(dev_iter):
             sent = batch.Sentence
-            # sent = torch.tensor(sent, dtype=torch.long)
-            # Variable(batch.Frame[0]).to(self.device)
+
             labels = Variable(batch.Frame[0]).to(self.device)
 
             outputs = self.net(sent)
@@ -294,8 +292,6 @@ class FrameIDNetwork(object):
             total += self.cM.batch_size
 
             correct += (predicted == labels).sum()
-
-            # batch_loss.backward()
 
             loss += batch_loss.item()
 

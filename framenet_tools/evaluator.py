@@ -36,7 +36,9 @@ def calc_f(tp: int, fp: int, fn: int):
     return pr, re, f
 
 
-def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentifier = None):
+def evaluate_span_identification(
+    cM: ConfigManager, span_identifier: SpanIdentifier = None
+):
     """
     Evaluates the span identification for its F1 score
 
@@ -68,7 +70,9 @@ def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentif
             gold_annotations = gold_sentences[i]
             predictied_annotations = m_data_reader.annotations[i]
 
-            for gold_annotation, predictied_annotation in zip(gold_annotations, predictied_annotations):
+            for gold_annotation, predictied_annotation in zip(
+                gold_annotations, predictied_annotations
+            ):
 
                 for role_posistion in gold_annotation.role_positions:
                     if role_posistion in predictied_annotation.role_positions:
@@ -82,9 +86,11 @@ def evaluate_span_identification(cM: ConfigManager, span_identifier: SpanIdentif
 
         pr, re, f1 = calc_f(tp, fp, fn)
 
-        logging.info(f"FEE Evaluation complete!\n"
-                     f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
-                     f"Precision: {pr} Recall: {re} F1-Score: {f1}")
+        logging.info(
+            f"FEE Evaluation complete!\n"
+            f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
+            f"Precision: {pr} Recall: {re} F1-Score: {f1}"
+        )
 
     return pr, re, f1
 
@@ -114,22 +120,28 @@ def evaluate_fee_identification(cM: ConfigManager):
             gold_sentences, m_data_reader.annotations
         ):
             for gold_annotation in gold_annotations:
-                if gold_annotation.fee_raw in [x.fee_raw for x in predictied_annotations]:
+                if gold_annotation.fee_raw in [
+                    x.fee_raw for x in predictied_annotations
+                ]:
                     tp += 1
                 else:
                     fn += 1
 
             for predicted_annotation in predictied_annotations:
-                #print(predicted_annotation)
-                #print([x.fee_raw for x in gold_annotations])
-                if predicted_annotation.fee_raw not in [x.fee_raw for x in gold_annotations]:
+                # print(predicted_annotation)
+                # print([x.fee_raw for x in gold_annotations])
+                if predicted_annotation.fee_raw not in [
+                    x.fee_raw for x in gold_annotations
+                ]:
                     fp += 1
 
         pr, re, f1 = calc_f(tp, fp, fn)
 
-        logging.info(f"FEE Evaluation complete!\n"
-                     f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
-                     f"Precision: {pr} Recall: {re} F1-Score: {f1}")
+        logging.info(
+            f"FEE Evaluation complete!\n"
+            f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
+            f"Precision: {pr} Recall: {re} F1-Score: {f1}"
+        )
 
     return pr, re, f1
 
@@ -150,9 +162,11 @@ def evaluate_frame_identification(cM: ConfigManager):
         tp, fp, fn = f_i.evaluate_file(file)
         pr, re, f1 = calc_f(tp, fp, fn)
 
-        logging.info(f"Evaluation complete!\n"
-                     f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
-                     f"Precision: {pr} Recall: {re} F1-Score: {f1}")
+        logging.info(
+            f"Evaluation complete!\n"
+            f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
+            f"Precision: {pr} Recall: {re} F1-Score: {f1}"
+        )
 
     return pr, re, f1
 

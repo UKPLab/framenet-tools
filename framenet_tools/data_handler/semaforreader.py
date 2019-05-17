@@ -46,7 +46,9 @@ class SemaforReader(DataReader):
             fee = element_data[4]  # Frame evoking element
             position = element_data[5].rsplit("_")  # Position of word in sentence
             position = (int(position[0]), int(position[-1]))
-            fee_raw = element_data[6].rsplit(" ")[0]  # Frame evoking element as it appeared
+            fee_raw = element_data[6].rsplit(" ")[
+                0
+            ]  # Frame evoking element as it appeared
 
             sent_num = int(element_data[7])  # Sentence number
 
@@ -56,14 +58,23 @@ class SemaforReader(DataReader):
             roles, role_positions = self.digest_role_data(element)
 
             self.annotations[sent_num].append(
-                Annotation(frame, fee, position, fee_raw, self.sentences[sent_num], roles, role_positions)
+                Annotation(
+                    frame,
+                    fee,
+                    position,
+                    fee_raw,
+                    self.sentences[sent_num],
+                    roles,
+                    role_positions,
+                )
             )
 
     def digest_role_data(self, element: str):
         """
+        Parses a string of role information into the desired format
 
-        :param element:
-        :return:
+        :param element: The string containing the role data
+        :return: A pair of two concurrent lists containing the roles and their spans
         """
 
         roles = []
@@ -74,7 +85,7 @@ class SemaforReader(DataReader):
 
         while len(element_data) > c:
             role = element_data[c]
-            role_position = element_data[c+1]
+            role_position = element_data[c + 1]
             if ":" in role_position:
                 role_position = role_position.rsplit(":")
                 role_position = (role_position[0], role_position[1])
@@ -123,14 +134,10 @@ class SemaforReader(DataReader):
 
         # Remove empty line at the end
         if elements[len(elements) - 1] == "":
-            # print("Removed empty line at eof")
             elements = elements[: len(elements) - 1]
 
         if sentences[len(sentences) - 1] == "":
-            # print("Removed empty line at eof")
             sentences = sentences[: len(sentences) - 1]
-
-        # print(sentences)
 
         self.digest_raw_data(elements, sentences)
 

@@ -10,9 +10,7 @@ class RawReader(DataReader):
     Inherits from DataReader
     """
 
-    def __init__(
-        self, cM: ConfigManager, raw_path: str = None
-    ):
+    def __init__(self, cM: ConfigManager, raw_path: str = None):
 
         DataReader.__init__(self, cM)
 
@@ -41,4 +39,3 @@ class RawReader(DataReader):
         self.sentences += get_sentences(raw, self.cM.use_spacy)
 
         self.loaded(False)
-

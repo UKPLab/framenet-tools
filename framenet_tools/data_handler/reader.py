@@ -16,9 +16,7 @@ class DataReader(object):
     Stores all loaded data from every reader.
     """
 
-    def __init__(
-        self, cM: ConfigManager
-    ):
+    def __init__(self, cM: ConfigManager):
 
         self.cM = cM
 
@@ -107,7 +105,7 @@ class DataReader(object):
             embedded = self.cM.wEM.embed(word.lower())
 
         if embedded is None:
-            embedded = [random.random()/10 for _ in range(300)]
+            embedded = [random.random() / 10 for _ in range(300)]
 
         return embedded
 
@@ -139,7 +137,6 @@ class DataReader(object):
 
             self.embedded_sentences.append(embedded_sentence)
 
-
         logging.info("[Done] embedding sentences")
 
     def embed_frame(self, frame: str):
@@ -155,7 +152,7 @@ class DataReader(object):
         embedded = self.cM.fEM.embed(frame)
 
         if embedded is None:
-            embedded = [random.random()/6 for _ in range(100)]
+            embedded = [random.random() / 6 for _ in range(100)]
 
         return embedded
 
