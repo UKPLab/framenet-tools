@@ -19,6 +19,46 @@ required_resources = [
 ]
 
 
+pos_dict = [
+    "CC",
+    "CD",
+    "DT",
+    "EX",
+    "FW",
+    "IN",
+    "JJ",
+    "JJR",
+    "JJS",
+    "LS",
+    "MD",
+    "NN",
+    "NNS",
+    "NNP",
+    "NNPS",
+    "PDT",
+    "POS",
+    "PRP",
+    "PRP$",
+    "RB",
+    "RBR",
+    "RBS",
+    "RP",
+    "SYM",
+    "TO",
+    "UH",
+    "VB",
+    "VBD",
+    "VBG",
+    "VBN",
+    "VBP",
+    "VBZ",
+    "WDT",
+    "WP",
+    "WP$",
+    "WRB",
+]
+
+
 def download_resources():
     """
     Checks if the required resources from nltk are installed, if not they are downloaded.
@@ -112,11 +152,7 @@ def get_spacy_en_model():
     :return:
     """
 
-    call(["python3",
-          "-m",
-          "spacy",
-          "download",
-          "en_core_web_sm"])
+    call(["python3", "-m", "spacy", "download", "en_core_web_sm"])
 
 
 def download(url: str):
@@ -196,3 +232,17 @@ def get_sentences_nltk(raw: str):
         sentences.append(words)
 
     return sentences
+
+
+def pos_to_int(pos: str):
+    """
+    Converts a pos tag to an integer according to the static dictionary.
+
+    :param pos: The pos tag
+    :return: The index of the pos tag
+    """
+
+    if pos in pos_dict:
+        return pos_dict.index(pos)
+
+    return -1

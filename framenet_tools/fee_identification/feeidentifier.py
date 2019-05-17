@@ -1,13 +1,13 @@
 import logging
 import nltk
-import spacy
 
-from nltk.stem import WordNetLemmatizer
-from nltk.tree import Tree
-
+from typing import List
 
 # Static definitions
 from framenet_tools.config import ConfigManager
+from framenet_tools.data_handler.annotation import Annotation
+from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.utils.postagger import PosTagger
 
 punctuation = (".", ",", ";", ":", "!", "?", "/", "(", ")", "'")  # added
 forbidden_words = (
@@ -69,26 +69,6 @@ forbidden_pos_prefixes = (
     "PO",
 )  # added "PO": POS = genitive marker
 direct_object_labels = ("OBJ", "DOBJ")  # accomodates MST labels and Standford labels
-
-
-def get_pos_constants(tag: str):
-    """
-    Static function for tag conversion
-
-    :param tag: The given pos tag
-    :return: The corresponding letter
-    """
-
-    if tag.startswith("J"):
-        return "a"
-    elif tag.startswith("V"):
-        return "v"
-    elif tag.startswith("N"):
-        return "n"
-    elif tag.startswith("R"):
-        return "r"
-    else:
-        return "n"
 
 
 def should_include_token(p_data: list):
@@ -168,10 +148,7 @@ class FeeIdentifier(object):
 
         self.cM = cM
 
-        if self.cM.use_spacy:
-            self.nlp = spacy.load("en_core_web_sm")
-        else:
-            self.lemmatizer = WordNetLemmatizer()
+        self.pos_tagger = PosTagger(self.cM.use_spacy)
 
     def identify_targets(self, sentence: list):
         """
@@ -182,88 +159,10 @@ class FeeIdentifier(object):
         """
 
         tokens = nltk.word_tokenize(sentence)
-        p_data = self.get_tags(tokens)
+        p_data = self.pos_tagger.get_tags(tokens)
         targets = should_include_token(p_data)
 
         return targets
-
-    def get_tags(self, tokens: str):
-        """
-
-        :param tokens:
-        :return:
-        """
-
-        if self.cM.use_spacy:
-            return self.get_tags_spacy(tokens)
-
-        return self.get_tags_nltk(tokens)
-
-    def get_tags_spacy(self, tokens: str):
-        """
-
-        :param tokens:
-        :return:
-        """
-
-        sentence = ""
-
-        if len(tokens) > 0:
-            sentence = tokens[0]
-
-        for token in tokens:
-            sentence += " " + token
-
-        doc = self.nlp(sentence)
-        pData = []
-
-        for token in doc:
-            text = token.text
-            ne = token.ent_type_
-            tag = token.tag_
-            lemma = token.lemma_
-
-            logging.debug(f"Token: {text}, NE: {ne}, Tag: {tag}, Lemma: {lemma}")
-
-            if ne == "":
-                ne = "-"
-
-            pData.append([text, tag, lemma, ne])
-
-        return pData
-
-    def get_tags_nltk(self, tokens: list):
-        """
-        Gets lemma, pos and NE for each token
-
-        :param tokens: A list of tokens from a sentence
-        :return: A 2d-Array containing lemma, pos and NE for each token
-        """
-
-        pos_tags = []
-        lemmas = []
-        nes = []
-        # print(tokens)
-
-        tags = nltk.pos_tag(tokens)
-
-        for tag in tags:
-            pos_tags.append(tag[1])
-            lemmas.append(
-                self.lemmatizer.lemmatize(tag[0], pos=get_pos_constants(tag[1]))
-            )
-        chunks = nltk.ne_chunk(tags)
-        for chunk in chunks:
-            if isinstance(chunk, Tree):
-                nes.append(chunk.label())
-            else:
-                nes.append("-")
-        pData = []
-
-        for t, p, l, n in zip(tokens, pos_tags, lemmas, nes):
-            pData.append([t, p, l, n])
-
-        return pData
 
     """
     def load_dataset(self, file):
@@ -274,7 +173,7 @@ class FeeIdentifier(object):
         return self.sum_FEEs(dataset)
     """
 
-    def query(self, x: list):
+    def query(self, x: List[str]):
         """
         Query a prediction of FEEs for a given sentence
 
@@ -284,13 +183,13 @@ class FeeIdentifier(object):
 
         tokens = x[0]
 
-        pData = self.get_tags(tokens)
+        pData = self.pos_tagger.get_tags(tokens)
 
         possible_fees = should_include_token(pData)
 
         return possible_fees
 
-    def predict_fees(self, dataset: list):
+    def predict_fees_old(self, dataset: List[List[str]]):
         """
         Predicts all FEEs for a complete datset
 
@@ -305,7 +204,7 @@ class FeeIdentifier(object):
 
         return predictions
 
-    def evaluate_acc(self, dataset: list):
+    def evaluate_acc(self, dataset: List[List[str]]):
         """
         Evaluates the accuracy of the Frame Evoking Element Identifier
 
@@ -329,3 +228,26 @@ class FeeIdentifier(object):
         acc = correct / total
 
         return correct, total, acc
+
+    def predict_fees(self, mReader: DataReader):
+        """
+        Predicts the Frame Evoking Elements
+        NOTE: This drops current annotation data
+
+        :return:
+        """
+
+        mReader.annotations = []
+        #fee_finder = FeeIdentifier(self.cM)
+
+        for sentence in mReader.sentences:
+            possible_fees = self.query([sentence])
+            predicted_annotations = []
+
+            # Create new Annotation for each possible frame evoking element
+            for possible_fee in possible_fees:
+                predicted_annotations.append(
+                    Annotation(fee_raw=possible_fee, sentence=sentence)
+                )
+
+            mReader.annotations.append(predicted_annotations)

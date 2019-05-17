@@ -5,13 +5,20 @@ from torchtext import data
 import pickle
 from typing import List
 
+from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
-from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
+from framenet_tools.utils.static_utils import shuffle_concurrent_lists
 
 
 class FrameIdentifier(object):
+    """
+    The FrameIdentifier
+
+    Manages the neural network and dataset creation needed for training and evaluation.
+    """
+
     def __init__(self, cM: ConfigManager):
         # Create fields
         self.input_field = data.Field(
@@ -26,24 +33,14 @@ class FrameIdentifier(object):
         self.cM = cM
         self.network = None
 
-    def get_dataset(self, file: List[str], predict_fees: bool):
+    def get_dataset(self, reader: DataReader):
         """
         Loads the dataset and combines the necessary data
 
-        :param file: A list of the two files to load
-        :param predict_fees: A boolean whether to predict the frame evoking elements
-        :return: xs: A list of senctences appended with its FEE
+        :param reader: The reader that contains the dataset
+        :return: xs: A list of sentences appended with its FEE
                 ys: A list of frames corresponding to the given sentences
         """
-
-        reader = DataReader(self.cM)
-        if len(file) == 2:
-            reader.read_data(file[0], file[1])
-        else:
-            reader.read_raw_text(file[0])
-
-        if predict_fees:
-            reader.predict_fees()
 
         xs = []
         ys = []
@@ -98,12 +95,7 @@ class FrameIdentifier(object):
         fn = 0
 
         predictions = [i.item() for j in predictions for i in j]
-        print(len(predictions))
-        print(predictions)
-        print(len(xs))
-        # print(len(ys))
 
-        # dataset = reformat_dataset(predictions, xs, ys)
         found = False
 
         for gold_x, gold_y in zip(gold_xs, gold_ys):
@@ -130,6 +122,22 @@ class FrameIdentifier(object):
             found = False
 
         return tp, fp, fn
+
+    def query(self, annotation: Annotation):
+        """
+
+        :param annotation:
+        :return:
+        """
+
+        x = [annotation.fee_raw] + annotation.sentence
+
+        x = [[self.input_field.vocab.stoi[t]] for t in x]
+
+        frame = self.network.query(x)
+        frame = self.output_field.vocab.itos[frame.item()]
+
+        return frame
 
     def write_predictions(self, file: str, out_file: str, fee_only: bool = False):
         """
@@ -246,23 +254,23 @@ class FrameIdentifier(object):
 
         return self.evaluate(predictions, xs, file)
 
-    def train(self, files: List[List[str]]):
+    def train(self, reader: DataReader, reader_dev: DataReader = None):
         """
-        Trains the model on given files
+        Trains the model on the given reader.
 
-        NOTE: If more than two file sets are given, they will be concatenated!
+        NOTE: If no development reader is given, autostopping will be disabled!
 
-        :param files: A list of file sets
+        :param reader: The DataReader object which contains the training data
+        :param reader_dev: The DataReader object for evaluation and auto stopping
         :return:
         """
 
         xs = []
         ys = []
 
-        for file in files:
-            new_xs, new_ys = self.get_dataset(file, False)
-            xs += new_xs
-            ys += new_ys
+        new_xs, new_ys = self.get_dataset(reader)
+        xs += new_xs
+        ys += new_ys
 
         shuffle_concurrent_lists([xs, ys])
 
@@ -280,7 +288,7 @@ class FrameIdentifier(object):
 
         train_iter = self.prepare_dataset(xs, ys)
 
-        dev_iter = self.get_iter(self.cM.eval_files[0])
+        dev_iter = self.get_iter(reader_dev)
 
         self.input_field.vocab.load_vectors("glove.6B.300d")
 
@@ -292,13 +300,14 @@ class FrameIdentifier(object):
 
         self.network.train_model(dataset_size, train_iter, dev_iter)
 
-    def get_iter(self, file: str):
+    def get_iter(self, reader: DataReader):
+        """
+        Creates an Iterator for a given DataReader object.
+
+        :param reader: The DataReader object
+        :return: A Iterator of the dataset
         """
 
-        :param file:
-        :return:
-        """
-
-        xs, ys = self.get_dataset(file, False)
+        xs, ys = self.get_dataset(reader)
 
         return self.prepare_dataset(xs, ys)

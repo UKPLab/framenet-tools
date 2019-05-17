@@ -1,38 +1,50 @@
+import logging
 import spacy
-
+import re
 import torch
-import torch.nn as nn
 
+from allennlp.predictors.predictor import Predictor
 from torchtext import data
+from tqdm import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.annotation import Annotation
-from framenet_tools.frame_identification.utils import shuffle_concurrent_lists
-from framenet_tools.role_identification.spanidnetwork import SpanIdNetwork
+from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.utils.postagger import PosTagger
+from framenet_tools.utils.static_utils import shuffle_concurrent_lists, pos_to_int
+from framenet_tools.span_identification.spanidnetwork import SpanIdNetwork
 
 
 class SpanIdentifier(object):
-    def __init__(self, cM: ConfigManager):
+    """
+    The Span Identifier for predicting possible role spans of a given sentence
 
-        # Create fields
-        self.input_field = data.Field(
-            dtype=torch.long, use_vocab=True, preprocessing=None
-        )
-        self.output_field = data.Field(dtype=torch.long)
-        self.data_fields = [("Sentence", self.input_field), ("BIO", self.output_field)]
+    Includes multiple ways of predicting:
+        -static
+        -using allennlp
+        -using a bilstm
+    """
+
+    def __init__(self, cM: ConfigManager):
 
         self.cM = cM
         self.network = None
 
-        self.nlp = spacy.load("en_core_web_sm")
-
-    def query(self, annotation: Annotation, use_static: bool = True):
+    def query(
+        self,
+        embedded_sentence: List[float],
+        annotation: Annotation,
+        pos_tags: List[str],
+        use_static: bool = True,
+    ):
         """
         Predicts a possible span set for a given sentence.
 
         NOTE: This can be done static (only using syntax) or via an LSTM.
 
+        :param pos_tags: The postags of the sentence
+        :param embedded_sentence: The embedded words of the sentence
         :param annotation: The annotation of the sentence to predict
         :param use_static: True uses the syntactic static version, otherwise the NN
         :return: A list of possible span tuples
@@ -41,37 +53,39 @@ class SpanIdentifier(object):
         if use_static:
             return self.query_static(annotation)
         else:
-            return self.query_nn(annotation)
+            return self.query_nn(embedded_sentence, annotation, pos_tags)
 
-    def query_nn(self, annotation: Annotation):
+    def query_nn(
+        self,
+        embedded_sentence: List[float],
+        annotation: Annotation,
+        pos_tags: List[str],
+    ):
         """
         Predicts the possible spans using the LSTM.
 
         NOTE: In order to use this, the network must be trained beforehand
 
+        :param pos_tags: The postags of the sentence
+        :param embedded_sentence: The embedded words of the sentence
         :param annotation: The annotation of the sentence to predict
         :return: A list of possible span tuples
         """
 
-        self.network.reset_hidden()
-
         possible_roles = []
         count = 0
         new_span = -1
-        sent = []
 
-        for word in annotation.sentence:
+        combined = [
+            torch.tensor([word + annotation.embedded_frame + [pos_to_int(pos_tag[1])]])
+            for word, pos_tag in zip(embedded_sentence, pos_tags)
+        ]
 
-            sent.append(self.input_field.vocab.stoi[word])
-
-        sent.append(self.input_field.vocab.stoi[annotation.fee_raw])
-
-        bio_tags = self.network.predict(sent)[0]
+        bio_tags = self.network.predict(combined)[0]
 
         bio_tags = torch.argmax(bio_tags, 1)
 
         for bio_tag in bio_tags:
-            bio_tag = self.output_field.vocab.itos[bio_tag]
 
             if bio_tag == 0:
                 new_span = count
@@ -79,6 +93,8 @@ class SpanIdentifier(object):
             if bio_tag == 2 and new_span != -1:
                 possible_roles.append((new_span, count - 1))
                 new_span = -1
+
+            count += 1
 
         return possible_roles
 
@@ -234,14 +250,14 @@ class SpanIdentifier(object):
 
         sentence_length = len(annotation.sentence)
 
-        bio = [2] * sentence_length
+        bio = ["O"] * sentence_length
 
         for role_position in annotation.role_positions:
             b = role_position[0]
-            bio[b] = 0
+            bio[b] = "B"
 
-            for i in range(b, role_position[1]):
-                bio[i] = 1
+            for i in range(b + 1, role_position[1] + 1):
+                bio[i] = "I"
 
         return bio
 
@@ -285,7 +301,127 @@ class SpanIdentifier(object):
 
         return iterator
 
-    def train(self, annotations: List[List[Annotation]]):
+    def get_dataset_comb(self, m_reader: DataReader):
+        """
+        Generates sentences with their BIO-tags
+
+        :param m_reader: The DataReader to create the dataset from
+        :return: A pair of concurrent lists containing the sequences and their labels
+        """
+
+        xs = []
+        ys = []
+
+        pos_tagger = PosTagger(self.cM.use_spacy)
+
+        for annotations_sentence, emb_sentence, sentence in zip(
+            m_reader.annotations, m_reader.embedded_sentences, m_reader.sentences
+        ):
+
+            pos_tags = pos_tagger.get_tags(sentence)
+
+            for annotation in annotations_sentence:
+
+                sent_len = len(sentence)
+                spans = [2] * sent_len
+
+                for role_pos in annotation.role_positions:
+
+                    spans[role_pos[0]] = 0
+
+                    for i in range(role_pos[0] + 1, role_pos[1] + 1):
+                        spans[i] = 1
+
+                ys.append(spans)
+
+                combined = [
+                    torch.tensor(
+                        [
+                            emb_word
+                            + annotation.embedded_frame
+                            + [pos_to_int(pos_tag[1])]
+                        ]
+                    )
+                    for emb_word, pos_tag in zip(emb_sentence, pos_tags)
+                ]
+                xs.append(combined)
+
+        return xs, ys
+
+    def pred_allen(self):
+        """
+        A version for predicting spans using allennlp's predictor
+
+        :return:
+        """
+
+        predictor = Predictor.from_path(
+            "https://s3-us-west-2.amazonaws.com/allennlp/models/srl-model-2018.05.25.tar.gz"
+        )
+
+        num_sentences = range(len(self.sentences))
+
+        for i in tqdm(num_sentences):
+
+            sentence = " ".join(self.sentences[i])
+
+            prediction = predictor.predict(sentence)
+
+            verbs = [t["verb"] for t in prediction["verbs"]]
+
+            for annotation in self.annotations[i]:
+
+                spans = []
+
+                if annotation.fee_raw in verbs:
+                    # print("d")
+                    desc = prediction["verbs"][verbs.index(annotation.fee_raw)][
+                        "description"
+                    ]
+
+                    c = 0
+
+                    while re.search("\[ARG[" + str(c) + "]: [^\]]*", desc) is not None:
+
+                        span = re.search("\[ARG[" + str(c) + "]: [^\]]*", desc).span()
+
+                        arg = desc[span[0] + 7 : span[1]]
+
+                        # arg = nltk.word_tokenize(arg)
+                        arg = self.nlp(arg)
+
+                        for j in range(len(annotation.sentence)):
+
+                            word = annotation.sentence[j]
+
+                            if word == arg[0].text:
+                                saved = j
+
+                                for arg_word in arg:
+
+                                    if not arg_word.text == annotation.sentence[j]:
+                                        break
+
+                                    saved2 = j
+                                    j += 1
+
+                        spans.append((saved, saved2))
+
+                        c += 1
+
+                annotation.role_positions = spans
+
+    def load(self):
+        """
+        Loads the saved model of the span identification network
+
+        :return:
+        """
+
+        self.network = SpanIdNetwork(self.cM, 3)
+        self.network.load_model("data/models/span_test.m")
+
+    def train(self, mReader, mReaderDev):
         """
         Trains the model on all of the given annotations.
 
@@ -293,35 +429,48 @@ class SpanIdentifier(object):
         :return:
         """
 
-        xs, ys = self.get_dataset(annotations)
+        xs, ys = self.get_dataset_comb(mReader)
 
-        # Not needed atm...
-        # ys = self.to_one_hot(ys)
+        dev_xs, dev_ys = self.get_dataset_comb(mReaderDev)
 
         shuffle_concurrent_lists([xs, ys])
 
-        # Zip datasets and generate complete dictionary
-        examples = [
-            data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
-        ]
+        num_classes = 3
 
-        dataset = data.Dataset(examples, fields=self.data_fields)
+        self.network = SpanIdNetwork(self.cM, num_classes)
 
-        self.input_field.build_vocab(dataset)
-        self.output_field.build_vocab(dataset)
+        self.network.train_model(xs, ys, dev_xs, dev_ys)
 
-        dataset_size = len(xs)
+    def predict_spans(self, m_reader: DataReader):
+        """
+        Predicts the spans of the currently loaded dataset.
+        The predictions are saved in the annotations.
 
-        train_iter = self.prepare_dataset(xs, ys)
+        NOTE: All loaded spans and roles are overwritten!
 
-        # dev_iter = self.get_iter(self.cM.eval_files[0])
+        :return:
+        """
 
-        self.input_field.vocab.load_vectors("glove.6B.300d")
+        logging.info(f"Predicting Spans")
+        use_static = False
 
-        num_classes = len(self.output_field.vocab)
+        # if span_identifier is None:
+        #    span_identifier = SpanIdentifier(self.cM)
+        #    use_static = True
 
-        embed = nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
+        num_sentences = range(len(m_reader.sentences))
 
-        self.network = SpanIdNetwork(self.cM, embed, num_classes)
+        for i in tqdm(num_sentences):
+            for annotation in m_reader.annotations[i]:
 
-        self.network.train_model(dataset_size, train_iter)
+                p_role_positions = self.query(
+                    m_reader.embedded_sentences[i],
+                    annotation,
+                    m_reader.pos_tags[i],
+                    use_static,
+                )
+
+                annotation.role_positions = p_role_positions
+                annotation.roles = []
+
+        logging.info(f"Done predicting Spans")

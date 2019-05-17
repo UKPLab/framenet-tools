@@ -2,9 +2,11 @@ import logging
 import torch
 import torch.nn as nn
 import torchtext
+
 from torch.autograd import Variable
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
+from typing import List
 
 from framenet_tools.config import ConfigManager
 
@@ -76,7 +78,7 @@ class Net(nn.Module):
         lookup_tensor = sent.to(self.device)
         embedded_sent = self.embedding_layer(lookup_tensor)
 
-        averaged_sent = embedded_sent.mean(dim=0)
+        averaged_sent = embedded_sent.mean(dim=1)
 
         # Reappend the FEE
 
@@ -98,6 +100,7 @@ class Net(nn.Module):
         :return: The prediction of the network
         """
 
+        x = torch.transpose(x, 0, 1)
         x = Variable(self.average_sentence(x)).to(self.device)
 
         # Programmatically pass x through all layers
@@ -152,13 +155,15 @@ class FrameIDNetwork(object):
         Trains the model with the given dataset
         Uses the model specified in net
 
+        :param dev_iter: The dev dataset for performance measuring
         :param train_iter: The train dataset iterator including all data for training
         :param dataset_size: The size of the dataset
-        :param batch_size: The batchsize to use for training
+        :param batch_size: The batch size to use for training
         :return:
         """
 
-        # batch_count = sum(1 for _ in train_iter)
+        highest_acc = 0
+        auto_stopper = True
 
         writer = SummaryWriter()
 
@@ -179,8 +184,6 @@ class FrameIDNetwork(object):
                 self.optimizer.zero_grad()  # zero the gradient buffer
                 outputs = self.net(sent)
 
-                # print(labels)
-                # print(outputs)
                 loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
@@ -189,11 +192,6 @@ class FrameIDNetwork(object):
 
                 _, predicted = torch.max(outputs.data, 1)
                 total_hits += (predicted == labels).sum().item()
-
-                # print(predicted)
-                # print(labels)
-                # print(total_hits)
-                # print(count)
 
                 count += labels.size(0)
 
@@ -210,6 +208,10 @@ class FrameIDNetwork(object):
 
             dev_acc, dev_loss = self.eval_model(dev_iter)
 
+            if dev_acc > highest_acc:
+                highest_acc = dev_acc
+                self.save_model(self.cM.saved_model + ".auto")
+
             logging.info(
                 f"Train Acc: {train_acc}, Dev Acc: {dev_acc}, Train Loss: {train_loss}, Dev Loss: {dev_loss}"
             )
@@ -222,8 +224,22 @@ class FrameIDNetwork(object):
                 "data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch
             )
 
-        writer.export_scalars_to_json("data/logging/t_loss.json")
         writer.close()
+
+    def query(self, x: List[int]):
+        """
+        Query a single sentence
+        
+        :param x: A list of ints representing words according to the embedding dictionary
+        :return: The prediction of the frame
+        """
+
+        x = torch.tensor(x)
+
+        output = self.net(x)
+        _, predicted = torch.max(output.data, 1)
+
+        return predicted.to("cpu")
 
     def predict(self, dataset_iter: torchtext.data.Iterator):
         """
@@ -236,7 +252,6 @@ class FrameIDNetwork(object):
 
         for batch in iter(dataset_iter):
             sent = batch.Sentence
-            # sent = torch.tensor(sent, dtype=torch.long)
 
             outputs = self.net(sent)
             _, predicted = torch.max(outputs.data, 1)
@@ -266,8 +281,7 @@ class FrameIDNetwork(object):
 
         for batch in iter(dev_iter):
             sent = batch.Sentence
-            # sent = torch.tensor(sent, dtype=torch.long)
-            # Variable(batch.Frame[0]).to(self.device)
+
             labels = Variable(batch.Frame[0]).to(self.device)
 
             outputs = self.net(sent)
@@ -275,11 +289,9 @@ class FrameIDNetwork(object):
 
             _, predicted = torch.max(outputs.data, 1)
 
-            total += 1
+            total += self.cM.batch_size
 
             correct += (predicted == labels).sum()
-
-            # batch_loss.backward()
 
             loss += batch_loss.item()
 

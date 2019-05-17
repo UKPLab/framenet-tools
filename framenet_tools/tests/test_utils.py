@@ -1,12 +1,11 @@
 import logging
 import os
 import pytest
-import random
 
 from typing import List
 
 from framenet_tools.evaluator import calc_f
-from framenet_tools.frame_identification.utils import (
+from framenet_tools.utils.utils import (
     shuffle_concurrent_lists,
     extract7z,
     download_file,

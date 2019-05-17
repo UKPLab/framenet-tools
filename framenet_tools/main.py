@@ -7,17 +7,9 @@ import os
 from typing import List
 from subprocess import call
 
-# from framenet_tools.frame_identification.feeidentifierWrapper import FeeIdentifierWrapper
-from framenet_tools.data_handler.reader import DataReader
-from framenet_tools.data_handler.semeval_reader import SemevalReader
-from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.config import ConfigManager
-from framenet_tools.evaluator import (
-    evaluate_frame_identification,
-    evaluate_fee_identification,
-    evaluate_span_identification)
-from framenet_tools.frame_identification.utils import download, get_spacy_en_model
-from framenet_tools.role_identification.spanidentifier import SpanIdentifier
+from framenet_tools.pipeline import Pipeline
+from framenet_tools.utils.static_utils import download, get_spacy_en_model
 
 dirs = ["/scripts", "/lib", "/resources", "/data"]
 
@@ -25,7 +17,7 @@ required_files = [
     "https://github.com/akb89/pyfn/releases/download/v1.0.0/scripts.7z",
     "https://github.com/akb89/pyfn/releases/download/v1.0.0/lib.7z",
     "https://github.com/akb89/pyfn/releases/download/v1.0.0/resources.7z",
-    "https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z"
+    "https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z",
 ]
 
 
@@ -54,7 +46,12 @@ def create_argparser():
 
     parser.add_argument(
         "action",
-        help=f"Actions to perform, namely: download, convert, train, predict, evaluate, fee_predict, span_evaluate",
+        help=f"Actions to perform, namely: download, convert, train, predict, evaluate",
+    )
+    parser.add_argument(
+        "--level",
+        help="The upper bound for pipeline stages. (Default is 4, meaning all stages!)",
+        type=int,
     )
     parser.add_argument(
         "--path", help="A path specification used by some actions.", type=str
@@ -86,6 +83,11 @@ def eval_args(
         parsed = parser.parse_args()
     else:
         parsed = parser.parse_args(args)
+
+    level = 4
+
+    if parsed.level is not None:
+        level = parsed.level
 
     if parsed.action == "download":
 
@@ -136,14 +138,12 @@ def eval_args(
 
     if parsed.action == "train":
 
-        f_i = FrameIdentifier(cM)
+        pipeline = Pipeline(cM, level)
 
         if parsed.use_eval_files:
-            f_i.train(cM.all_files)
+            pipeline.train(cM.all_files)
         else:
-            f_i.train(cM.train_files)
-
-        f_i.save_model(cM.saved_model)
+            pipeline.train(cM.train_files)
 
     if parsed.action == "predict":
 
@@ -153,32 +153,15 @@ def eval_args(
         if parsed.out_path is None:
             raise Exception("No path specified for saving!")
 
-        f_i = FrameIdentifier(cM)
-        f_i.load_model(cM.saved_model)
-        f_i.write_predictions(parsed.path, parsed.out_path)
+        pipeline = Pipeline(cM, level)
 
-    if parsed.action == "fee_predict":
-
-        if parsed.path is None:
-            raise Exception("No input file for prediction given!")
-
-        if parsed.out_path is None:
-            raise Exception("No path specified for saving!")
-
-        f_i = FrameIdentifier(cM)
-        f_i.write_predictions(parsed.path, parsed.out_path, fee_only=True)
+        pipeline.predict(parsed.path, parsed.out_path)
 
     if parsed.action == "evaluate":
 
-        evaluate_frame_identification(cM)
+        pipeline = Pipeline(cM, level)
 
-    if parsed.action == "fee_evaluate":
-
-        evaluate_fee_identification(cM)
-
-    if parsed.action == "span_evaluate":
-
-        evaluate_span_identification(cM)
+        pipeline.evaluate()
 
 
 def main():
@@ -196,4 +179,3 @@ def main():
     parser = create_argparser()
 
     eval_args(parser, cM)
-

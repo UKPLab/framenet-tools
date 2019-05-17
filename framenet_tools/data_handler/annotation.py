@@ -2,6 +2,12 @@ from typing import List, Tuple
 
 
 class Annotation(object):
+    """
+    Annotation class
+
+    Saves and manages all data of one frame for a given sentence.
+    """
+
     def __init__(
         self,
         frame: str = "Default",
@@ -19,6 +25,7 @@ class Annotation(object):
         self.sentence = sentence
         self.roles = roles
         self.role_positions = role_positions
+        self.embedded_frame = None
 
     def create_handle(self):
         """

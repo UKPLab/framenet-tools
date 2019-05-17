@@ -24,12 +24,12 @@ def char_pos_to_sentence_pos(start_char: int, end_char: int, words: List[str]):
 
     chars = 0
 
-    for i in range(len(words)+1):
+    for i in range(len(words) + 1):
         if start == -1 and start_char <= chars:
             start = i
 
         if end == -1 and end_char < chars:
-            return start, max(i-1, start)
+            return start, max(i - 1, start)
 
         if i == len(words):
             break
@@ -41,6 +41,11 @@ def char_pos_to_sentence_pos(start_char: int, end_char: int, words: List[str]):
 
 
 class SemevalReader(DataReader):
+    """
+    A reader for the Semeval format.
+
+    Inherits from DataReader
+    """
 
     def __init__(self, cM: ConfigManager, path_xml: str = None):
         DataReader.__init__(self, cM)
@@ -73,7 +78,7 @@ class SemevalReader(DataReader):
 
     def digest_tree(self, root: xml.etree.ElementTree):
         """
-        Parses the xml-tree into a datareader object.
+        Parses the xml-tree into a DataReader object.
 
         :param root: The root node of the tree
         :return:
@@ -82,7 +87,9 @@ class SemevalReader(DataReader):
         sent_num = 0
 
         # Structure as define by semeval
-        for sentences in root.findall(".documents/document/paragraphs/paragraph/sentences/sentence"):
+        for sentences in root.findall(
+            ".documents/document/paragraphs/paragraph/sentences/sentence"
+        ):
             sentence = sentences.find("text").text
 
             raw_sent = sentence
@@ -98,7 +105,6 @@ class SemevalReader(DataReader):
 
                 data = annotation.findall("./layers/layer")
                 fee_node = data[0].findall(".labels/label")
-                # print(fee.attrib)
 
                 start_char = int(fee_node[0].get("start"))
                 end_char = int(fee_node[-1].get("end"))
@@ -109,17 +115,6 @@ class SemevalReader(DataReader):
                 fee = words[start]
                 fee_raw = words[start]
 
-                '''
-                for fee_part in fee_node[1:]:
-                    start_char = int(fee_part.get("start"))
-                    end_char = int(fee_part.get("end"))
-
-                    start, end = char_pos_to_sentence_pos(start_char, end_char, words)
-
-                    fee += " " + words[start]
-                    fee_raw += " " + words[start]
-                '''
-
                 roles = []
                 role_positions = []
 
@@ -129,7 +124,9 @@ class SemevalReader(DataReader):
                             fe = label.get("name")
                             start_char = int(label.get("start"))
                             end_char = int(label.get("end"))
-                            start, end = char_pos_to_sentence_pos(start_char, end_char, words)
+                            start, end = char_pos_to_sentence_pos(
+                                start_char, end_char, words
+                            )
 
                             roles.append(fe)
                             role_positions.append((start, end))
@@ -138,9 +135,15 @@ class SemevalReader(DataReader):
                     self.annotations.append([])
 
                 self.annotations[sent_num].append(
-                    Annotation(frame, fee, position, fee_raw, self.sentences[sent_num], roles, role_positions)
+                    Annotation(
+                        frame,
+                        fee,
+                        position,
+                        fee_raw,
+                        self.sentences[sent_num],
+                        roles,
+                        role_positions,
+                    )
                 )
 
             sent_num += 1
-
-

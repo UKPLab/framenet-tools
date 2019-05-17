@@ -1,107 +1,35 @@
+import json
 import logging
+import random
 
 from tqdm import tqdm
 from typing import List
 
-from framenet_tools.frame_identification.feeidentifier import FeeIdentifier
-from framenet_tools.frame_identification.utils import download_resources, get_sentences, get_spacy_en_model
 from framenet_tools.config import ConfigManager
-from framenet_tools.role_identification.spanidentifier import SpanIdentifier
-from framenet_tools.data_handler.annotation import Annotation
+from framenet_tools.utils.postagger import PosTagger
 
 
 class DataReader(object):
-    def __init__(
-        self, cM: ConfigManager, path_sent: str = None, path_elements: str = None, raw_path: str = None
-    ):
+    """
+    The top-level DataReader
+
+    Stores all loaded data from every reader.
+    """
+
+    def __init__(self, cM: ConfigManager):
 
         self.cM = cM
-
-        # Provides the ability to set the path at object creation (can also be done on load)
-        self.path_sent = path_sent
-        self.path_elements = path_elements
-        self.raw_path = raw_path
 
         self.sentences = []
         self.annotations = []
 
+        # Embedded
+        self.embedded_sentences = []
+        self.pos_tags = []
+
         # Flags
         self.is_annotated = None
         self.is_loaded = False
-
-        self.dataset = []
-
-        download_resources()
-        get_spacy_en_model()
-
-    def digest_raw_data(self, elements: list, sentences: list):
-        """
-        Converts the raw elements and sentences into a nicely structured dataset
-
-        NOTE: This representation is meant to match the one in the "frames-files"
-
-        :param elements: the annotation data of the given sentences
-        :param sentences: the sentences to digest
-        :return:
-        """
-
-        # Append sentences
-        for sentence in sentences:
-            words = sentence.split(" ")
-            while "" in words:
-                words.remove("")
-            self.sentences.append(words)
-
-        for element in elements:
-            # Element data
-            element_data = element.split("\t")
-
-            frame = element_data[3]  # Frame
-            fee = element_data[4]  # Frame evoking element
-            position = element_data[5].rsplit("_")  # Position of word in sentence
-            position = (int(position[0]), int(position[-1]))
-            fee_raw = element_data[6].rsplit(" ")[0]  # Frame evoking element as it appeared
-
-            sent_num = int(element_data[7])  # Sentence number
-
-            if sent_num >= len(self.annotations):
-                self.annotations.append([])
-
-            roles, role_positions = self.digest_role_data(element)
-
-            self.annotations[sent_num].append(
-                Annotation(frame, fee, position, fee_raw, self.sentences[sent_num], roles, role_positions)
-            )
-
-    def digest_role_data(self, element: str):
-        """
-
-        :param element:
-        :return:
-        """
-
-        roles = []
-        role_positions = []
-
-        element_data = element.split("\t")
-        c = 8
-
-        while len(element_data) > c:
-            role = element_data[c]
-            role_position = element_data[c+1]
-            if ":" in role_position:
-                role_position = role_position.rsplit(":")
-                role_position = (role_position[0], role_position[1])
-            else:
-                role_position = (role_position, role_position)
-            role_position = (int(role_position[0]), int(role_position[1]))
-
-            role_positions.append(role_position)
-            roles.append(role)
-
-            c += 2
-
-        return roles, role_positions
 
     def loaded(self, is_annotated: bool):
         """
@@ -114,134 +42,175 @@ class DataReader(object):
         self.is_loaded = True
         self.is_annotated = is_annotated
 
-    def read_raw_text(self, raw_path: str = None):
+    def export_to_json(self, path: str):
         """
-        Reads a raw text file and saves the content as a dataset
+        Exports the list of annotations to a json file
 
-        NOTE: Applying this function removes the previous dataset content
-
-        :param raw_path: The path of the file to read
+        :param path: The path of the json file
         :return:
         """
 
-        if raw_path is not None:
-            self.raw_path = raw_path
+        out_data = []
+        sent_count = 0
 
-        if self.raw_path is None:
-            raise Exception("Found no file to read")
+        for annotations in self.annotations:
+            data_dict = dict()
+            data_dict["sentence"] = annotations[0].sentence
+            data_dict["sentence_id"] = sent_count
+            data_dict["prediction"] = []
 
-        file = open(raw_path, "r")
-        raw = file.read()
-        file.close()
+            sent_count += 1
 
-        self.sentences += get_sentences(raw, self.cM.use_spacy)
+            frame_count = 0
 
-        self.loaded(False)
+            for annotation in annotations:
 
-    def read_data(self, path_sent: str = None, path_elements: str = None):
+                prediction_dict = dict()
+                prediction_dict["id"] = frame_count
+                prediction_dict["fee"] = annotation.fee_raw
+                prediction_dict["frame"] = annotation.frame
+                prediction_dict["roles"] = []
+
+                role_id = 0
+
+                for span in annotation.role_positions:
+
+                    span_dict = dict()
+                    span_dict["role_id"] = role_id
+                    span_dict["span"] = span
+
+                    role_id += 1
+
+                    prediction_dict["roles"].append(span_dict)
+
+                data_dict["prediction"].append(prediction_dict)
+                frame_count += 1
+
+            out_data.append(data_dict)
+
+        with open(path, "w") as out:
+            json.dump(out_data, out, indent=4)
+
+    def embed_word(self, word: str):
         """
-        Reads a the sentence and elements file and saves the content as a dataset
+        Embeds a single word
 
-        NOTE: Applying this function removes the previous dataset content
+        :param word: The word to embed
+        :return: The vector of the embedding
+        """
 
-        :param path_sent: The path to the sentence file
-        :param path_elements: The path to the elements
+        embedded = self.cM.wEM.embed(word)
+
+        if embedded is None:
+            embedded = self.cM.wEM.embed(word.lower())
+
+        if embedded is None:
+            embedded = [random.random() / 10 for _ in range(300)]
+
+        return embedded
+
+    def embed_words(self, force: bool = False):
+        """
+        Embeds all words of all sentences that are currently saved in "sentences".
+
+        NOTE: Can erase all previously embedded data!
+
+        :param force: If true, all previously saved embeddings will be overwritten!
         :return:
         """
 
-        if path_sent is not None:
-            self.path_sent = path_sent
+        # not not - meaning if the list is NOT empty!
+        if not not self.embedded_sentences and not force:
+            return
 
-        if path_elements is not None:
-            self.path_elements = path_elements
+        self.cM.wEM.read_word_embeddings()
 
-        if self.path_sent is None:
-            raise Exception("Found no sentences-file to read!")
+        self.embedded_sentences = []
 
-        if self.path_elements is None:
-            raise Exception("Found no elements-file to read!")
+        logging.info("Embedding sentences")
 
-        with open(self.path_sent, "r") as file:
-            sentences = file.read()
+        for sentence in tqdm(self.sentences):
+            embedded_sentence = []
 
-        with open(self.path_elements, "r") as file:
-            elements = file.read()
+            for word in sentence:
+                embedded_sentence.append(self.embed_word(word))
 
-        sentences = sentences.split("\n")
-        elements = elements.split("\n")
+            self.embedded_sentences.append(embedded_sentence)
 
-        # Remove empty line at the end
-        if elements[len(elements) - 1] == "":
-            # print("Removed empty line at eof")
-            elements = elements[: len(elements) - 1]
+        logging.info("[Done] embedding sentences")
 
-        if sentences[len(sentences) - 1] == "":
-            # print("Removed empty line at eof")
-            sentences = sentences[: len(sentences) - 1]
-
-        # print(sentences)
-
-        self.digest_raw_data(elements, sentences)
-
-        self.loaded(True)
-
-    def predict_fees(self):
+    def embed_frame(self, frame: str):
         """
-        Predicts the Frame Evoking Elements
-        NOTE: This drops current annotation data
+        Embeds a single frame.
 
+        NOTE: if the embeddings of the frame can not be found, a random set of values is generated.
+
+        :param frame: The frame to embed
+        :return: The embedding of the frame
+        """
+
+        embedded = self.cM.fEM.embed(frame)
+
+        if embedded is None:
+            embedded = [random.random() / 6 for _ in range(100)]
+
+        return embedded
+
+    def embed_frames(self, force: bool = False):
+        """
+        Embeds all the sentences that are currently loaded.
+
+        NOTE: if forced, overrides embedded data inside of the annotation objects
+
+        :param force: If true, embeddings are generate even if they already exist
         :return:
         """
 
-        self.annotations = []
-        fee_finder = FeeIdentifier(self.cM)
+        if (not self.annotations[0].embedded_frame is None) and not force:
+            return
+
+        self.cM.fEM.read_frame_embeddings()
+
+        logging.info("Embedding sentences")
+
+        for annotations in tqdm(self.annotations):
+
+            for annotation in annotations:
+
+                annotation.embedded_frame = self.embed_frame(annotation.frame)
+
+        logging.info("[Done] embedding sentences")
+
+    def generate_pos_tags(self, force: bool = False):
+        """
+        Generates the POS-tags of all sentences that are currently saved.
+
+        :param force: If true, the POS-tags will overwrite previously saved tags.
+        :return:
+        """
+
+        # not not - meaning if the list is NOT empty!
+        if not not self.pos_tags and not force:
+            return
+
+        pos_tagger = PosTagger(self.cM.use_spacy)
+        count = 0
+
+        self.pos_tags = []
 
         for sentence in self.sentences:
-            possible_fees = fee_finder.query([sentence])
-            predicted_annotations = []
+            tags = pos_tagger.get_tags(sentence)
+            self.pos_tags.append(tags)
 
-            # Create new Annotation for each possible frame evoking element
-            for possible_fee in possible_fees:
-                predicted_annotations.append(
-                    Annotation(fee_raw=possible_fee, sentence=sentence)
-                )
-
-            self.annotations.append(predicted_annotations)
-
-    def predict_spans(self, span_identifier: SpanIdentifier = None):
-        """
-        Predicts the spans of the currently loaded dataset.
-        The predictions are saved in the annotations.
-
-        NOTE: All loaded spans and roles are overwritten!
-
-        :return:
-        """
-
-        logging.info(f"Predicting Spans")
-        use_static = False
-
-        if span_identifier is None:
-            span_identifier = SpanIdentifier(self.cM)
-            use_static = True
-
-        num_sentences = range(len(self.sentences))
-
-        for i in tqdm(num_sentences):
-            for annotation in self.annotations[i]:
-
-                p_role_positions = span_identifier.query(annotation, use_static)
-
-                annotation.role_positions = p_role_positions
-                annotation.roles = []
-
-        logging.info(f"Done predicting Spans")
+            if len(sentence) != len(tags):
+                count += 1
 
     def get_annotations(self, sentence: List[str] = None):
         """
+        Returns the annotation object for a given sentence.
 
         :param sentence: The sentence to retrieve the annotations for.
-        :return:
+        :return: A annoation object
         """
 
         for i in len(self.sentences):
