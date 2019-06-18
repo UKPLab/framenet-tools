@@ -167,6 +167,8 @@ class FrameIDNetwork(object):
 
         highest_acc = 0
         auto_stopper = True
+        last_improvement = 0
+        improvement_threshold = 4
 
         writer = SummaryWriter()
 
@@ -211,8 +213,13 @@ class FrameIDNetwork(object):
 
             dev_acc, dev_loss = self.eval_model(dev_iter)
 
+            last_improvement += 1
+
             if dev_acc > highest_acc:
                 highest_acc = dev_acc
+
+                last_improvement = 0
+
                 self.save_model(self.cM.saved_model + ".auto")
 
             logging.info(
@@ -226,6 +233,10 @@ class FrameIDNetwork(object):
             writer.add_scalars(
                 "data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch
             )
+
+            if auto_stopper and (last_improvement > improvement_threshold):
+                writer.close()
+                return
 
         writer.close()
 

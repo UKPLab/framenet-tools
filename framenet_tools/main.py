@@ -204,6 +204,6 @@ logging.basicConfig(
         format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
     )
 
-cM = ConfigManager()
+cM = ConfigManager('config.file')
 
-eval_args(create_argparser(), cM, ['evaluate', '--frameid', '--feeid'])
+eval_args(create_argparser(), cM, ['evaluate', '--frameid'])

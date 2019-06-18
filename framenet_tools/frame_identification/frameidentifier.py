@@ -1,4 +1,5 @@
 import json
+import os
 from copy import deepcopy
 
 import torch
@@ -247,7 +248,12 @@ class FrameIdentifier(object):
         pickle.dump(self.input_field.vocab, open(name + ".in_voc", "wb"))
 
         # Saving the actual network
-        self.network.save_model(name + ".ph")
+        if os.path.exists(name + ".auto"):
+            # If auto saving found, simply rename it
+            print("renamed")
+            os.rename(name + ".auto", name + ".ph")
+        else:
+            self.network.save_model(name + ".ph")
 
     def load_model(self, name: str):
         """
