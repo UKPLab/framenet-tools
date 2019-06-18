@@ -1,9 +1,11 @@
 import logging
+from copy import deepcopy
 from typing import List
 
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.rawreader import RawReader
 from framenet_tools.data_handler.semevalreader import SemevalReader
+from framenet_tools.evaluator import evaluate_stages
 from framenet_tools.stages.feeID import FeeID
 from framenet_tools.stages.frameID import FrameID
 from framenet_tools.stages.spanID import SpanID
@@ -54,7 +56,8 @@ class Pipeline(object):
         if self.levels == []:
             logging.info(f"NOTE: Training an empty pipeline!")
 
-        reader, reader_dev = self.load_dataset()
+        reader = self.load_dataset("data/experiments/xp_001/data/train.gold.xml")
+        reader_dev = self.load_dataset(self.cM.semeval_files[0])
 
         for stage in self.stages:
             stage.train(reader, reader_dev)
@@ -80,29 +83,36 @@ class Pipeline(object):
 
         m_reader.export_to_json(out_path)
 
-    def load_dataset(self, files: List[str] = None):
+    def load_dataset(self, file: str = None):
         """
-        Helper function for loading datasets
+        Helper function for loading datasets.
 
-        :param files:
-        :return:
+        :param file: The file to load the dataset from.
+        :return: A reader object containing the loaded data.
         """
-
-        file = "data/experiments/xp_001/data/train.gold.xml"
 
         m_data_reader = SemevalReader(self.cM)
         m_data_reader.read_data(file)
 
-        file = self.cM.semeval_files[0]
-        m_data_reader_dev = SemevalReader(self.cM)
-        m_data_reader_dev.read_data(file)
-
-        return m_data_reader, m_data_reader_dev
+        return m_data_reader
 
     def evaluate(self):
         """
+        Evaluates all the specified stages of the pipeline.
+
+        NOTE: Depending on the certain levels of the pipeline, the propagated error can be large!
 
         :return:
         """
 
-        # TODO
+        for file in self.cM.semeval_files:
+
+            logging.info(f"Evaluation on {file}:")
+
+            m_reader = self.load_dataset(file)
+            original_reader = deepcopy(m_reader)
+
+            for stage in self.stages:
+                stage.predict(m_reader)
+
+            evaluate_stages(m_reader, original_reader, self.levels)

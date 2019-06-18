@@ -201,9 +201,9 @@ def main():
 
 
 logging.basicConfig(
-        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.DEBUG
+        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
     )
 
 cM = ConfigManager()
 
-eval_args(create_argparser(), cM, ['predict', '--feeid', '--frameid', '--path', 'example.txt'])
+eval_args(create_argparser(), cM, ['evaluate', '--frameid'])
