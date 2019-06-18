@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import torch
 import torch.nn as nn
+from torch.nn.functional import softmax
 from torchtext import data
 import pickle
 from typing import List
@@ -128,8 +129,11 @@ class FrameIdentifier(object):
 
     def query(self, annotation: Annotation):
         """
+        A simple query for retrieving the most likely frame for a given annotation.
 
-        :param annotation:
+        NOTE: require are loaded network and a annotation object which has a sentence and fee!
+
+        :param annotation: The annotation containing the sentence and the fee.
         :return:
         """
 
@@ -137,10 +141,39 @@ class FrameIdentifier(object):
 
         x = [[self.input_field.vocab.stoi[t]] for t in x]
 
-        frame = self.network.query(x)
+        network_output = self.network.query(x)
+        _, frame = torch.max(network_output[0], 0)
         frame = self.output_field.vocab.itos[frame.item()]
 
         return frame
+
+    def query_confidence(self, annotation: Annotation, n: int = 5):
+        """
+        A deeper query for retrieving a list of likely frames for a given annotation.
+
+        NOTE: require are loaded network and a annotation object which has a sentence and fee!
+
+        :param annotation: The annotation containing the sentence and the fee.
+        :param n: The amount of best guesses retrieved.
+        :return:
+        """
+
+        frames = []
+
+        x = [annotation.fee_raw] + annotation.sentence
+
+        x = [[self.input_field.vocab.stoi[t]] for t in x]
+
+        network_output = self.network.query(x)[0]
+        network_output = softmax(network_output, dim=0)
+
+        for i in range(n):
+            confidence, frame = torch.max(network_output, 0)
+            frames.append((self.output_field.vocab.itos[frame.item()], confidence))
+
+            network_output = torch.cat([network_output[:frame], network_output[frame+1:]])
+
+        return frames
 
     def write_predictions(self, file: str, out_file: str, fee_only: bool = False):
         """

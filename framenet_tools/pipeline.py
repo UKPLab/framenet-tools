@@ -22,11 +22,11 @@ def get_stages(i: int, cM: ConfigManager):
     stages = [
         FeeID(cM),
         FrameID(cM),
-        SpanID(cM),
+        # SpanID(cM),
         # RoleID(cM)
     ]
 
-    return stages[:i]
+    return stages[i]
 
 
 class Pipeline(object):
@@ -37,11 +37,11 @@ class Pipeline(object):
     Span identification and Role identification.
     """
 
-    def __init__(self, cM: ConfigManager, level):
+    def __init__(self, cM: ConfigManager, levels: List[int]):
         self.cM = cM
-        self.level = level
+        self.levels = levels
 
-        self.stages = get_stages(self.level, cM)
+        self.stages = [get_stages(level, cM) for level in levels]
 
     def train(self, data: List[str]):
         """
@@ -50,6 +50,9 @@ class Pipeline(object):
         :param data: The data to train on TODO
         :return:
         """
+
+        if self.levels == []:
+            logging.info(f"NOTE: Training an empty pipeline!")
 
         reader, reader_dev = self.load_dataset()
 

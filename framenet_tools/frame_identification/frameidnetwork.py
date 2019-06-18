@@ -240,9 +240,9 @@ class FrameIDNetwork(object):
         x = torch.tensor(x)
 
         output = self.net(x)
-        _, predicted = torch.max(output.data, 1)
+        #_, predicted = torch.max(output.data, 1)
 
-        return predicted.to("cpu")
+        return output.data.to("cpu")
 
     def predict(self, dataset_iter: torchtext.data.Iterator):
         """

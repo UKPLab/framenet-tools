@@ -1,3 +1,5 @@
+import logging
+
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
@@ -24,6 +26,8 @@ class FeeID(PipelineStage):
         """
 
         # Nothing to train on this stage
+        logging.debug(f"Training FeeID complete!")
+
         return
 
     def predict(self, m_reader: DataReader):
