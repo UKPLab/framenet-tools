@@ -206,4 +206,4 @@ logging.basicConfig(
 
 cM = ConfigManager()
 
-eval_args(create_argparser(), cM, ['evaluate', '--frameid'])
+eval_args(create_argparser(), cM, ['evaluate', '--frameid', '--feeid'])

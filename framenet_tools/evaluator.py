@@ -6,7 +6,7 @@ from typing import List
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.semaforreader import SemaforReader
 from framenet_tools.data_handler.semevalreader import SemevalReader
-from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
+from framenet_tools.frame_identification.frameidentifier import FrameIdentifier, get_dataset
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
@@ -149,8 +149,37 @@ def evaluate_frame_identification(m_reader: DataReader, original_reader: DataRea
     :return: A Triple of True positives, False positives and False negatives
     """
 
+    # Load correct answers for comparison:
+    gold_xs, gold_ys = get_dataset(original_reader)
+    xs, ys = get_dataset(m_reader)
+    tp = 0
+    fp = 0
+    fn = 0
 
-    # tp, fp, fn = f_i.evaluate_file(m_data_reader, predict_fees)
+    found = False
+
+    for gold_x, gold_y in zip(gold_xs, gold_ys):
+        for x, y in zip(xs, ys):
+            if gold_x == x and gold_y == y:
+                found = True
+                break
+
+        if found:
+            tp += 1
+        else:
+            fn += 1
+
+        found = False
+
+    for x, y in zip(xs, ys):
+        for gold_x, gold_y in zip(gold_xs, gold_ys):
+            if gold_x == x and gold_y == y:
+                found = True
+
+        if not found:
+            fp += 1
+
+        found = False
 
     return tp, fp, fn
 

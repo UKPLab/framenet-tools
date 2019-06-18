@@ -16,6 +16,26 @@ from framenet_tools.config import ConfigManager
 from framenet_tools.utils.static_utils import shuffle_concurrent_lists
 
 
+def get_dataset(reader: DataReader):
+    """
+    Loads the dataset and combines the necessary data
+
+    :param reader: The reader that contains the dataset
+    :return: xs: A list of sentences appended with its FEE
+             ys: A list of frames corresponding to the given sentences
+    """
+
+    xs = []
+    ys = []
+
+    for annotation_sentences in reader.annotations:
+        for annotation in annotation_sentences:
+            xs.append([annotation.fee_raw] + annotation.sentence)
+            ys.append(annotation.frame)
+
+    return xs, ys
+
+
 class FrameIdentifier(object):
     """
     The FrameIdentifier
@@ -36,25 +56,6 @@ class FrameIdentifier(object):
 
         self.cM = cM
         self.network = None
-
-    def get_dataset(self, reader: DataReader):
-        """
-        Loads the dataset and combines the necessary data
-
-        :param reader: The reader that contains the dataset
-        :return: xs: A list of sentences appended with its FEE
-                ys: A list of frames corresponding to the given sentences
-        """
-
-        xs = []
-        ys = []
-
-        for annotation_sentences in reader.annotations:
-            for annotation in annotation_sentences:
-                xs.append([annotation.fee_raw] + annotation.sentence)
-                ys.append(annotation.frame)
-
-        return xs, ys
 
     def prepare_dataset(self, xs: List[str], ys: List[str], batch_size: int = None):
         """
@@ -92,7 +93,7 @@ class FrameIdentifier(object):
         """
 
         # Load correct answers for comparison:
-        gold_xs, gold_ys = self.get_dataset(reader)
+        gold_xs, gold_ys = get_dataset(reader)
 
         tp = 0
         fp = 0
@@ -189,7 +190,7 @@ class FrameIdentifier(object):
         if not fee_only and self.network is None:
             raise Exception("No network found! Train or load a network.")
 
-        xs, ys = self.get_dataset([file], True)
+        xs, ys = get_dataset([file])
 
         if not fee_only:
             dataset_iter = self.prepare_dataset(xs, ys, 1)
@@ -288,7 +289,7 @@ class FrameIdentifier(object):
             fee_finder = FeeIdentifier(self.cM)
             fee_finder.predict_fees(reader)
 
-        xs, ys = self.get_dataset(reader)
+        xs, ys = get_dataset(reader)
 
         iter = self.prepare_dataset(xs, ys, 1)
 
@@ -310,7 +311,7 @@ class FrameIdentifier(object):
         xs = []
         ys = []
 
-        new_xs, new_ys = self.get_dataset(reader)
+        new_xs, new_ys = get_dataset(reader)
         xs += new_xs
         ys += new_ys
 
@@ -350,6 +351,6 @@ class FrameIdentifier(object):
         :return: A Iterator of the dataset
         """
 
-        xs, ys = self.get_dataset(reader)
+        xs, ys = get_dataset(reader)
 
         return self.prepare_dataset(xs, ys)
