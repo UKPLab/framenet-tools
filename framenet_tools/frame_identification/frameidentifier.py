@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from copy import deepcopy
 
@@ -81,7 +82,9 @@ class FrameIdentifier(object):
 
         return iterator
 
-    def evaluate(self, predictions: List[torch.tensor], xs: List[str], reader: DataReader):
+    def evaluate(
+        self, predictions: List[torch.tensor], xs: List[str], reader: DataReader
+    ):
         """
         Evaluates the model
 
@@ -173,7 +176,9 @@ class FrameIdentifier(object):
             confidence, frame = torch.max(network_output, 0)
             frames.append((self.output_field.vocab.itos[frame.item()], confidence))
 
-            network_output = torch.cat([network_output[:frame], network_output[frame+1:]])
+            network_output = torch.cat(
+                [network_output[:frame], network_output[frame + 1 :]]
+            )
 
         return frames
 
@@ -250,7 +255,7 @@ class FrameIdentifier(object):
         # Saving the actual network
         if os.path.exists(name + ".auto"):
             # If auto saving found, simply rename it
-            print("renamed")
+            logging.info(f"Autostopper STOP")
             os.rename(name + ".auto", name + ".ph")
         else:
             self.network.save_model(name + ".ph")
@@ -347,6 +352,11 @@ class FrameIdentifier(object):
 
         self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
+        if dev_iter is None:
+            logging.info(
+                f"NOTE: Beginning training w/o a development set! Autostopper deactivated!"
+            )
+
         self.network.train_model(dataset_size, train_iter, dev_iter)
 
     def get_iter(self, reader: DataReader):
@@ -356,6 +366,9 @@ class FrameIdentifier(object):
         :param reader: The DataReader object
         :return: A Iterator of the dataset
         """
+
+        if reader is None:
+            return None
 
         xs, ys = get_dataset(reader)
 

@@ -41,23 +41,31 @@ class Pipeline(object):
 
     def __init__(self, cM: ConfigManager, levels: List[int]):
         self.cM = cM
+
         self.levels = levels
 
-        self.stages = [get_stages(level, cM) for level in levels]
+        if not levels:
+            self.levels = [0, 1]
 
-    def train(self, data: List[str]):
+        self.stages = [get_stages(level, cM) for level in self.levels]
+
+    def train(self, data: List[str], dev_data: List[str] = None):
         """
         Trains all stages up to the specified level
 
-        :param data: The data to train on TODO
+        :param data: The data to train on
+        :param dev_data: The data to check evaluation on
         :return:
         """
 
-        if self.levels == []:
+        if not self.levels:
             logging.info(f"NOTE: Training an empty pipeline!")
 
-        reader = self.load_dataset("data/experiments/xp_001/data/train.gold.xml")
-        reader_dev = self.load_dataset(self.cM.semeval_files[0])
+        reader = self.load_dataset(data)
+        reader_dev = None
+
+        if dev_data is not None:
+            reader_dev = self.load_dataset(dev_data)
 
         for stage in self.stages:
             stage.train(reader, reader_dev)
@@ -83,16 +91,17 @@ class Pipeline(object):
 
         m_reader.export_to_json(out_path)
 
-    def load_dataset(self, file: str = None):
+    def load_dataset(self, files: List[str]):
         """
         Helper function for loading datasets.
 
-        :param file: The file to load the dataset from.
+        :param files: A List of files to load the datasets from.
         :return: A reader object containing the loaded data.
         """
 
         m_data_reader = SemevalReader(self.cM)
-        m_data_reader.read_data(file)
+        for file in files:
+            m_data_reader.read_data(file)
 
         return m_data_reader
 
@@ -105,11 +114,12 @@ class Pipeline(object):
         :return:
         """
 
-        for file in self.cM.semeval_files:
+        #print(self.cM.semeval_test)
+        for file in self.cM.semeval_dev + self.cM.semeval_test:
 
             logging.info(f"Evaluation on {file}:")
 
-            m_reader = self.load_dataset(file)
+            m_reader = self.load_dataset([file])
             original_reader = deepcopy(m_reader)
 
             for stage in self.stages:

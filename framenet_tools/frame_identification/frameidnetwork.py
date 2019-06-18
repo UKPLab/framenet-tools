@@ -82,7 +82,7 @@ class Net(nn.Module):
         for sentence in lookup_tensor:
 
             # Cut off padding from torchtext, as it messes up the averaging process!
-            sentence = sentence[:(sentence!=1).nonzero()[-1].item()+1]
+            sentence = sentence[: (sentence != 1).nonzero()[-1].item() + 1]
             embedded_sent = self.embedding_layer(sentence)
 
             averaged_sent = embedded_sent.mean(dim=0)
@@ -166,9 +166,9 @@ class FrameIDNetwork(object):
         """
 
         highest_acc = 0
-        auto_stopper = True
+        auto_stopper = self.cM.autostopper and dev_iter is not None
         last_improvement = 0
-        improvement_threshold = 4
+        autostopper_threshold = self.cM.autostopper_threshold
 
         writer = SummaryWriter()
 
@@ -211,6 +211,14 @@ class FrameIDNetwork(object):
             train_loss = total_loss / count
             train_acc = total_hits / count
 
+            if dev_iter is None:
+                logging.info(f"Train Acc: {train_acc}, Train Loss: {train_loss}")
+
+                writer.add_scalars("data/loss", {"train_loss": train_loss}, epoch)
+
+                writer.add_scalars("data/acc", {"train_acc": train_acc}, epoch)
+                continue
+
             dev_acc, dev_loss = self.eval_model(dev_iter)
 
             last_improvement += 1
@@ -234,7 +242,7 @@ class FrameIDNetwork(object):
                 "data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch
             )
 
-            if auto_stopper and (last_improvement > improvement_threshold):
+            if auto_stopper and (last_improvement > autostopper_threshold):
                 writer.close()
                 return
 
@@ -251,7 +259,7 @@ class FrameIDNetwork(object):
         x = torch.tensor(x)
 
         output = self.net(x)
-        #_, predicted = torch.max(output.data, 1)
+        # _, predicted = torch.max(output.data, 1)
 
         return output.data.to("cpu")
 

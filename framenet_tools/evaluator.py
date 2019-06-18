@@ -4,9 +4,8 @@ from copy import deepcopy
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.data_handler.semaforreader import SemaforReader
 from framenet_tools.data_handler.semevalreader import SemevalReader
-from framenet_tools.frame_identification.frameidentifier import FrameIdentifier, get_dataset
+from framenet_tools.frame_identification.frameidentifier import get_dataset
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
@@ -114,9 +113,7 @@ def evaluate_fee_identification(m_reader: DataReader, original_reader: DataReade
         gold_sentences, m_reader.annotations
     ):
         for gold_annotation in gold_annotations:
-            if gold_annotation.fee_raw in [
-                x.fee_raw for x in predictied_annotations
-            ]:
+            if gold_annotation.fee_raw in [x.fee_raw for x in predictied_annotations]:
                 tp += 1
             else:
                 fn += 1
@@ -126,16 +123,6 @@ def evaluate_fee_identification(m_reader: DataReader, original_reader: DataReade
                 x.fee_raw for x in gold_annotations
             ]:
                 fp += 1
-
-    #pr, re, f1 = calc_f(tp, fp, fn)
-
-    '''
-    logging.info(
-        f"FEE Evaluation complete!\n"
-        f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
-        f"Precision: {pr} Recall: {re} F1-Score: {f1}"
-    )
-    '''
 
     return tp, fp, fn
 
@@ -184,13 +171,16 @@ def evaluate_frame_identification(m_reader: DataReader, original_reader: DataRea
     return tp, fp, fn
 
 
-def evaluate_stages(m_reader: DataReader, original_reader: DataReader, levels: List[int]):
+def evaluate_stages(
+    m_reader: DataReader, original_reader: DataReader, levels: List[int]
+):
     """
+    Evaluates the stages specified in levels
 
-    :param m_reader:
-    :param original_reader:
-    :param levels:
-    :return:
+    :param m_reader: The reader including the predicted data
+    :param original_reader: The reader which holds the gold data
+    :param levels: The levels to evaluate for
+    :return: A triple of Precision, Recall and the F1-Score
     """
 
     if max(levels) == 0:
@@ -208,15 +198,3 @@ def evaluate_stages(m_reader: DataReader, original_reader: DataReader, levels: L
     )
 
     return pr, re, f1
-
-"""
-f1 = evaluate_fee_identification(DEV_FILES)
-print(f1)
-
-f1 = evaluate_frame_identification(SAVED_MODEL, DEV_FILES)
-print(f1)
-
-f_i = FrameIdentifier()
-f_i.load_model(SAVED_MODEL)
-f_i.write_predictions("../data/experiments/xp_001/data/WallStreetJournal20150915.txt", "here.txt")
-"""

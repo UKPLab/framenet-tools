@@ -16,7 +16,10 @@ class ConfigManager(object):
 
     train_files: List[List[str]]
     eval_files: List[List[str]]
-    semeval_files: List[str]
+    semeval_train: List[str]
+    semeval_dev: List[str]
+    semeval_test: List[str]
+    semeval_all: List[str]
     all_files: List[List[str]]
 
     use_cuda: bool
@@ -34,7 +37,13 @@ class ConfigManager(object):
 
         self.train_files = []
         self.eval_files = []
-        self.semeval_files = []
+
+        self.semeval_train = []
+        self.semeval_dev = []
+        self.semeval_test = []
+
+        self.all_files = self.train_files + self.eval_files
+        self.semeval_all = self.semeval_train + self.semeval_dev + self.semeval_test
 
         # NOTE: model is actually saved in three individual files (.ph, .in_voc, .out_voc)
         model_name = "model"
@@ -44,8 +53,6 @@ class ConfigManager(object):
         self.use_cuda = True
         self.use_spacy = True
         self.syntax_only_mode = True
-
-        self.all_files = self.train_files + self.eval_files
 
         self.hidden_sizes = [512, 0.2, 256, 0.1]
         self.activation_functions = ["ReLU", "Dropout", "ReLU", "Dropout"]
@@ -83,7 +90,7 @@ class ConfigManager(object):
         self.train_files = [train_files]
         self.eval_files = [dev_files, test_files]
 
-        self.semeval_files = [
+        self.semeval_all = [
             "data/experiments/xp_001/data/train.gold.xml",
             "data/experiments/xp_001/data/dev.gold.xml",
             "data/experiments/xp_001/data/test.gold.xml",
@@ -131,7 +138,14 @@ class ConfigManager(object):
 
             if section == "SEMEVAL":
                 for key in config[section]:
-                    self.semeval_files.append(config[section][key])
+                    self.semeval_all.append(config[section][key])
+
+                    if key == "train":
+                        self.semeval_train.append(config[section][key])
+                    if key == "dev":
+                        self.semeval_dev.append(config[section][key])
+                    if key == "test":
+                        self.semeval_test.append(config[section][key])
 
             if section == "VARIABLES":
                 for key in config[section]:
@@ -218,7 +232,7 @@ class ConfigManager(object):
         config_string += self.paths_to_string(self.eval_files)
 
         config_string += "[SEMEVAL]\n"
-        for file_path in self.semeval_files:
+        for file_path in self.semeval_all:
             config_string += (
                 file_path.rsplit("/")[-1].rsplit(".")[0] + ": " + file_path + "\n"
             )

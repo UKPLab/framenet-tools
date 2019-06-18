@@ -8,7 +8,6 @@ from typing import List
 from subprocess import call
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.evaluator import evaluate_frame_identification
 from framenet_tools.pipeline import Pipeline
 from framenet_tools.utils.static_utils import download, get_spacy_en_model
 
@@ -50,14 +49,10 @@ def create_argparser():
         help=f"Actions to perform, namely: download, convert, train, predict, evaluate",
     )
     parser.add_argument(
-        "--feeid",
-        help="Use frame evoking element identification.",
-        action="store_true",
+        "--feeid", help="Use frame evoking element identification.", action="store_true"
     )
     parser.add_argument(
-        "--frameid",
-        help="Use frame identification.",
-        action="store_true",
+        "--frameid", help="Use frame identification.", action="store_true"
     )
     parser.add_argument(
         "--path", help="A path specification used by some actions.", type=str
@@ -163,9 +158,9 @@ def eval_args(
         pipeline = Pipeline(cM, levels)
 
         if parsed.use_eval_files:
-            pipeline.train(cM.all_files)
+            pipeline.train(cM.semeval_all)
         else:
-            pipeline.train(cM.train_files)
+            pipeline.train(cM.semeval_train, cM.semeval_dev)
 
     if parsed.action == "predict":
 
@@ -200,10 +195,8 @@ def main():
     eval_args(parser, cM)
 
 
-logging.basicConfig(
-        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
-    )
+logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO)
 
-cM = ConfigManager('config.file')
+cM = ConfigManager("config.file")
 
-eval_args(create_argparser(), cM, ['evaluate', '--frameid'])
+eval_args(create_argparser(), cM, ["evaluate"])
