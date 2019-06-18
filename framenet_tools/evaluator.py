@@ -3,6 +3,7 @@ import logging
 from copy import deepcopy
 
 from framenet_tools.config import ConfigManager
+from framenet_tools.data_handler.semaforreader import SemaforReader
 from framenet_tools.data_handler.semevalreader import SemevalReader
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.data_handler.reader import DataReader
@@ -156,10 +157,15 @@ def evaluate_frame_identification(cM: ConfigManager):
 
     f_i = FrameIdentifier(cM)
     f_i.load_model(cM.saved_model)
+    #print(cM.semeval_files)
 
-    for file in cM.eval_files:
-        logging.info(f"Evaluating on: {file[0]}")
-        tp, fp, fn = f_i.evaluate_file(file)
+    for file in cM.semeval_files:
+        logging.info(f"Evaluating on: {file}")
+
+        m_data_reader = SemevalReader(cM)
+        m_data_reader.read_data(file)
+
+        tp, fp, fn = f_i.evaluate_file(m_data_reader)
         pr, re, f1 = calc_f(tp, fp, fn)
 
         logging.info(

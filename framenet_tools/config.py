@@ -32,7 +32,7 @@ class ConfigManager(object):
     learning_rate: float
     embedding_size: int
 
-    def __init__(self):
+    def __init__(self, path: str = CONFIG_PATH):
 
         self.train_files = []
         self.eval_files = []
@@ -58,7 +58,7 @@ class ConfigManager(object):
 
         self.level = 3
 
-        if not self.load_config():
+        if not self.load_config(path):
             download_resources()
             get_spacy_en_model()
             self.create_config()

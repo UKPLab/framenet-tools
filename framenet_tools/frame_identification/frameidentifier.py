@@ -1,4 +1,6 @@
 import json
+from copy import deepcopy
+
 import torch
 import torch.nn as nn
 from torchtext import data
@@ -7,6 +9,7 @@ from typing import List
 
 from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
 from framenet_tools.utils.static_utils import shuffle_concurrent_lists
@@ -75,7 +78,7 @@ class FrameIdentifier(object):
 
         return iterator
 
-    def evaluate(self, predictions: List[torch.tensor], xs: List[str], file: List[str]):
+    def evaluate(self, predictions: List[torch.tensor], xs: List[str], reader: DataReader):
         """
         Evaluates the model
 
@@ -83,12 +86,12 @@ class FrameIdentifier(object):
 
         :param predictions: The predictions the model made on xs
         :param xs: The original fed in data
-        :param file: The file from which xs was derived
+        :param reader: The reader from which xs was derived
         :return:
         """
 
         # Load correct answers for comparison:
-        gold_xs, gold_ys = self.get_dataset(file, False)
+        gold_xs, gold_ys = self.get_dataset(reader)
 
         tp = 0
         fp = 0
@@ -223,7 +226,7 @@ class FrameIdentifier(object):
         """
 
         # Loading config
-        self.cM.load_config(name + ".cfg")
+        self.cM = ConfigManager(name + ".cfg")
 
         # Loading Vocabs
         out_voc = pickle.load(open(name + ".out_voc", "rb"))
@@ -238,21 +241,27 @@ class FrameIdentifier(object):
 
         self.network.load_model(name + ".ph")
 
-    def evaluate_file(self, file: List[str]):
+    def evaluate_file(self, reader: DataReader):
         """
         Evaluates the model on a given file set
 
-        :param file: The files to evaluate on
+        :param reader: The reader to evaluate on
         :return: A Triple of True Positives, False Positives and False Negatives
         """
 
-        xs, ys = self.get_dataset(file, False)
+        reader_copy = deepcopy(reader)
+
+        fee_finder = FeeIdentifier(self.cM)
+
+        fee_finder.predict_fees(reader)
+
+        xs, ys = self.get_dataset(reader)
 
         iter = self.prepare_dataset(xs, ys, 1)
 
         predictions = self.network.predict(iter)
 
-        return self.evaluate(predictions, xs, file)
+        return self.evaluate(predictions, xs, reader_copy)
 
     def train(self, reader: DataReader, reader_dev: DataReader = None):
         """

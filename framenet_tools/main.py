@@ -8,6 +8,7 @@ from typing import List
 from subprocess import call
 
 from framenet_tools.config import ConfigManager
+from framenet_tools.evaluator import evaluate_frame_identification
 from framenet_tools.pipeline import Pipeline
 from framenet_tools.utils.static_utils import download, get_spacy_en_model
 
@@ -179,3 +180,14 @@ def main():
     parser = create_argparser()
 
     eval_args(parser, cM)
+
+
+logging.basicConfig(
+        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
+    )
+
+cM = ConfigManager()
+#pipeline = Pipeline(cM, 2)
+print(cM.semeval_files)
+#pipeline.train(cM.train_files)
+evaluate_frame_identification(cM)

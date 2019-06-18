@@ -76,16 +76,19 @@ class Net(nn.Module):
         """
 
         lookup_tensor = sent.to(self.device)
-        embedded_sent = self.embedding_layer(lookup_tensor)
-
-        averaged_sent = embedded_sent.mean(dim=1)
-
-        # Reappend the FEE
 
         appended_avg = []
 
-        for sentence in averaged_sent:
-            inc_FEE = torch.cat((embedded_sent[0][0], sentence), 0)
+        for sentence in lookup_tensor:
+
+            # Cut off padding from torchtext, as it messes up the averaging process!
+            sentence = sentence[:(sentence!=1).nonzero()[-1].item()+1]
+            embedded_sent = self.embedding_layer(sentence)
+
+            averaged_sent = embedded_sent.mean(dim=0)
+
+            # Reappend the FEE
+            inc_FEE = torch.cat((embedded_sent[0], averaged_sent), 0)
             appended_avg.append(inc_FEE)
 
         averaged_sent = torch.stack(appended_avg)
