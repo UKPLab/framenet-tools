@@ -36,7 +36,7 @@ ACTIVATION_FUNCTIONS = [
 
 
 def create_network(
-    embedding_vocab_size: int = 2,
+    embedding_vocab_size: int = 4,
     embedding_dim: int = 2,
     hidden_sizes: List[int] = [128],
     activation_functions: List[str] = ["ReLU"],
@@ -139,15 +139,16 @@ def test_net_avg():
     """
 
     net = create_network()
-    test_tensor = torch.tensor([[0], [1]], dtype=torch.long)
+    test_tensor = torch.tensor([[2, 3]], dtype=torch.long)
     x = net.average_sentence(test_tensor)
 
-    ten0 = torch.tensor([0], dtype=torch.long)
-    ten1 = torch.tensor([1], dtype=torch.long)
+    ten0 = torch.tensor([2], dtype=torch.long)
+    ten1 = torch.tensor([3], dtype=torch.long)
 
     ten0 = net.embedding_layer(ten0)
     ten1 = net.embedding_layer(ten1)
 
+    print(ten0)
     assert (ten0.data[0][0] + ten1.data[0][0]) / 2 == x.data[0][2]
     assert (ten0.data[0][1] + ten1.data[0][1]) / 2 == x.data[0][3]
 
@@ -162,7 +163,7 @@ def test_net_dim():
     """
 
     net = create_network()
-    test_tensor = torch.tensor([[0], [1]], dtype=torch.long)
+    test_tensor = torch.tensor([[0, 2]], dtype=torch.long)
     x = net.average_sentence(test_tensor)
 
     ten = torch.tensor([0], dtype=torch.long)
@@ -210,6 +211,8 @@ def test_arbitrary_activation(activation: List[str]):
     create_network(activation_functions=[activation])
 
 
+# TODO replace by own prediction tests
+'''
 @pytest.mark.parametrize("max_sentence_length", [random.randint(1, 50) for _ in range(10)])
 def test_prediction_fee_only(max_sentence_length: int):
     """
@@ -228,7 +231,7 @@ def test_prediction_fee_only(max_sentence_length: int):
         f_i.write_predictions(m_rndfiles.files[0], out_file, fee_only=True)
 
         m_rndfiles.files.append(out_file)
-
+'''
 
 @pytest.mark.parametrize("max_sentence_length", [random.randint(1, 50) for _ in range(10)])
 def test_prediction_no_network(max_sentence_length: int):

@@ -241,7 +241,7 @@ class FrameIdentifier(object):
 
         self.network.load_model(name + ".ph")
 
-    def evaluate_file(self, reader: DataReader):
+    def evaluate_file(self, reader: DataReader, predict_fees: bool = False):
         """
         Evaluates the model on a given file set
 
@@ -251,9 +251,9 @@ class FrameIdentifier(object):
 
         reader_copy = deepcopy(reader)
 
-        fee_finder = FeeIdentifier(self.cM)
-
-        fee_finder.predict_fees(reader)
+        if predict_fees:
+            fee_finder = FeeIdentifier(self.cM)
+            fee_finder.predict_fees(reader)
 
         xs, ys = self.get_dataset(reader)
 

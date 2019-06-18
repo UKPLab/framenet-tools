@@ -102,6 +102,8 @@ class SpanIdentifier(object):
         """
         Predicts the set of possible spans just by the use of the static syntax tree.
 
+        NOTE: deprecated!
+
         :param annotation: The annotation of the sentence to predict
         :return: A list of possible span tuples
         """

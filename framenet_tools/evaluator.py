@@ -147,7 +147,7 @@ def evaluate_fee_identification(cM: ConfigManager):
     return pr, re, f1
 
 
-def evaluate_frame_identification(cM: ConfigManager):
+def evaluate_frame_identification(cM: ConfigManager, predict_fees: bool = False):
     """
     Evaluates the F1-Score for a model on a given file set
 
@@ -165,7 +165,7 @@ def evaluate_frame_identification(cM: ConfigManager):
         m_data_reader = SemevalReader(cM)
         m_data_reader.read_data(file)
 
-        tp, fp, fn = f_i.evaluate_file(m_data_reader)
+        tp, fp, fn = f_i.evaluate_file(m_data_reader, predict_fees)
         pr, re, f1 = calc_f(tp, fp, fn)
 
         logging.info(

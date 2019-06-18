@@ -1,5 +1,7 @@
 import pytest
 
+from framenet_tools.config import ConfigManager
+from framenet_tools.stages.feeID import FeeID
 from framenet_tools.tests.test_reader import RandomFiles
 
 
@@ -53,7 +55,9 @@ def test_predict_fees(run: int):
 
     with RandomFiles(10, True) as m_rndfiles:
 
-        m_rndfiles.m_reader.predict_fees()
+        m_feeID = FeeID(ConfigManager())
+
+        m_feeID.predict(m_rndfiles.m_reader)
 
         annotations = m_rndfiles.m_reader.annotations
         annotations_length = sum([len(x) for x in annotations])
@@ -73,7 +77,9 @@ def test_predict_loaded_fees(run: int):
         annotations = m_rndfiles.m_reader.annotations
         old_annotations_length = sum([len(x) for x in annotations])
 
-        m_rndfiles.m_reader.predict_fees()
+        m_feeID = FeeID(ConfigManager())
+
+        m_feeID.predict(m_rndfiles.m_reader)
         annotations = m_rndfiles.m_reader.annotations
         annotations_length = sum([len(x) for x in annotations])
 

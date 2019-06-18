@@ -5,20 +5,23 @@ import string
 from typing import List
 
 from framenet_tools.config import ConfigManager
-from framenet_tools.data_handler.reader import Annotation, DataReader
-from framenet_tools.data_handler.semeval_reader import SemevalReader
+from framenet_tools.data_handler.annotation import Annotation
+from framenet_tools.data_handler.semaforreader import SemaforReader
+from framenet_tools.data_handler.semevalreader import SemevalReader
+from framenet_tools.data_handler.rawreader import RawReader
 
 cM = ConfigManager()
 
 
 class RandomFiles(object):
     def __init__(self, max_sentence_length: int, raw_file: bool = False):
-        self.m_reader = DataReader(cM)
         self.files = []
 
         if raw_file:
+            self.m_reader = RawReader(cM)
             self.create_and_load_raw(max_sentence_length)
         else:
+            self.m_reader = SemaforReader(cM)
             self.create_and_load(max_sentence_length)
 
     def __enter__(self):
@@ -231,7 +234,7 @@ def test_reader_no_file():
     """
 
     with pytest.raises(Exception):
-        m_reader = DataReader(cM)
+        m_reader = SemaforReader(cM)
         m_reader.read_data()
 
 
@@ -378,7 +381,7 @@ def test_semeval_reader_sentences():
     s_reader = SemevalReader(cM)
     s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
 
-    d_reader = DataReader(cM)
+    d_reader = SemaforReader(cM)
     d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
                        "../data/experiments/xp_001/data/train.frame.elements")
 
@@ -398,7 +401,7 @@ def test_semeval_reader_annotation_size():
     s_reader = SemevalReader(cM)
     s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
 
-    d_reader = DataReader(cM)
+    d_reader = SemaforReader(cM)
     d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
                        "../data/experiments/xp_001/data/train.frame.elements")
 
@@ -420,7 +423,7 @@ def test_semeval_reader_annotations():
     s_reader = SemevalReader(cM)
     s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
 
-    d_reader = DataReader(cM)
+    d_reader = SemaforReader(cM)
     d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
                        "../data/experiments/xp_001/data/train.frame.elements")
 
