@@ -335,8 +335,10 @@ class FrameIDNetwork(object):
         :return:
         """
 
-        if not os.path.isdir(path):
-            os.makedirs(path[:path.rfind('/')])
+        upper_path = path[:path.rfind('/')]
+
+        if not os.path.isdir(upper_path):
+            os.makedirs(upper_path)
 
         torch.save(self.net.state_dict(), path)
 

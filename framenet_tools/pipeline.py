@@ -114,7 +114,6 @@ class Pipeline(object):
         :return:
         """
 
-        #print(self.cM.semeval_test)
         for file in self.cM.semeval_dev + self.cM.semeval_test:
 
             logging.info(f"Evaluation on {file}:")
