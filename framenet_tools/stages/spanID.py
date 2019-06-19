@@ -2,6 +2,7 @@ from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.pipelinestage import PipelineStage
 from framenet_tools.span_identification.spanidentifier import SpanIdentifier
+from framenet_tools.utils.static_utils import download_frame_embeddings
 
 
 class SpanID(PipelineStage):
@@ -11,6 +12,9 @@ class SpanID(PipelineStage):
 
     def __init__(self, cM: ConfigManager):
         super().__init__(cM)
+
+        # Check and possibly download the frame embeddings
+        download_frame_embeddings()
 
         self.s_i = SpanIdentifier(cM)
 

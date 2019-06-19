@@ -1,4 +1,6 @@
 import logging
+import pickle
+
 import nltk
 import random
 import os
@@ -73,6 +75,69 @@ def download_resources():
         except LookupError:
             logging.info(f"Did not find {resource[1]}, downloading...")
             nltk.download(resource[1])
+
+
+def load_pkl_from_path(str_path_file: str):
+    """
+    Taken from: https://public.ukp.informatik.tu-darmstadt.de/repl4nlp17-frameEmbeddings/reader.py
+
+    :param str_path_file: The path of the pickle file to load the dict from
+    :return: The loaded dict
+    """
+
+    logging.debug(f"Loading pkl from path: {str_path_file}")
+
+    # Minor adjustments as the code seems to be for python2
+    with open(str_path_file, 'rb') as f:
+        u = pickle._Unpickler(f)
+        u.encoding = 'latin1'
+        loaded_pkl = u.load()
+
+    return loaded_pkl
+
+
+def print_dict_to_txt(str_path_file: str, dict_to_print: dict):
+    """
+    Taken from: https://public.ukp.informatik.tu-darmstadt.de/repl4nlp17-frameEmbeddings/reader.py
+
+    :param str_path_file: The path of the dict to save to
+    :param dict_to_print: The dict to save
+    :return:
+    """
+
+    logging.debug(f"Printing to: {str_path_file}")
+
+    with open(str_path_file, "w") as file_out:
+        for key, val in dict_to_print.items():
+            file_out.write("{}\t{}\n".format(key, list(val)))
+
+
+def download_frame_embeddings():
+    """
+    Checks if the needed frame embeddings are already downloaded, if not they are downloaded.
+
+    :return:
+    """
+
+    path = "data/frame_embeddings/"
+    files = ["dict_frame_to_emb_50dim_TransE_list.txt", "dict_frame_to_emb_100dim_wsb_list.txt", "dict_frame_to_emb_300dim_w2v_list.txt"]
+    pkl_files = ["dict_frame_to_emb_50dim_transE_npArray.pkl", "dict_frame_to_emb_100dim_wsb_npArray.pkl", "dict_frame_to_emb_300dim_w2v_npArray.pkl"]
+
+    url = "https://public.ukp.informatik.tu-darmstadt.de/repl4nlp17-frameEmbeddings/"
+
+    logging.debug(f"Checking frame embeddings.")
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    for file, pkl_file in zip(files, pkl_files):
+        if not os.path.isfile(path + file):
+            logging.info(f"Did not find {file}, downloading...")
+            download_file(url + pkl_file, path + pkl_file)
+
+            dict_frame_emb = load_pkl_from_path(path + pkl_file)
+            print_dict_to_txt(path + file, dict_frame_emb)
+
 
 
 def shuffle_concurrent_lists(l: List[List[object]]):
