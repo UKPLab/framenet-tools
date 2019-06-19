@@ -194,9 +194,3 @@ def main():
 
     eval_args(parser, cM)
 
-
-logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO)
-
-cM = ConfigManager("config.file")
-
-eval_args(create_argparser(), cM, ["train"])

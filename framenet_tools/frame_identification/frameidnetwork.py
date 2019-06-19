@@ -2,6 +2,7 @@ import logging
 import torch
 import torch.nn as nn
 import torchtext
+import os
 
 from torch.autograd import Variable
 from tqdm import tqdm
@@ -333,6 +334,9 @@ class FrameIDNetwork(object):
         :param path: The path to save the model at
         :return:
         """
+
+        if not os.path.isdir(path):
+            os.makedirs(path[:path.rfind('/')])
 
         torch.save(self.net.state_dict(), path)
 
