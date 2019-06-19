@@ -199,4 +199,4 @@ logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=loggin
 
 cM = ConfigManager("config.file")
 
-eval_args(create_argparser(), cM, ["evaluate"])
+eval_args(create_argparser(), cM, ["train"])

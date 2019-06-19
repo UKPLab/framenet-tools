@@ -10,7 +10,7 @@ from framenet_tools.data_handler.semaforreader import SemaforReader
 from framenet_tools.data_handler.semevalreader import SemevalReader
 from framenet_tools.data_handler.rawreader import RawReader
 
-cM = ConfigManager()
+cM = ConfigManager('config.file')
 
 
 class RandomFiles(object):
