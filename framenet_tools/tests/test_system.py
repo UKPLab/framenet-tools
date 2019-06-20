@@ -9,7 +9,7 @@ from framenet_tools.tests.test_reader import RandomFiles, create_random_string
 
 cM = ConfigManager("config.file")
 
-# Adjust paths
+# Adjust paths if necessary
 cM.semeval_train = ["../" + cM.semeval_train[0]]
 cM.semeval_dev = ["../" + cM.semeval_dev[0]]
 cM.semeval_test = ["../" + cM.semeval_test[0]]
@@ -81,7 +81,9 @@ def test_train_frameid_batchsize():
 
     batch_size = random.randint(50, 500)
 
-    eval_args(create_argparser(), cM, ["train", "--frameid", "--batchsize", str(batch_size)])
+    eval_args(
+        create_argparser(), cM, ["train", "--frameid", "--batchsize", str(batch_size)]
+    )
 
     assert cM.batch_size == batch_size
 
@@ -116,7 +118,7 @@ def test_eval_all():
     eval_args(create_argparser(), cM, ["evaluate"])
 
 
-@pytest.mark.parametrize('run', range(N))
+@pytest.mark.parametrize("run", range(N))
 def test_predict_feeid(run: int):
     """
     Test the frame evoking element predicting of a random raw file.
@@ -132,7 +134,7 @@ def test_predict_feeid(run: int):
         eval_args(create_argparser(), cM, ["predict", "--feeid", "--path", path])
 
 
-@pytest.mark.parametrize('run', range(N))
+@pytest.mark.parametrize("run", range(N))
 def test_predict_frameid(run: int):
     """
     Test the frame identification of a random raw file.
@@ -148,7 +150,7 @@ def test_predict_frameid(run: int):
         eval_args(create_argparser(), cM, ["predict", "--frameid", "--path", path])
 
 
-@pytest.mark.parametrize('run', range(N))
+@pytest.mark.parametrize("run", range(N))
 def test_predict_all(run: int):
     """
     Test for a complete pipeline prediction of a random raw file.
@@ -179,7 +181,7 @@ def test_config_arg():
     os.remove(path)
 
 
-@pytest.mark.parametrize('run', range(N))
+@pytest.mark.parametrize("run", range(N))
 def test_predict_feeid_out_path(run: int):
     """
     Test the frame evoking element predicting of a random raw file,
@@ -195,12 +197,16 @@ def test_predict_feeid_out_path(run: int):
 
     with RandomFiles(10, True) as m_rndfiles:
         path = m_rndfiles.files[0]
-        eval_args(create_argparser(), cM, ["predict", "--feeid", "--path", path, "--out_path", out_path])
+        eval_args(
+            create_argparser(),
+            cM,
+            ["predict", "--feeid", "--path", path, "--out_path", out_path],
+        )
 
     os.remove(out_path)
 
 
-@pytest.mark.parametrize('run', range(N))
+@pytest.mark.parametrize("run", range(N))
 def test_predict_frameid_out_path(run: int):
     """
     Test the frame identification of a random raw file,
@@ -216,12 +222,16 @@ def test_predict_frameid_out_path(run: int):
 
     with RandomFiles(10, True) as m_rndfiles:
         path = m_rndfiles.files[0]
-        eval_args(create_argparser(), cM, ["predict", "--frameid", "--path", path, "--out_path", out_path])
+        eval_args(
+            create_argparser(),
+            cM,
+            ["predict", "--frameid", "--path", path, "--out_path", out_path],
+        )
 
     os.remove(out_path)
 
 
-@pytest.mark.parametrize('run', range(N))
+@pytest.mark.parametrize("run", range(N))
 def test_predict_all_out_path(run: int):
     """
     Test for a complete pipeline prediction of a random raw file,
@@ -237,7 +247,8 @@ def test_predict_all_out_path(run: int):
 
     with RandomFiles(10, True) as m_rndfiles:
         path = m_rndfiles.files[0]
-        eval_args(create_argparser(), cM, ["predict", "--path", path, "--out_path", out_path])
+        eval_args(
+            create_argparser(), cM, ["predict", "--path", path, "--out_path", out_path]
+        )
 
     os.remove(out_path)
-

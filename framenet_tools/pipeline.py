@@ -78,7 +78,7 @@ class Pipeline(object):
         NOTE: Prediction is only possible up to the level on which the pipeline was trained!
 
         :param file: The raw input text file
-        :param out_path: The path to save the outputs to
+        :param out_path: The path to save the outputs to (can be None)
         :return:
         """
 

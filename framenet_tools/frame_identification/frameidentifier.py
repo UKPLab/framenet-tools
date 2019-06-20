@@ -174,10 +174,10 @@ class FrameIdentifier(object):
 
         for i in range(n):
             confidence, frame = torch.max(network_output, 0)
-            frames.append((self.output_field.vocab.itos[frame.item()], confidence))
+            frames.append((self.output_field.vocab.itos[frame.item()], confidence.item()))
 
             network_output = torch.cat(
-                [network_output[:frame], network_output[frame + 1 :]]
+                [network_output[:frame], network_output[frame + 1:]]
             )
 
         return frames

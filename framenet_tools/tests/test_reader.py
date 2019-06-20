@@ -10,7 +10,7 @@ from framenet_tools.data_handler.semaforreader import SemaforReader
 from framenet_tools.data_handler.semevalreader import SemevalReader
 from framenet_tools.data_handler.rawreader import RawReader
 
-cM = ConfigManager('config.file')
+cM = ConfigManager("config.file")
 
 
 class RandomFiles(object):
@@ -382,8 +382,10 @@ def test_semeval_reader_sentences():
     s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
 
     d_reader = SemaforReader(cM)
-    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
-                       "../data/experiments/xp_001/data/train.frame.elements")
+    d_reader.read_data(
+        "../data/experiments/xp_001/data/train.sentences",
+        "../data/experiments/xp_001/data/train.frame.elements",
+    )
 
     assert s_reader.sentences == d_reader.sentences
 
@@ -402,8 +404,10 @@ def test_semeval_reader_annotation_size():
     s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
 
     d_reader = SemaforReader(cM)
-    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
-                       "../data/experiments/xp_001/data/train.frame.elements")
+    d_reader.read_data(
+        "../data/experiments/xp_001/data/train.sentences",
+        "../data/experiments/xp_001/data/train.frame.elements",
+    )
 
     assert len(s_reader.annotations) == len(d_reader.annotations)
 
@@ -424,8 +428,10 @@ def test_semeval_reader_annotations():
     s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
 
     d_reader = SemaforReader(cM)
-    d_reader.read_data("../data/experiments/xp_001/data/train.sentences",
-                       "../data/experiments/xp_001/data/train.frame.elements")
+    d_reader.read_data(
+        "../data/experiments/xp_001/data/train.sentences",
+        "../data/experiments/xp_001/data/train.frame.elements",
+    )
 
     assert len(s_reader.annotations) == len(d_reader.annotations)
 

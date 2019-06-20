@@ -223,7 +223,7 @@ def test_prediction_no_network(max_sentence_length: int):
 
     with RandomFiles(max_sentence_length=max_sentence_length) as m_rndfiles:
 
-        f_i = FrameIdentifier(ConfigManager())
+        f_i = FrameIdentifier(ConfigManager("config.file"))
 
         out_file = create_random_string()
 
@@ -250,7 +250,7 @@ def test_prediction_with_network(embedding_dim: int, num_classes: int):
             raw = file.read()
             word_count = sum([1 for line in raw.rsplit("\n") for _ in line.rsplit(" ")])
 
-        cM = ConfigManager()
+        cM = ConfigManager("config.file")
         embedding_layer = nn.Embedding(word_count, embedding_dim)
 
         f_i = FrameIdentifier(cM)
