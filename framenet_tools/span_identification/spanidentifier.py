@@ -3,7 +3,6 @@ import spacy
 import re
 import torch
 
-from allennlp.predictors.predictor import Predictor
 from torchtext import data
 from tqdm import tqdm
 from typing import List
@@ -101,6 +100,8 @@ class SpanIdentifier(object):
     def query_static(self, annotation: Annotation):
         """
         Predicts the set of possible spans just by the use of the static syntax tree.
+
+        NOTE: deprecated!
 
         :param annotation: The annotation of the sentence to predict
         :return: A list of possible span tuples
@@ -347,69 +348,6 @@ class SpanIdentifier(object):
                 xs.append(combined)
 
         return xs, ys
-
-    def pred_allen(self):
-        """
-        A version for predicting spans using allennlp's predictor
-
-        :return:
-        """
-
-        predictor = Predictor.from_path(
-            "https://s3-us-west-2.amazonaws.com/allennlp/models/srl-model-2018.05.25.tar.gz"
-        )
-
-        num_sentences = range(len(self.sentences))
-
-        for i in tqdm(num_sentences):
-
-            sentence = " ".join(self.sentences[i])
-
-            prediction = predictor.predict(sentence)
-
-            verbs = [t["verb"] for t in prediction["verbs"]]
-
-            for annotation in self.annotations[i]:
-
-                spans = []
-
-                if annotation.fee_raw in verbs:
-                    # print("d")
-                    desc = prediction["verbs"][verbs.index(annotation.fee_raw)][
-                        "description"
-                    ]
-
-                    c = 0
-
-                    while re.search("\[ARG[" + str(c) + "]: [^\]]*", desc) is not None:
-
-                        span = re.search("\[ARG[" + str(c) + "]: [^\]]*", desc).span()
-
-                        arg = desc[span[0] + 7 : span[1]]
-
-                        # arg = nltk.word_tokenize(arg)
-                        arg = self.nlp(arg)
-
-                        for j in range(len(annotation.sentence)):
-
-                            word = annotation.sentence[j]
-
-                            if word == arg[0].text:
-                                saved = j
-
-                                for arg_word in arg:
-
-                                    if not arg_word.text == annotation.sentence[j]:
-                                        break
-
-                                    saved2 = j
-                                    j += 1
-
-                        spans.append((saved, saved2))
-
-                        c += 1
-
-                annotation.role_positions = spans
 
     def load(self):
         """

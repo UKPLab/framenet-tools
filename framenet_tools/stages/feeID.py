@@ -1,3 +1,5 @@
+import logging
+
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
@@ -18,18 +20,24 @@ class FeeID(PipelineStage):
         """
         No training needed
 
-        :param m_reader:
-        :param m_reader_dev:
+        :param m_reader: The DataReader object which contains the training data
+        :param m_reader_dev: The DataReader object for evaluation and auto stopping
+                            (NOTE: not necessarily given, as the focus might lie on maximizing the training data)
         :return:
         """
 
         # Nothing to train on this stage
+        logging.debug(f"Training FeeID complete!")
+
         return
 
     def predict(self, m_reader: DataReader):
         """
+        Predict the given data
 
-        :param m_reader:
+        NOTE: Changes the object itself
+
+        :param m_reader: The DataReader object
         :return:
         """
 

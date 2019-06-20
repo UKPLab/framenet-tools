@@ -68,7 +68,7 @@ class DataReader(object):
                 prediction_dict = dict()
                 prediction_dict["id"] = frame_count
                 prediction_dict["fee"] = annotation.fee_raw
-                prediction_dict["frame"] = annotation.frame
+                prediction_dict["frame"] = annotation.frame_confidence
                 prediction_dict["roles"] = []
 
                 role_id = 0
@@ -87,6 +87,10 @@ class DataReader(object):
                 frame_count += 1
 
             out_data.append(data_dict)
+
+        if path is None:
+            print(out_data)
+            return
 
         with open(path, "w") as out:
             json.dump(out_data, out, indent=4)

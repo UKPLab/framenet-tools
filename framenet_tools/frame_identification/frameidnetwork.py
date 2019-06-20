@@ -2,6 +2,7 @@ import logging
 import torch
 import torch.nn as nn
 import torchtext
+import os
 
 from torch.autograd import Variable
 from tqdm import tqdm
@@ -76,16 +77,19 @@ class Net(nn.Module):
         """
 
         lookup_tensor = sent.to(self.device)
-        embedded_sent = self.embedding_layer(lookup_tensor)
-
-        averaged_sent = embedded_sent.mean(dim=1)
-
-        # Reappend the FEE
 
         appended_avg = []
 
-        for sentence in averaged_sent:
-            inc_FEE = torch.cat((embedded_sent[0][0], sentence), 0)
+        for sentence in lookup_tensor:
+
+            # Cut off padding from torchtext, as it messes up the averaging process!
+            sentence = sentence[: (sentence != 1).nonzero()[-1].item() + 1]
+            embedded_sent = self.embedding_layer(sentence)
+
+            averaged_sent = embedded_sent.mean(dim=0)
+
+            # Reappend the FEE
+            inc_FEE = torch.cat((embedded_sent[0], averaged_sent), 0)
             appended_avg.append(inc_FEE)
 
         averaged_sent = torch.stack(appended_avg)
@@ -163,7 +167,9 @@ class FrameIDNetwork(object):
         """
 
         highest_acc = 0
-        auto_stopper = True
+        auto_stopper = self.cM.autostopper and dev_iter is not None
+        last_improvement = 0
+        autostopper_threshold = self.cM.autostopper_threshold
 
         writer = SummaryWriter()
 
@@ -206,10 +212,23 @@ class FrameIDNetwork(object):
             train_loss = total_loss / count
             train_acc = total_hits / count
 
+            if dev_iter is None:
+                logging.info(f"Train Acc: {train_acc}, Train Loss: {train_loss}")
+
+                writer.add_scalars("data/loss", {"train_loss": train_loss}, epoch)
+
+                writer.add_scalars("data/acc", {"train_acc": train_acc}, epoch)
+                continue
+
             dev_acc, dev_loss = self.eval_model(dev_iter)
+
+            last_improvement += 1
 
             if dev_acc > highest_acc:
                 highest_acc = dev_acc
+
+                last_improvement = 0
+
                 self.save_model(self.cM.saved_model + ".auto")
 
             logging.info(
@@ -224,6 +243,10 @@ class FrameIDNetwork(object):
                 "data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch
             )
 
+            if auto_stopper and (last_improvement > autostopper_threshold):
+                writer.close()
+                return
+
         writer.close()
 
     def query(self, x: List[int]):
@@ -237,9 +260,9 @@ class FrameIDNetwork(object):
         x = torch.tensor(x)
 
         output = self.net(x)
-        _, predicted = torch.max(output.data, 1)
+        # _, predicted = torch.max(output.data, 1)
 
-        return predicted.to("cpu")
+        return output.data.to("cpu")
 
     def predict(self, dataset_iter: torchtext.data.Iterator):
         """
@@ -311,6 +334,11 @@ class FrameIDNetwork(object):
         :param path: The path to save the model at
         :return:
         """
+
+        upper_path = path[:path.rfind('/')]
+
+        if not os.path.isdir(upper_path):
+            os.makedirs(upper_path)
 
         torch.save(self.net.state_dict(), path)
 

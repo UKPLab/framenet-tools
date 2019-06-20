@@ -49,9 +49,10 @@ def create_argparser():
         help=f"Actions to perform, namely: download, convert, train, predict, evaluate",
     )
     parser.add_argument(
-        "--level",
-        help="The upper bound for pipeline stages. (Default is 4, meaning all stages!)",
-        type=int,
+        "--feeid", help="Use frame evoking element identification.", action="store_true"
+    )
+    parser.add_argument(
+        "--frameid", help="Use frame identification.", action="store_true"
     )
     parser.add_argument(
         "--path", help="A path specification used by some actions.", type=str
@@ -63,6 +64,12 @@ def create_argparser():
         "--use_eval_files",
         help="Specify if eval files should be used for training as well.",
         action="store_true",
+    )
+    parser.add_argument(
+        "--batchsize", help="The Batchsize to use for training.", type=int
+    )
+    parser.add_argument(
+        "--config", help="The path to the config file to use.", type=str
     )
 
     return parser
@@ -76,6 +83,7 @@ def eval_args(
 
     :param parser: The ArgumentParser for getting the specified arguments
     :param cM: The ConfigManager for getting necessary variables
+    :param args: Possibility for manually passing arguments.
     :return:
     """
 
@@ -84,10 +92,19 @@ def eval_args(
     else:
         parsed = parser.parse_args(args)
 
-    level = 4
+    levels = []
 
-    if parsed.level is not None:
-        level = parsed.level
+    if parsed.config is not None:
+        cM = ConfigManager(parsed.config)
+
+    if parsed.feeid:
+        levels.append(0)
+
+    if parsed.frameid:
+        levels.append(1)
+
+    if parsed.batchsize is not None:
+        cM.batch_size = parsed.batchsize
 
     if parsed.action == "download":
 
@@ -138,28 +155,25 @@ def eval_args(
 
     if parsed.action == "train":
 
-        pipeline = Pipeline(cM, level)
+        pipeline = Pipeline(cM, levels)
 
         if parsed.use_eval_files:
-            pipeline.train(cM.all_files)
+            pipeline.train(cM.semeval_all)
         else:
-            pipeline.train(cM.train_files)
+            pipeline.train(cM.semeval_train, cM.semeval_dev)
 
     if parsed.action == "predict":
 
         if parsed.path is None:
             raise Exception("No input file for prediction given!")
 
-        if parsed.out_path is None:
-            raise Exception("No path specified for saving!")
-
-        pipeline = Pipeline(cM, level)
+        pipeline = Pipeline(cM, levels)
 
         pipeline.predict(parsed.path, parsed.out_path)
 
     if parsed.action == "evaluate":
 
-        pipeline = Pipeline(cM, level)
+        pipeline = Pipeline(cM, levels)
 
         pipeline.evaluate()
 
@@ -179,3 +193,4 @@ def main():
     parser = create_argparser()
 
     eval_args(parser, cM)
+

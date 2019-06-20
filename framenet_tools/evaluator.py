@@ -1,10 +1,11 @@
 import logging
 
 from copy import deepcopy
+from typing import List
 
 from framenet_tools.config import ConfigManager
 from framenet_tools.data_handler.semevalreader import SemevalReader
-from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
+from framenet_tools.frame_identification.frameidentifier import get_dataset
 from framenet_tools.data_handler.reader import DataReader
 from framenet_tools.span_identification.spanidentifier import SpanIdentifier
 
@@ -95,90 +96,105 @@ def evaluate_span_identification(
     return pr, re, f1
 
 
-def evaluate_fee_identification(cM: ConfigManager):
+def evaluate_fee_identification(m_reader: DataReader, original_reader: DataReader):
     """
-    Evaluates the F1-Score of the Frame Evoking Element Identification only
+    Evaluates the Frame Evoking Element Identification only
 
-    :param cM: The ConfigManager containing the saved model and evaluation files
-    :return: A Triple of Precision, Recall and F1-Score
+    :param m_reader: The reader containing the predicted annotations
+    :param original_reader: The original reader containing the gold annotations
+    :return: A Triple of True positives, False positives and False negatives
     """
 
-    for file in cM.eval_files:
+    gold_sentences = original_reader.annotations.copy()
 
-        logging.info(f"Evaluating on: {file[0]}")
+    tp = fp = fn = 0
 
-        m_data_reader = DataReader(cM)
-        m_data_reader.read_data(file[0], file[1])
+    for gold_annotations, predictied_annotations in zip(
+        gold_sentences, m_reader.annotations
+    ):
+        for gold_annotation in gold_annotations:
+            if gold_annotation.fee_raw in [x.fee_raw for x in predictied_annotations]:
+                tp += 1
+            else:
+                fn += 1
 
-        gold_sentences = m_data_reader.annotations.copy()
+        for predicted_annotation in predictied_annotations:
+            if predicted_annotation.fee_raw not in [
+                x.fee_raw for x in gold_annotations
+            ]:
+                fp += 1
 
-        m_data_reader.predict_fees()
+    return tp, fp, fn
 
-        tp = fp = fn = 0
 
-        for gold_annotations, predictied_annotations in zip(
-            gold_sentences, m_data_reader.annotations
-        ):
-            for gold_annotation in gold_annotations:
-                if gold_annotation.fee_raw in [
-                    x.fee_raw for x in predictied_annotations
-                ]:
-                    tp += 1
-                else:
-                    fn += 1
+def evaluate_frame_identification(m_reader: DataReader, original_reader: DataReader):
+    """
+    Evaluates the Frame Identification
 
-            for predicted_annotation in predictied_annotations:
-                # print(predicted_annotation)
-                # print([x.fee_raw for x in gold_annotations])
-                if predicted_annotation.fee_raw not in [
-                    x.fee_raw for x in gold_annotations
-                ]:
-                    fp += 1
+    :param m_reader: The reader containing the predicted annotations
+    :param original_reader: The original reader containing the gold annotations
+    :return: A Triple of True positives, False positives and False negatives
+    """
 
-        pr, re, f1 = calc_f(tp, fp, fn)
+    # Load correct answers for comparison:
+    gold_xs, gold_ys = get_dataset(original_reader)
+    xs, ys = get_dataset(m_reader)
+    tp = 0
+    fp = 0
+    fn = 0
 
-        logging.info(
-            f"FEE Evaluation complete!\n"
-            f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
-            f"Precision: {pr} Recall: {re} F1-Score: {f1}"
-        )
+    found = False
+
+    for gold_x, gold_y in zip(gold_xs, gold_ys):
+        for x, y in zip(xs, ys):
+            if gold_x == x and gold_y == y:
+                found = True
+                break
+
+        if found:
+            tp += 1
+        else:
+            fn += 1
+
+        found = False
+
+    for x, y in zip(xs, ys):
+        for gold_x, gold_y in zip(gold_xs, gold_ys):
+            if gold_x == x and gold_y == y:
+                found = True
+
+        if not found:
+            fp += 1
+
+        found = False
+
+    return tp, fp, fn
+
+
+def evaluate_stages(
+    m_reader: DataReader, original_reader: DataReader, levels: List[int]
+):
+    """
+    Evaluates the stages specified in levels
+
+    :param m_reader: The reader including the predicted data
+    :param original_reader: The reader which holds the gold data
+    :param levels: The levels to evaluate for
+    :return: A triple of Precision, Recall and the F1-Score
+    """
+
+    if max(levels) == 0:
+        tp, fp, fn = evaluate_fee_identification(m_reader, original_reader)
+
+    if max(levels) == 1:
+        tp, fp, fn = evaluate_frame_identification(m_reader, original_reader)
+
+    pr, re, f1 = calc_f(tp, fp, fn)
+
+    logging.info(
+        f"Evaluation complete!\n"
+        f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
+        f"Precision: {pr} Recall: {re} F1-Score: {f1}"
+    )
 
     return pr, re, f1
-
-
-def evaluate_frame_identification(cM: ConfigManager):
-    """
-    Evaluates the F1-Score for a model on a given file set
-
-    :param cM: The ConfigManager containing the saved model and evaluation files
-    :return: A Triple of Precision, Recall and F1-Score
-    """
-
-    f_i = FrameIdentifier(cM)
-    f_i.load_model(cM.saved_model)
-
-    for file in cM.eval_files:
-        logging.info(f"Evaluating on: {file[0]}")
-        tp, fp, fn = f_i.evaluate_file(file)
-        pr, re, f1 = calc_f(tp, fp, fn)
-
-        logging.info(
-            f"Evaluation complete!\n"
-            f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
-            f"Precision: {pr} Recall: {re} F1-Score: {f1}"
-        )
-
-    return pr, re, f1
-
-
-"""
-f1 = evaluate_fee_identification(DEV_FILES)
-print(f1)
-
-f1 = evaluate_frame_identification(SAVED_MODEL, DEV_FILES)
-print(f1)
-
-f_i = FrameIdentifier()
-f_i.load_model(SAVED_MODEL)
-f_i.write_predictions("../data/experiments/xp_001/data/WallStreetJournal20150915.txt", "here.txt")
-"""

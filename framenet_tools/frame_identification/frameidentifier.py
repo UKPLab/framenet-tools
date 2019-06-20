@@ -1,15 +1,41 @@
 import json
+import logging
+import os
+from copy import deepcopy
+
 import torch
 import torch.nn as nn
+from torch.nn.functional import softmax
 from torchtext import data
 import pickle
 from typing import List
 
 from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.data_handler.reader import DataReader
+from framenet_tools.fee_identification.feeidentifier import FeeIdentifier
 from framenet_tools.frame_identification.frameidnetwork import FrameIDNetwork
 from framenet_tools.config import ConfigManager
 from framenet_tools.utils.static_utils import shuffle_concurrent_lists
+
+
+def get_dataset(reader: DataReader):
+    """
+    Loads the dataset and combines the necessary data
+
+    :param reader: The reader that contains the dataset
+    :return: xs: A list of sentences appended with its FEE
+             ys: A list of frames corresponding to the given sentences
+    """
+
+    xs = []
+    ys = []
+
+    for annotation_sentences in reader.annotations:
+        for annotation in annotation_sentences:
+            xs.append([annotation.fee_raw] + annotation.sentence)
+            ys.append(annotation.frame)
+
+    return xs, ys
 
 
 class FrameIdentifier(object):
@@ -32,25 +58,6 @@ class FrameIdentifier(object):
 
         self.cM = cM
         self.network = None
-
-    def get_dataset(self, reader: DataReader):
-        """
-        Loads the dataset and combines the necessary data
-
-        :param reader: The reader that contains the dataset
-        :return: xs: A list of sentences appended with its FEE
-                ys: A list of frames corresponding to the given sentences
-        """
-
-        xs = []
-        ys = []
-
-        for annotation_sentences in reader.annotations:
-            for annotation in annotation_sentences:
-                xs.append([annotation.fee_raw] + annotation.sentence)
-                ys.append(annotation.frame)
-
-        return xs, ys
 
     def prepare_dataset(self, xs: List[str], ys: List[str], batch_size: int = None):
         """
@@ -75,7 +82,9 @@ class FrameIdentifier(object):
 
         return iterator
 
-    def evaluate(self, predictions: List[torch.tensor], xs: List[str], file: List[str]):
+    def evaluate(
+        self, predictions: List[torch.tensor], xs: List[str], reader: DataReader
+    ):
         """
         Evaluates the model
 
@@ -83,12 +92,12 @@ class FrameIdentifier(object):
 
         :param predictions: The predictions the model made on xs
         :param xs: The original fed in data
-        :param file: The file from which xs was derived
+        :param reader: The reader from which xs was derived
         :return:
         """
 
         # Load correct answers for comparison:
-        gold_xs, gold_ys = self.get_dataset(file, False)
+        gold_xs, gold_ys = get_dataset(reader)
 
         tp = 0
         fp = 0
@@ -125,8 +134,11 @@ class FrameIdentifier(object):
 
     def query(self, annotation: Annotation):
         """
+        A simple query for retrieving the most likely frame for a given annotation.
 
-        :param annotation:
+        NOTE: require are loaded network and a annotation object which has a sentence and fee!
+
+        :param annotation: The annotation containing the sentence and the fee.
         :return:
         """
 
@@ -134,10 +146,41 @@ class FrameIdentifier(object):
 
         x = [[self.input_field.vocab.stoi[t]] for t in x]
 
-        frame = self.network.query(x)
+        network_output = self.network.query(x)
+        _, frame = torch.max(network_output[0], 0)
         frame = self.output_field.vocab.itos[frame.item()]
 
         return frame
+
+    def query_confidence(self, annotation: Annotation, n: int = 5):
+        """
+        A deeper query for retrieving a list of likely frames for a given annotation.
+
+        NOTE: require are loaded network and a annotation object which has a sentence and fee!
+
+        :param annotation: The annotation containing the sentence and the fee.
+        :param n: The amount of best guesses retrieved.
+        :return:
+        """
+
+        frames = []
+
+        x = [annotation.fee_raw] + annotation.sentence
+
+        x = [[self.input_field.vocab.stoi[t]] for t in x]
+
+        network_output = self.network.query(x)[0]
+        network_output = softmax(network_output, dim=0)
+
+        for i in range(n):
+            confidence, frame = torch.max(network_output, 0)
+            frames.append((self.output_field.vocab.itos[frame.item()], confidence.item()))
+
+            network_output = torch.cat(
+                [network_output[:frame], network_output[frame + 1:]]
+            )
+
+        return frames
 
     def write_predictions(self, file: str, out_file: str, fee_only: bool = False):
         """
@@ -153,7 +196,7 @@ class FrameIdentifier(object):
         if not fee_only and self.network is None:
             raise Exception("No network found! Train or load a network.")
 
-        xs, ys = self.get_dataset([file], True)
+        xs, ys = get_dataset([file])
 
         if not fee_only:
             dataset_iter = self.prepare_dataset(xs, ys, 1)
@@ -210,7 +253,12 @@ class FrameIdentifier(object):
         pickle.dump(self.input_field.vocab, open(name + ".in_voc", "wb"))
 
         # Saving the actual network
-        self.network.save_model(name + ".ph")
+        if os.path.exists(name + ".auto"):
+            # If auto saving found, simply rename it
+            logging.info(f"Autostopper STOP")
+            os.rename(name + ".auto", name + ".ph")
+        else:
+            self.network.save_model(name + ".ph")
 
     def load_model(self, name: str):
         """
@@ -223,7 +271,7 @@ class FrameIdentifier(object):
         """
 
         # Loading config
-        self.cM.load_config(name + ".cfg")
+        self.cM = ConfigManager(name + ".cfg")
 
         # Loading Vocabs
         out_voc = pickle.load(open(name + ".out_voc", "rb"))
@@ -238,21 +286,27 @@ class FrameIdentifier(object):
 
         self.network.load_model(name + ".ph")
 
-    def evaluate_file(self, file: List[str]):
+    def evaluate_file(self, reader: DataReader, predict_fees: bool = False):
         """
         Evaluates the model on a given file set
 
-        :param file: The files to evaluate on
+        :param reader: The reader to evaluate on
         :return: A Triple of True Positives, False Positives and False Negatives
         """
 
-        xs, ys = self.get_dataset(file, False)
+        reader_copy = deepcopy(reader)
+
+        if predict_fees:
+            fee_finder = FeeIdentifier(self.cM)
+            fee_finder.predict_fees(reader)
+
+        xs, ys = get_dataset(reader)
 
         iter = self.prepare_dataset(xs, ys, 1)
 
         predictions = self.network.predict(iter)
 
-        return self.evaluate(predictions, xs, file)
+        return self.evaluate(predictions, xs, reader_copy)
 
     def train(self, reader: DataReader, reader_dev: DataReader = None):
         """
@@ -268,7 +322,7 @@ class FrameIdentifier(object):
         xs = []
         ys = []
 
-        new_xs, new_ys = self.get_dataset(reader)
+        new_xs, new_ys = get_dataset(reader)
         xs += new_xs
         ys += new_ys
 
@@ -298,6 +352,11 @@ class FrameIdentifier(object):
 
         self.network = FrameIDNetwork(self.cM, embed, num_classes)
 
+        if dev_iter is None:
+            logging.info(
+                f"NOTE: Beginning training w/o a development set! Autostopper deactivated!"
+            )
+
         self.network.train_model(dataset_size, train_iter, dev_iter)
 
     def get_iter(self, reader: DataReader):
@@ -308,6 +367,9 @@ class FrameIdentifier(object):
         :return: A Iterator of the dataset
         """
 
-        xs, ys = self.get_dataset(reader)
+        if reader is None:
+            return None
+
+        xs, ys = get_dataset(reader)
 
         return self.prepare_dataset(xs, ys)

@@ -37,5 +37,7 @@ class FrameID(PipelineStage):
         for annotations in m_reader.annotations:
             for annotation in annotations:
                 frame = self.f_i.query(annotation)
+                frames = self.f_i.query_confidence(annotation)
 
                 annotation.frame = frame
+                annotation.frame_confidence = frames

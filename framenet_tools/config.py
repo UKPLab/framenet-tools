@@ -9,8 +9,6 @@ from framenet_tools.data_handler.frame_embedding_manager import FrameEmbeddingMa
 from framenet_tools.data_handler.word_embedding_manager import WordEmbeddingManager
 from framenet_tools.utils.static_utils import download_resources, get_spacy_en_model
 
-CONFIG_PATH = "config.file"
-
 
 class ConfigManager(object):
 
@@ -18,7 +16,10 @@ class ConfigManager(object):
 
     train_files: List[List[str]]
     eval_files: List[List[str]]
-    semeval_files: List[str]
+    semeval_train: List[str]
+    semeval_dev: List[str]
+    semeval_test: List[str]
+    semeval_all: List[str]
     all_files: List[List[str]]
 
     use_cuda: bool
@@ -32,11 +33,17 @@ class ConfigManager(object):
     learning_rate: float
     embedding_size: int
 
-    def __init__(self):
+    def __init__(self, path: str = None):
 
         self.train_files = []
         self.eval_files = []
-        self.semeval_files = []
+
+        self.semeval_train = []
+        self.semeval_dev = []
+        self.semeval_test = []
+
+        self.all_files = self.train_files + self.eval_files
+        self.semeval_all = self.semeval_train + self.semeval_dev + self.semeval_test
 
         # NOTE: model is actually saved in three individual files (.ph, .in_voc, .out_voc)
         model_name = "model"
@@ -47,21 +54,20 @@ class ConfigManager(object):
         self.use_spacy = True
         self.syntax_only_mode = True
 
-        self.all_files = self.train_files + self.eval_files
-
-        self.hidden_sizes = [512, 256]
-        self.activation_functions = ["ReLU", "ReLU"]
-        self.batch_size = 10
-        self.num_epochs = 5
+        self.hidden_sizes = [512, 0.2, 256, 0.1]
+        self.activation_functions = ["ReLU", "Dropout", "ReLU", "Dropout"]
+        self.batch_size = 64
+        self.num_epochs = 50
         self.learning_rate = 0.001
         self.embedding_size = 300
 
-        self.level = 3
+        self.autostopper = True
+        self.autostopper_threshold = 5
 
-        if not self.load_config():
+        if not self.load_config(path):
             download_resources()
             get_spacy_en_model()
-            self.create_config()
+            self.create_config('config.file')
 
         self.wEM = WordEmbeddingManager()
         self.fEM = FrameEmbeddingManager()
@@ -84,7 +90,7 @@ class ConfigManager(object):
         self.train_files = [train_files]
         self.eval_files = [dev_files, test_files]
 
-        self.semeval_files = [
+        self.semeval_all = [
             "data/experiments/xp_001/data/train.gold.xml",
             "data/experiments/xp_001/data/dev.gold.xml",
             "data/experiments/xp_001/data/test.gold.xml",
@@ -98,7 +104,7 @@ class ConfigManager(object):
             handle[0] = os.path.join(dir_data, handle[0])
             handle[1] = os.path.join(dir_data, handle[1])
 
-    def load_config(self, path: str = CONFIG_PATH):
+    def load_config(self, path: str = None):
         """
         Loads the config file and saves all found variables
 
@@ -114,7 +120,7 @@ class ConfigManager(object):
             return False
 
         config = configparser.ConfigParser()
-        config.read(CONFIG_PATH)
+        config.read(path)
 
         for section in config.sections():
 
@@ -132,7 +138,14 @@ class ConfigManager(object):
 
             if section == "SEMEVAL":
                 for key in config[section]:
-                    self.semeval_files.append(config[section][key])
+                    self.semeval_all.append(config[section][key])
+
+                    if key == "train":
+                        self.semeval_train.append(config[section][key])
+                    if key == "dev":
+                        self.semeval_dev.append(config[section][key])
+                    if key == "test":
+                        self.semeval_test.append(config[section][key])
 
             if section == "VARIABLES":
                 for key in config[section]:
@@ -148,8 +161,11 @@ class ConfigManager(object):
                     if key == "syntax_only_mode":
                         self.syntax_only_mode = config[section][key] == "True"
 
-                    if key == "level":
-                        self.level = int(config[section][key])
+                    if key == "autostopper":
+                        self.autostopper = config[section][key] == "True"
+
+                    if key == "autostopper_threshold":
+                        self.autostopper_threshold = int(config[section][key])
 
             if section == "HYPERPARAMETER":
                 for key in config[section]:
@@ -201,7 +217,7 @@ class ConfigManager(object):
 
         return string
 
-    def create_config(self, path: str = CONFIG_PATH):
+    def create_config(self, path: str):
         """
         Creates a config file and saves all necessary variables
 
@@ -216,7 +232,7 @@ class ConfigManager(object):
         config_string += self.paths_to_string(self.eval_files)
 
         config_string += "[SEMEVAL]\n"
-        for file_path in self.semeval_files:
+        for file_path in self.semeval_all:
             config_string += (
                 file_path.rsplit("/")[-1].rsplit(".")[0] + ": " + file_path + "\n"
             )
@@ -226,7 +242,8 @@ class ConfigManager(object):
         config_string += "use_cuda: " + str(self.use_cuda) + "\n"
         config_string += "use_spacy: " + str(self.use_spacy) + "\n"
         config_string += "syntax_only_mode: " + str(self.syntax_only_mode) + "\n"
-        config_string += "level: " + str(self.level) + "\n"
+        config_string += "autostopper: " + str(self.autostopper) + "\n"
+        config_string += "autostopper_threshold: " + str(self.autostopper_threshold) + "\n"
 
         config_string += "\n[HYPERPARAMETER]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"

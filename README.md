@@ -41,21 +41,23 @@ and adjust the path inside the script.
 The following functions both require a pretrained model,  
 generate using `framenet_tools train` as explained above.
 - Stages: The System is split into 4 distinct pipeline stages, namely:
-    - 1  Frame evoking element identification
+    - 1 Frame evoking element identification
     - 2 Frame identification
-    - 3 Span identification
-    - 4 Role identification
+    - 3 Span identification (WIP)
+    - 4 Role identification (WIP)
+
+Each stage can individually be trained by calling it e.g. `--frameid`.
+Also combinations of mutliple stages are possible. This can be done for every option.
+NOTE: A usage of `evaluate` or `predict` requires a previous training of the same stage level! 
     
-The level of the stages can be specified by `--level [level]` where the level is represented as the
-number of the given stage. This can be done for every option.
-NOTE: A usage of `evaluate` or `predict` requires a previous training of the same (or higher)
- stage level! 
-    
-- `framenet_tools predict --path [path] --out_path [out_path]`  
+- `framenet_tools predict --path [path]`  
 annotates the given raw text file located at
- `--path` and writes the output to `--out_path`
+ `--path` and prints the result. Optionally `--out_path` can be used to write the results directly to a file.
+ Also a prediction can be limited to a certain stage by specifying it (e.g. `--feeid`). NOTE: As the stages build 
+on the previous ones, this option represents a upper bound. 
 - `framenet_tools evaluate`  
 evaluates the F1-Score of the model on the evaluation files.
+Here, evaluation can be exclusively limited to a certain stage.
 
 ## Logging
 
