@@ -76,13 +76,12 @@ def create_argparser():
 
 
 def eval_args(
-    parser: argparse.ArgumentParser, cM: ConfigManager, args: List[str] = None
+    parser: argparse.ArgumentParser, args: List[str] = None
 ):
     """
     Evaluates the given arguments and runs to program accordingly.
 
     :param parser: The ArgumentParser for getting the specified arguments
-    :param cM: The ConfigManager for getting necessary variables
     :param args: Possibility for manually passing arguments.
     :return:
     """
@@ -94,8 +93,12 @@ def eval_args(
 
     levels = []
 
+    # If a special config file is given, use it
     if parsed.config is not None:
         cM = ConfigManager(parsed.config)
+    else:
+        # Otherwise try to load the standard file
+        cM = ConfigManager('config.file')
 
     if parsed.feeid:
         levels.append(0)
@@ -189,8 +192,7 @@ def main():
         format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
     )
 
-    cM = ConfigManager()
     parser = create_argparser()
 
-    eval_args(parser, cM)
+    eval_args(parser)
 
