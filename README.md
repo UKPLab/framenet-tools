@@ -3,7 +3,6 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
-A summarization of the SRL process.  
 Provides functionality to find Frame Evoking Elements in raw text and predict 
 their corresponding frames. Furthermore possible spans of roles can be found and assigned. 
 Models can be trained either on the given files or on any annotated file in a supported format (For more information
@@ -13,7 +12,7 @@ look at the section formats).
 ## Installation
 - Clone repository or download files
 - Enter the directory
-- Run `pip3 install .`
+- Run `pip install -e .`
 
 ## Setup
 - `framenet_tools download`  
@@ -65,7 +64,7 @@ Training automatically logs the loss and accuracy of the train- and devset in [T
 - `tensorboard --logdir=runs`
 can be used to run TensorBoard and visualize the data.
 
-##Architecture
+## Architecture
 
 ![alt text](Overview.png "Architecture")
 
@@ -73,7 +72,7 @@ can be used to run TensorBoard and visualize the data.
 [2]: https://github.com/akb89/pyfn/releases/download/v1.0.0/data.7z
 [3]: https://www.tensorflow.org/guide/summaries_and_tensorboard
 
-##Formats
+## Formats
 
 Currently support formats include:
 
