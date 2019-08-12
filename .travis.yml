@@ -1,0 +1,13 @@
+language: python
+python:
+  - "3.6"
+
+install:
+  - pip install -r requirements.txt
+  - pip install .
+
+# NOTE: Needed for whole system tests
+#  - framenet_tools download
+#  - framenet_tools convert
+
+script: pytest framenet_tools/tests/
