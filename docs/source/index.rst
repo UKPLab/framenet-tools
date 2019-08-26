@@ -1,7 +1,4 @@
-.. Framenet Tools documentation master file, created by
-   sphinx-quickstart on Mon Aug 26 13:22:55 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. Framenet Tools documentation master file
 
 Framenet Tools's: A summarization of the SRL process
 ====================================================
@@ -14,6 +11,7 @@ Provides functionality to find Frame Evoking Elements in raw text and predict th
    :caption: Contents:
 
    installation
+   codedoc/modules
 
 
 
