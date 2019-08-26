@@ -12,7 +12,10 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../framenet_tools/'))
+
+from unittest.mock import MagicMock
+
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -56,3 +59,12 @@ html_theme = 'default'
 html_static_path = ['_static']
 
 master_doc = 'index'
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+MOCK_MODULES = ['torch', 'torchtext', 'nltk', 'spacy', 'pyfn', 'argparse', 'numpy', 'pandas']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
