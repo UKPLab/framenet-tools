@@ -1,11 +1,16 @@
 Usage
 =====
 
-| The following functions both require a pretrained model,
-| generate using ``framenet_tools train`` as explained above. - Stages:
-  The System is split into 4 distinct pipeline stages, namely: - 1 Frame
-  evoking element identification - 2 Frame identification - 3 Span
-  identification (WIP) - 4 Role identification (WIP)
+The following functions both require a pretrained model,
+which can be generated using ``framenet_tools train`` as explained previously. 
+
+- Stages:The System is split into 4 distinct pipeline stages, namely: 
+
+  - 1 Frameevoking element identification 
+  - 2 Frame identification 
+  - 3 Spanidentification (WIP) 
+  - 4 Role identification (WIP)
+
 
 Each stage can individually be trained by calling it
 e.g. \ ``--frameid``. Also combinations of mutliple stages are possible.
@@ -27,8 +32,9 @@ Logging
 -------
 
 Training automatically logs the loss and accuracy of the train- and
-devset in `TensorBoard`_ format. - ``tensorboard --logdir=runs`` can be
-used to run TensorBoard and visualize the data.
+devset in `TensorBoard`_ format. 
+
+- ``tensorboard --logdir=runs`` can beused to run TensorBoard and visualize the data.
 
 Formats
 -------

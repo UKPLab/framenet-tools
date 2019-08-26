@@ -10,4 +10,4 @@ install:
 #  - framenet_tools download
 #  - framenet_tools convert
 
-script: pytest framenet_tools/tests/
+script: pytest tests/

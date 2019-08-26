@@ -12,7 +12,6 @@ Subpackages
     framenet_tools.role_identification
     framenet_tools.span_identification
     framenet_tools.stages
-    framenet_tools.tests
     framenet_tools.utils
 
 Submodules
