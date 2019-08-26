@@ -11,6 +11,7 @@ Provides functionality to find Frame Evoking Elements in raw text and predict th
    :caption: Contents:
 
    installation
+   usage
    codedoc/modules
 
 

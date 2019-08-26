@@ -9,7 +9,9 @@ Subpackages
     framenet_tools.data_handler
     framenet_tools.fee_identification
     framenet_tools.frame_identification
+    framenet_tools.role_identification
     framenet_tools.span_identification
+    framenet_tools.stages
     framenet_tools.tests
     framenet_tools.utils
 
