@@ -8,7 +8,7 @@ from typing import List
 from framenet_tools.config import ConfigManager
 from framenet_tools.frame_identification.frameidentifier import FrameIdentifier
 from framenet_tools.frame_identification.frameidnetwork import Net, FrameIDNetwork
-from framenet_tools.tests.test_reader import create_random_string, RandomFiles
+from tests.test_reader import create_random_string, RandomFiles
 
 ACTIVATION_FUNCTIONS = [
     "LogSoftmax",

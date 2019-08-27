@@ -27,7 +27,6 @@ setuptools.setup(
               "framenet_tools.data_handler",
               "framenet_tools.utils",
               "framenet_tools.stages",
-              "framenet_tools.tests",
               ],
     install_requires=["pyfn",
                       "torch",
