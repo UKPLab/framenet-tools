@@ -2,7 +2,7 @@ import pytest
 
 from framenet_tools.config import ConfigManager
 from framenet_tools.stages.feeID import FeeID
-from framenet_tools.tests.test_reader import RandomFiles
+from tests.test_reader import RandomFiles
 
 
 # Parameter to run tests N times.

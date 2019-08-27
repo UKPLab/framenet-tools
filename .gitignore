@@ -442,6 +442,7 @@ scripts/
 log/
 .vector_cache/
 config.file
+config.test
 *.csv
 *.ph
 *.in_voc

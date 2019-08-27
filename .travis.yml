@@ -10,4 +10,5 @@ install:
 #  - framenet_tools download
 #  - framenet_tools convert
 
-script: pytest tests/
+# Skip the whole system test, as it would require a whole installation (around 9 Gb)
+script: pytest tests/ --ignore tests/test_system.py
