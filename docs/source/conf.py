@@ -79,5 +79,8 @@ MOCK_MODULES = [
     "argparse",
     "numpy",
     "pandas",
+    "tqdm",
+    "py7zlib",
+    "tensorboardX"
 ]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
