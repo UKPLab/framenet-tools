@@ -91,6 +91,8 @@ class Pipeline(object):
 
         m_reader.export_to_json(out_path)
 
+        logging.info(f"Prediction successful!")
+
     def load_dataset(self, files: List[str]):
         """
         Helper function for loading datasets.
