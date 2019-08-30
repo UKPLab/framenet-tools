@@ -40,7 +40,7 @@ class RandomFiles(object):
         :return: A DataReader-Object and a list of the two file names
         """
 
-        num_sentences = random.randint(1, max_sentence_length)
+        num_sentences = random.randint(2, max_sentence_length)
 
         raw_file = create_raw_file(num_sentences, 10)
 
@@ -201,7 +201,7 @@ def create_raw_file(sentence_count: int, max_word_count: int):
     content = ""
 
     for i in range(sentence_count):
-        for j in range(random.randint(1, max_word_count)):
+        for j in range(random.randint(2, max_word_count)):
             content += create_random_string(string.ascii_letters + string.digits) + " "
 
         content += ". "

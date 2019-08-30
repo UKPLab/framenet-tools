@@ -55,6 +55,10 @@ class DataReader(object):
 
         for annotations in self.annotations:
             data_dict = dict()
+
+            if len(annotations) < 1:
+                continue
+
             data_dict["sentence"] = annotations[0].sentence
             data_dict["sentence_id"] = sent_count
             data_dict["prediction"] = []

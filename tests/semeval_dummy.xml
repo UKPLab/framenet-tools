@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<corpus XMLCreated="Wed Aug 28 11:54:37 UTC 2019">
+  <documents>
+    <document>
+      <paragraphs>
+        <paragraph>
+          <sentences>
+            <sentence ID="0">
+              <text>' I think , overall , things went very well , ' said Lawton Davis , head of the South Central Health District .</text>
+              <annotationSets>
+                <annotationSet ID="1" frameName="Awareness">
+                  <layers>
+                    <layer ID="1" name="Target">
+                      <labels>
+                        <label ID="1" name="Target" start="4" end="8"/>
+                      </labels>
+                    </layer>
+                    <layer ID="2" name="FE">
+                      <labels>
+                        <label ID="2" name="Cognizer" start="2" end="2"/>
+                        <label ID="3" name="Content" start="12" end="42"/>
+                      </labels>
+                    </layer>
+                  </layers>
+                </annotationSet>
+                <annotationSet ID="2" frameName="Statement">
+                  <layers>
+                    <layer ID="3" name="Target">
+                      <labels>
+                        <label ID="4" name="Target" start="48" end="51"/>
+                      </labels>
+                    </layer>
+                    <layer ID="4" name="FE">
+                      <labels>
+                        <label ID="5" name="Message" start="0" end="46"/>
+                        <label ID="6" name="Speaker" start="53" end="108"/>
+                      </labels>
+                    </layer>
+                  </layers>
+                </annotationSet>
+                <annotationSet ID="3" frameName="Leadership">
+                  <layers>
+                    <layer ID="5" name="Target">
+                      <labels>
+                        <label ID="7" name="Target" start="68" end="71"/>
+                      </labels>
+                    </layer>
+                    <layer ID="6" name="FE">
+                      <labels>
+                        <label ID="8" name="Governed" start="73" end="108"/>
+                        <label ID="9" name="Leader" start="68" end="71"/>
+                      </labels>
+                    </layer>
+                  </layers>
+                </annotationSet>
+              </annotationSets>
+            </sentence>
+          </sentences>
+        </paragraph>
+      </paragraphs>
+    </document>
+  </documents>
+</corpus>
