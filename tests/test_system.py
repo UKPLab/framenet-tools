@@ -52,9 +52,14 @@ def adjust_config(simple_mode: bool):
         shutil.copy("semeval_dummy.xml", "dev.semeval_dummy.xml")
         shutil.copy("semeval_dummy.xml", "test.semeval_dummy.xml")
 
+        shutil.copy("semafor_dummy.sentences", "train.sentences")
+        shutil.copy("semafor_dummy.frame.elements", "train.frame.elements")
+
         cM.semeval_train = ["train.semeval_dummy.xml"]
         cM.semeval_dev = ["dev.semeval_dummy.xml"]
         cM.semeval_test = ["test.semeval_dummy.xml"]
+
+        cM.train_files = [["train.sentences", "train.frame.elements"]]
 
     else:
 
@@ -62,12 +67,26 @@ def adjust_config(simple_mode: bool):
         cM.semeval_dev = [data_path + cM.semeval_dev[0]]
         cM.semeval_test = [data_path + cM.semeval_test[0]]
 
+        train_files = []
+
+        for files in cM.train_files:
+            t = []
+
+            for file in files:
+                t.append(data_path + file)
+
+            train_files.append(t)
+
+        cM.train_files = train_files
+
     cM.num_epochs = 1
 
     cM.semeval_all = cM.semeval_train + cM.semeval_dev + cM.semeval_test
 
     cM.create_config("config.file")
 
+
+os.remove("config.file")
 
 cM = ConfigManager("config.file")
 
@@ -307,12 +326,12 @@ def test_semeval_reader_sentences():
     """
 
     s_reader = SemevalReader(cM)
-    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+    s_reader.read_data(cM.semeval_train[0])
 
     d_reader = SemaforReader(cM)
     d_reader.read_data(
-        "../data/experiments/xp_001/data/train.sentences",
-        "../data/experiments/xp_001/data/train.frame.elements",
+        cM.train_files[0][0],
+        cM.train_files[0][1],
     )
 
     assert s_reader.sentences == d_reader.sentences
@@ -329,12 +348,12 @@ def test_semeval_reader_annotation_size():
     """
 
     s_reader = SemevalReader(cM)
-    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+    s_reader.read_data(cM.semeval_train[0])
 
     d_reader = SemaforReader(cM)
     d_reader.read_data(
-        "../data/experiments/xp_001/data/train.sentences",
-        "../data/experiments/xp_001/data/train.frame.elements",
+        cM.train_files[0][0],
+        cM.train_files[0][1],
     )
 
     assert len(s_reader.annotations) == len(d_reader.annotations)
@@ -353,12 +372,12 @@ def test_semeval_reader_annotations():
     """
 
     s_reader = SemevalReader(cM)
-    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+    s_reader.read_data(cM.semeval_train[0])
 
     d_reader = SemaforReader(cM)
     d_reader.read_data(
-        "../data/experiments/xp_001/data/train.sentences",
-        "../data/experiments/xp_001/data/train.frame.elements",
+        cM.train_files[0][0],
+        cM.train_files[0][1],
     )
 
     assert len(s_reader.annotations) == len(d_reader.annotations)

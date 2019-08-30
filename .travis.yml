@@ -13,7 +13,7 @@ install:
 
 # Skip the whole system test, as it would require a whole installation (around 9 Gb)
 script: 
-  - python3 -m coverage run -m pytest tests/ --ignore tests/test_system.py
+  - python3 -m coverage run -m pytest tests/
 
 after_success:
   - codecov

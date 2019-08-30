@@ -96,6 +96,10 @@ class ConfigManager(object):
             "data/experiments/xp_001/data/test.gold.xml",
         ]
 
+        self.semeval_train = ["data/experiments/xp_001/data/train.gold.xml"]
+        self.semeval_dev = ["data/experiments/xp_001/data/dev.gold.xml"]
+        self.semeval_test = ["data/experiments/xp_001/data/test.gold.xml"]
+
         for handle in self.train_files:
             handle[0] = os.path.join(dir_data, handle[0])
             handle[1] = os.path.join(dir_data, handle[1])
