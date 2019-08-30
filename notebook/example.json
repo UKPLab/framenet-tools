@@ -1,0 +1,888 @@
+[
+    {
+        "sentence": [
+            "Half",
+            "an",
+            "hour",
+            "later",
+            "he",
+            "was",
+            "disappearing",
+            "behind",
+            "the",
+            "Douglas",
+            "mansion",
+            "on",
+            "the",
+            "summit",
+            "of",
+            "Cardiff",
+            "Hill",
+            ",",
+            "and",
+            "the",
+            "school",
+            "-",
+            "house",
+            "was",
+            "hardly",
+            "distinguishable",
+            "away",
+            "off",
+            "in",
+            "the",
+            "valley",
+            "behind",
+            "him",
+            "."
+        ],
+        "sentence_id": 0,
+        "prediction": [
+            {
+                "id": 0,
+                "fee": "half",
+                "frame": [
+                    [
+                        "Part_whole",
+                        0.9920269846916199
+                    ],
+                    [
+                        "Measure_duration",
+                        0.001743354252539575
+                    ],
+                    [
+                        "Time_vector",
+                        0.001047824160195887
+                    ],
+                    [
+                        "Terrorism",
+                        0.0008024685084819794
+                    ],
+                    [
+                        "Defend",
+                        0.0006394789670594037
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 1,
+                "fee": "hour",
+                "frame": [
+                    [
+                        "Measure_duration",
+                        0.9961645603179932
+                    ],
+                    [
+                        "Calendric_unit",
+                        0.003827783977612853
+                    ],
+                    [
+                        "Cardinal_numbers",
+                        3.281530780441244e-06
+                    ],
+                    [
+                        "Shapes",
+                        2.04518391910824e-06
+                    ],
+                    [
+                        "Undergo_change",
+                        1.1867938383147703e-06
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 2,
+                "fee": "later",
+                "frame": [
+                    [
+                        "Time_vector",
+                        0.6824564933776855
+                    ],
+                    [
+                        "Ordinal_numbers",
+                        0.12452205270528793
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.08116599917411804
+                    ],
+                    [
+                        "Intentionally_create",
+                        0.08043798804283142
+                    ],
+                    [
+                        "Frequency",
+                        0.018907742574810982
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 3,
+                "fee": "disappearing",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.6957500576972961
+                    ],
+                    [
+                        "Increment",
+                        0.03955372795462608
+                    ],
+                    [
+                        "Desirability",
+                        0.03255387023091316
+                    ],
+                    [
+                        "Position_on_a_scale",
+                        0.030527886003255844
+                    ],
+                    [
+                        "Usefulness",
+                        0.02625681832432747
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 4,
+                "fee": "douglas",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.7229047417640686
+                    ],
+                    [
+                        "Indigenous_origin",
+                        0.03728283941745758
+                    ],
+                    [
+                        "Political_locales",
+                        0.030385302379727364
+                    ],
+                    [
+                        "Substance",
+                        0.029564104974269867
+                    ],
+                    [
+                        "Aggregate",
+                        0.023182222619652748
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 5,
+                "fee": "mansion",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.4813672602176666
+                    ],
+                    [
+                        "Increment",
+                        0.04238278418779373
+                    ],
+                    [
+                        "Locale_by_use",
+                        0.03645976632833481
+                    ],
+                    [
+                        "Political_locales",
+                        0.03626435622572899
+                    ],
+                    [
+                        "Usefulness",
+                        0.03557531535625458
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 6,
+                "fee": "summit",
+                "frame": [
+                    [
+                        "Leadership",
+                        0.7017475962638855
+                    ],
+                    [
+                        "Collaboration",
+                        0.1445569097995758
+                    ],
+                    [
+                        "Cause_motion",
+                        0.04283267632126808
+                    ],
+                    [
+                        "Becoming",
+                        0.017996488139033318
+                    ],
+                    [
+                        "Process_completed_state",
+                        0.015911659225821495
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 7,
+                "fee": "cardiff",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.5560334920883179
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.04760013148188591
+                    ],
+                    [
+                        "Locale_by_use",
+                        0.03525964915752411
+                    ],
+                    [
+                        "Project",
+                        0.032302457839250565
+                    ],
+                    [
+                        "Usefulness",
+                        0.029958555474877357
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 8,
+                "fee": "hill",
+                "frame": [
+                    [
+                        "Natural_features",
+                        0.9414868950843811
+                    ],
+                    [
+                        "Buildings",
+                        0.05345891788601875
+                    ],
+                    [
+                        "Change_position_on_a_scale",
+                        0.001040657632984221
+                    ],
+                    [
+                        "Causation",
+                        0.0008113879011943936
+                    ],
+                    [
+                        "Locative_relation",
+                        0.0007153757032938302
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 9,
+                "fee": "school",
+                "frame": [
+                    [
+                        "Locale_by_use",
+                        0.9901506900787354
+                    ],
+                    [
+                        "Calendric_unit",
+                        0.004793021362274885
+                    ],
+                    [
+                        "Building",
+                        0.0046247513964772224
+                    ],
+                    [
+                        "Inclusion",
+                        0.0002646620851010084
+                    ],
+                    [
+                        "Institutions",
+                        0.00014011916937306523
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 10,
+                "fee": "-",
+                "frame": [
+                    [
+                        "Part_orientational",
+                        0.39115336537361145
+                    ],
+                    [
+                        "Dimension",
+                        0.30759572982788086
+                    ],
+                    [
+                        "Age",
+                        0.030071016401052475
+                    ],
+                    [
+                        "Sensation",
+                        0.022631894797086716
+                    ],
+                    [
+                        "People_by_origin",
+                        0.019630834460258484
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 11,
+                "fee": "house",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.9872825145721436
+                    ],
+                    [
+                        "Conquering",
+                        0.011212845332920551
+                    ],
+                    [
+                        "Opinion",
+                        0.0003925975470338017
+                    ],
+                    [
+                        "Time_vector",
+                        0.00031765090534463525
+                    ],
+                    [
+                        "Finish_competition",
+                        0.00028428403311409056
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 12,
+                "fee": "hardly",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.44423526525497437
+                    ],
+                    [
+                        "Indigenous_origin",
+                        0.09114504605531693
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.06713270395994186
+                    ],
+                    [
+                        "Political_locales",
+                        0.06517165154218674
+                    ],
+                    [
+                        "Coming_to_be",
+                        0.054952479898929596
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 13,
+                "fee": "distinguishable",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.7102921605110168
+                    ],
+                    [
+                        "Expertise",
+                        0.040981777012348175
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.03845907747745514
+                    ],
+                    [
+                        "Cause_to_make_progress",
+                        0.03287392482161522
+                    ],
+                    [
+                        "Political_locales",
+                        0.03247184306383133
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 14,
+                "fee": "away",
+                "frame": [
+                    [
+                        "Operate_vehicle",
+                        0.2381514012813568
+                    ],
+                    [
+                        "Motion",
+                        0.16278940439224243
+                    ],
+                    [
+                        "Desirable_event",
+                        0.0975622907280922
+                    ],
+                    [
+                        "Cause_to_amalgamate",
+                        0.08961160480976105
+                    ],
+                    [
+                        "Part_inner_outer",
+                        0.07667134702205658
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 15,
+                "fee": "off",
+                "frame": [
+                    [
+                        "Operate_vehicle",
+                        0.24043525755405426
+                    ],
+                    [
+                        "Self_motion",
+                        0.23343198001384735
+                    ],
+                    [
+                        "Instance",
+                        0.17564703524112701
+                    ],
+                    [
+                        "Part_orientational",
+                        0.070488840341568
+                    ],
+                    [
+                        "Arriving",
+                        0.05899268761277199
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 16,
+                "fee": "valley",
+                "frame": [
+                    [
+                        "Natural_features",
+                        0.9985431432723999
+                    ],
+                    [
+                        "Political_locales",
+                        0.0003115387517027557
+                    ],
+                    [
+                        "Locale_by_use",
+                        0.0002172542444895953
+                    ],
+                    [
+                        "Catastrophe",
+                        0.0001532315363874659
+                    ],
+                    [
+                        "Military",
+                        0.00011228719813516364
+                    ]
+                ],
+                "roles": []
+            }
+        ]
+    },
+    {
+        "sentence": [
+            "He",
+            "entered",
+            "a",
+            "dense",
+            "wood",
+            ",",
+            "picked",
+            "his",
+            "pathless",
+            "way",
+            "to",
+            "the",
+            "centre",
+            "of",
+            "it",
+            ",",
+            "and",
+            "sat",
+            "down",
+            "on",
+            "a",
+            "mossy",
+            "spot",
+            "under",
+            "a",
+            "spreading",
+            "oak",
+            "."
+        ],
+        "sentence_id": 1,
+        "prediction": [
+            {
+                "id": 0,
+                "fee": "entered",
+                "frame": [
+                    [
+                        "Activity_start",
+                        0.9153079390525818
+                    ],
+                    [
+                        "Arriving",
+                        0.046430446207523346
+                    ],
+                    [
+                        "People_by_origin",
+                        0.030219050124287605
+                    ],
+                    [
+                        "Becoming",
+                        0.0030670480336993933
+                    ],
+                    [
+                        "Participation",
+                        0.001218739664182067
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 1,
+                "fee": "dense",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.3495689034461975
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.1434980034828186
+                    ],
+                    [
+                        "Coming_up_with",
+                        0.11391489952802658
+                    ],
+                    [
+                        "Evoking",
+                        0.035453613847494125
+                    ],
+                    [
+                        "Political_locales",
+                        0.02958354353904724
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 2,
+                "fee": "wood",
+                "frame": [
+                    [
+                        "Temporal_collocation",
+                        0.31464019417762756
+                    ],
+                    [
+                        "Calendric_unit",
+                        0.1716734766960144
+                    ],
+                    [
+                        "Having_or_lacking_access",
+                        0.06584171950817108
+                    ],
+                    [
+                        "Leadership",
+                        0.0632060170173645
+                    ],
+                    [
+                        "Architectural_part",
+                        0.04856890067458153
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 3,
+                "fee": "picked",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.15981709957122803
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.14173124730587006
+                    ],
+                    [
+                        "Desirability",
+                        0.07601134479045868
+                    ],
+                    [
+                        "Architectural_part",
+                        0.06366051733493805
+                    ],
+                    [
+                        "Position_on_a_scale",
+                        0.04248155653476715
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 4,
+                "fee": "pathless",
+                "frame": [
+                    [
+                        "Temporal_collocation",
+                        0.31744271516799927
+                    ],
+                    [
+                        "Calendric_unit",
+                        0.20432433485984802
+                    ],
+                    [
+                        "Coming_up_with",
+                        0.11033369600772858
+                    ],
+                    [
+                        "Evoking",
+                        0.023729873821139336
+                    ],
+                    [
+                        "Creating",
+                        0.017257612198591232
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 5,
+                "fee": "way",
+                "frame": [
+                    [
+                        "Self_motion",
+                        0.43506014347076416
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.19421431422233582
+                    ],
+                    [
+                        "Expertise",
+                        0.1799076646566391
+                    ],
+                    [
+                        "Being_obligated",
+                        0.12272787094116211
+                    ],
+                    [
+                        "Locative_relation",
+                        0.0124941635876894
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 6,
+                "fee": "centre",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.3247424066066742
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.16518834233283997
+                    ],
+                    [
+                        "Desirability",
+                        0.0513484850525856
+                    ],
+                    [
+                        "Position_on_a_scale",
+                        0.045550160109996796
+                    ],
+                    [
+                        "Usefulness",
+                        0.043468642979860306
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 7,
+                "fee": "sat",
+                "frame": [
+                    [
+                        "Change_posture",
+                        0.9777553677558899
+                    ],
+                    [
+                        "Chatting",
+                        0.007613528054207563
+                    ],
+                    [
+                        "Activity_ongoing",
+                        0.005446599796414375
+                    ],
+                    [
+                        "Scrutiny",
+                        0.0020660748705267906
+                    ],
+                    [
+                        "Clothing",
+                        0.0016671967459842563
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 8,
+                "fee": "down",
+                "frame": [
+                    [
+                        "Direction",
+                        0.8176774978637695
+                    ],
+                    [
+                        "Locative_relation",
+                        0.06793414056301117
+                    ],
+                    [
+                        "History",
+                        0.017617762088775635
+                    ],
+                    [
+                        "Instance",
+                        0.014530270360410213
+                    ],
+                    [
+                        "Expertise",
+                        0.012184909544885159
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 9,
+                "fee": "mossy",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.29539957642555237
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.11382632702589035
+                    ],
+                    [
+                        "Leadership",
+                        0.042422112077474594
+                    ],
+                    [
+                        "People",
+                        0.038804445415735245
+                    ],
+                    [
+                        "Roadways",
+                        0.03265734761953354
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 10,
+                "fee": "spot",
+                "frame": [
+                    [
+                        "Locale",
+                        0.9979217648506165
+                    ],
+                    [
+                        "Organization",
+                        0.00047891377471387386
+                    ],
+                    [
+                        "Locale_by_use",
+                        0.0004085875116288662
+                    ],
+                    [
+                        "Event",
+                        0.0003758929669857025
+                    ],
+                    [
+                        "Locative_relation",
+                        0.00036701036151498556
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 11,
+                "fee": "spreading",
+                "frame": [
+                    [
+                        "Dispersal",
+                        0.9938293099403381
+                    ],
+                    [
+                        "Filling",
+                        0.004965730477124453
+                    ],
+                    [
+                        "Feeling",
+                        0.00031305631273426116
+                    ],
+                    [
+                        "Shopping",
+                        0.00021693958842661232
+                    ],
+                    [
+                        "Activity_ongoing",
+                        0.00020032908651046455
+                    ]
+                ],
+                "roles": []
+            },
+            {
+                "id": 12,
+                "fee": "oak",
+                "frame": [
+                    [
+                        "Buildings",
+                        0.3179667592048645
+                    ],
+                    [
+                        "Temporal_collocation",
+                        0.20438352227210999
+                    ],
+                    [
+                        "Coming_up_with",
+                        0.11630375683307648
+                    ],
+                    [
+                        "Risky_situation",
+                        0.0348360650241375
+                    ],
+                    [
+                        "Political_locales",
+                        0.03327442333102226
+                    ]
+                ],
+                "roles": []
+            }
+        ]
+    }
+]

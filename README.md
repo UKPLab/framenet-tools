@@ -3,6 +3,8 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Documentation Status](https://readthedocs.org/projects/framenet-tools/badge/?version=latest)](https://framenet-tools.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/inception-project/framenet-tools.svg?branch=master)](https://travis-ci.org/inception-project/framenet-tools)
+[![codecov](https://codecov.io/gh/inception-project/framenet-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/inception-project/framenet-tools)
+
 
 Provides functionality to find Frame Evoking Elements in raw text and predict 
 their corresponding frames. Furthermore possible spans of roles can be found and assigned. 
