@@ -1,25 +1,24 @@
 import os
 import random
+import shutil
 import string
 
 import pytest
 from framenet_tools.config import ConfigManager
+from framenet_tools.data_handler.semaforreader import SemaforReader
+from framenet_tools.data_handler.semevalreader import SemevalReader
 from framenet_tools.main import eval_args, create_argparser
 from tests.test_reader import RandomFiles, create_random_string
 
-cM = ConfigManager("config.file")
-
-# Adjust paths if necessary
-cM.semeval_train = ["../" + cM.semeval_train[0]]
-cM.semeval_dev = ["../" + cM.semeval_dev[0]]
-cM.semeval_test = ["../" + cM.semeval_test[0]]
-
-cM.semeval_all = cM.semeval_train + cM.semeval_dev + cM.semeval_test
-
-cM.num_epochs = 1
 
 # Parameter to run tests N times.
 N = 4
+
+# Simple mode
+simple_mode = True
+
+# Adjust path if necessary, NOTE: not needed for dummy testing.
+data_path = "../"
 
 
 """
@@ -30,7 +29,68 @@ This can take a long time!
 
 Also note that each test evaluates exactly one argset instead of programmatically 
 do it all at once, for better overview and debugging.
+
+To reduce the system load and duration, the simple mode can be activated. Note that this 
+only tests the system on self generated dummy files.
 """
+
+
+def adjust_config(simple_mode: bool):
+    """
+    Helper function for adjusting the config to match the testing purposes
+    duration.
+
+    NOTE: Simple mode tests everything on a single sentence-dummy-file!
+
+    :param simple_mode: Specify whether simple mode should be used
+    :return:
+    """
+
+    if simple_mode:
+
+        shutil.copy("semeval_dummy.xml", "train.semeval_dummy.xml")
+        shutil.copy("semeval_dummy.xml", "dev.semeval_dummy.xml")
+        shutil.copy("semeval_dummy.xml", "test.semeval_dummy.xml")
+
+        shutil.copy("semafor_dummy.sentences", "train.sentences")
+        shutil.copy("semafor_dummy.frame.elements", "train.frame.elements")
+
+        cM.semeval_train = ["train.semeval_dummy.xml"]
+        cM.semeval_dev = ["dev.semeval_dummy.xml"]
+        cM.semeval_test = ["test.semeval_dummy.xml"]
+
+        cM.train_files = [["train.sentences", "train.frame.elements"]]
+
+    else:
+
+        cM.semeval_train = [data_path + cM.semeval_train[0]]
+        cM.semeval_dev = [data_path + cM.semeval_dev[0]]
+        cM.semeval_test = [data_path + cM.semeval_test[0]]
+
+        train_files = []
+
+        for files in cM.train_files:
+            t = []
+
+            for file in files:
+                t.append(data_path + file)
+
+            train_files.append(t)
+
+        cM.train_files = train_files
+
+    cM.num_epochs = 1
+
+    cM.semeval_all = cM.semeval_train + cM.semeval_dev + cM.semeval_test
+
+    cM.create_config("config.file")
+
+
+os.remove("config.file")
+
+cM = ConfigManager("config.file")
+
+adjust_config(simple_mode)
 
 
 def test_train_feeid():
@@ -42,7 +102,7 @@ def test_train_feeid():
     :return:
     """
 
-    eval_args(create_argparser(), cM, ["train", "--feeid"])
+    eval_args(create_argparser(), ["train", "--feeid"])
 
 
 def test_train_frameid():
@@ -54,7 +114,7 @@ def test_train_frameid():
     :return:
     """
 
-    eval_args(create_argparser(), cM, ["train", "--frameid"])
+    eval_args(create_argparser(), ["train", "--frameid"])
 
 
 def test_train():
@@ -66,7 +126,7 @@ def test_train():
     :return:
     """
 
-    eval_args(create_argparser(), cM, ["train"])
+    eval_args(create_argparser(), ["train"])
 
 
 def test_train_frameid_batchsize():
@@ -82,10 +142,8 @@ def test_train_frameid_batchsize():
     batch_size = random.randint(50, 500)
 
     eval_args(
-        create_argparser(), cM, ["train", "--frameid", "--batchsize", str(batch_size)]
+        create_argparser(), ["train", "--frameid", "--batchsize", str(batch_size)]
     )
-
-    assert cM.batch_size == batch_size
 
 
 def test_eval_feeid():
@@ -95,7 +153,7 @@ def test_eval_feeid():
     :return:
     """
 
-    eval_args(create_argparser(), cM, ["evaluate", "--feeid"])
+    eval_args(create_argparser(), ["evaluate", "--feeid"])
 
 
 def test_eval_frameid():
@@ -105,7 +163,7 @@ def test_eval_frameid():
     :return:
     """
 
-    eval_args(create_argparser(), cM, ["evaluate", "--frameid"])
+    eval_args(create_argparser(), ["evaluate", "--frameid"])
 
 
 def test_eval_all():
@@ -115,7 +173,7 @@ def test_eval_all():
     :return:
     """
 
-    eval_args(create_argparser(), cM, ["evaluate"])
+    eval_args(create_argparser(), ["evaluate"])
 
 
 @pytest.mark.parametrize("run", range(N))
@@ -131,7 +189,7 @@ def test_predict_feeid(run: int):
 
     with RandomFiles(10, True) as m_rndfiles:
         path = m_rndfiles.files[0]
-        eval_args(create_argparser(), cM, ["predict", "--feeid", "--path", path])
+        eval_args(create_argparser(), ["predict", "--feeid", "--path", path])
 
 
 @pytest.mark.parametrize("run", range(N))
@@ -147,7 +205,7 @@ def test_predict_frameid(run: int):
 
     with RandomFiles(10, True) as m_rndfiles:
         path = m_rndfiles.files[0]
-        eval_args(create_argparser(), cM, ["predict", "--frameid", "--path", path])
+        eval_args(create_argparser(), ["predict", "--frameid", "--path", path])
 
 
 @pytest.mark.parametrize("run", range(N))
@@ -163,7 +221,7 @@ def test_predict_all(run: int):
 
     with RandomFiles(10, True) as m_rndfiles:
         path = m_rndfiles.files[0]
-        eval_args(create_argparser(), cM, ["predict", "--path", path])
+        eval_args(create_argparser(), ["predict", "--path", path])
 
 
 def test_config_arg():
@@ -176,7 +234,7 @@ def test_config_arg():
     path = "config.test"
     cM.create_config(path)
 
-    eval_args(create_argparser(), cM, ["evaluate", "--feeid", "--config", path])
+    eval_args(create_argparser(), ["evaluate", "--feeid", "--config", path])
 
     os.remove(path)
 
@@ -199,7 +257,6 @@ def test_predict_feeid_out_path(run: int):
         path = m_rndfiles.files[0]
         eval_args(
             create_argparser(),
-            cM,
             ["predict", "--feeid", "--path", path, "--out_path", out_path],
         )
 
@@ -224,7 +281,6 @@ def test_predict_frameid_out_path(run: int):
         path = m_rndfiles.files[0]
         eval_args(
             create_argparser(),
-            cM,
             ["predict", "--frameid", "--path", path, "--out_path", out_path],
         )
 
@@ -248,7 +304,7 @@ def test_predict_all_out_path(run: int):
     with RandomFiles(10, True) as m_rndfiles:
         path = m_rndfiles.files[0]
         eval_args(
-            create_argparser(), cM, ["predict", "--path", path, "--out_path", out_path]
+            create_argparser(), ["predict", "--path", path, "--out_path", out_path]
         )
 
     os.remove(out_path)
@@ -270,12 +326,12 @@ def test_semeval_reader_sentences():
     """
 
     s_reader = SemevalReader(cM)
-    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+    s_reader.read_data(cM.semeval_train[0])
 
     d_reader = SemaforReader(cM)
     d_reader.read_data(
-        "../data/experiments/xp_001/data/train.sentences",
-        "../data/experiments/xp_001/data/train.frame.elements",
+        cM.train_files[0][0],
+        cM.train_files[0][1],
     )
 
     assert s_reader.sentences == d_reader.sentences
@@ -292,12 +348,12 @@ def test_semeval_reader_annotation_size():
     """
 
     s_reader = SemevalReader(cM)
-    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+    s_reader.read_data(cM.semeval_train[0])
 
     d_reader = SemaforReader(cM)
     d_reader.read_data(
-        "../data/experiments/xp_001/data/train.sentences",
-        "../data/experiments/xp_001/data/train.frame.elements",
+        cM.train_files[0][0],
+        cM.train_files[0][1],
     )
 
     assert len(s_reader.annotations) == len(d_reader.annotations)
@@ -316,12 +372,12 @@ def test_semeval_reader_annotations():
     """
 
     s_reader = SemevalReader(cM)
-    s_reader.read_data("../data/experiments/xp_001/data/train.gold.xml")
+    s_reader.read_data(cM.semeval_train[0])
 
     d_reader = SemaforReader(cM)
     d_reader.read_data(
-        "../data/experiments/xp_001/data/train.sentences",
-        "../data/experiments/xp_001/data/train.frame.elements",
+        cM.train_files[0][0],
+        cM.train_files[0][1],
     )
 
     assert len(s_reader.annotations) == len(d_reader.annotations)
