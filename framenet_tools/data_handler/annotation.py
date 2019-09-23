@@ -26,7 +26,7 @@ class Annotation(object):
         self.roles = roles
         self.role_positions = role_positions
         self.embedded_frame = None
-        self.frame_confidence = []
+        self.frame_confidence = [[frame, 1.0]]
 
     def create_handle(self):
         """
