@@ -28,6 +28,12 @@ class Annotation(object):
         self.embedded_frame = None
         self.frame_confidence = [[frame, 1.0]]
 
+        if position is None:
+            self.position = (-1, -1)
+            if fee_raw in sentence:
+                t = sentence.index(fee_raw)
+                self.position = (t, t)
+
     def create_handle(self):
         """
         Helper function for ease of programmatic comparison

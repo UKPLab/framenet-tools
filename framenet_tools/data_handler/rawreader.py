@@ -26,6 +26,10 @@ class RawReader(DataReader):
         :return:
         """
 
+        if raw_path.rsplit(".")[-1] == "json":
+            self.import_from_json(raw_path)
+            return
+
         if raw_path is not None:
             self.raw_path = raw_path
 

@@ -138,31 +138,37 @@ class DataReader(object):
 
         for data_pair in json_data:
 
-            self.sentences.append(data_pair['sentence'])
+            self.sentences.append(data_pair["sentence"])
 
-            prediction = data_pair['prediction']
+            prediction = data_pair["prediction"]
 
             for data in prediction:
 
-                confidence = [i[1] for i in data['frame']]
-                confidence_max = np.asarray(confidence).argmax()
-                print(data['frame'][confidence_max][0])
+                frame = None
+                fee = None
+                position = None
 
-                frame = data['frame'][confidence_max][0]
+                if not data["frame"] == []:
+                    confidence = [i[1] for i in data["frame"]]
+                    confidence_max = np.asarray(confidence).argmax()
 
-                fee = data['fee']  # Frame evoking element
+                    frame = data["frame"][confidence_max][0]
 
-                position = data['position']
-                position = (position, position)
+                if not data["fee"] == "":
+                    fee = data["fee"]  # Frame evoking element
+
+                if not data["position"] == "":
+                    position = data["position"]
+                    position = (position, position)
 
                 role_positions = []
                 roles = []
 
-                for role_data in data['roles']:
-                    role_positions.append(tuple(role_data['span']))
-                    roles.append(role_data['role'])
+                for role_data in data["roles"]:
+                    role_positions.append(tuple(role_data["span"]))
+                    roles.append(role_data["role"])
 
-                #As this original information is lost, simply equal fee and fee_raw
+                # As this original information is lost, simply equal fee and fee_raw
                 fee_raw = fee
 
                 if sent_num >= len(self.annotations):
@@ -176,11 +182,11 @@ class DataReader(object):
                         fee_raw,
                         self.sentences[sent_num],
                         roles,
-                        role_positions
-                    ))
+                        role_positions,
+                    )
+                )
 
             sent_num = sent_num + 1
-
 
     def embed_word(self, word: str):
         """
