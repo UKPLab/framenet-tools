@@ -366,4 +366,81 @@ def test_frames_correctness():
             )
             # annotation = Annotation(line[3], line[4], line[5], line[6], int(line[7]))
             assert annotation == orig_annotation
-            
+
+
+def read_and_export(path: str, semafor: bool = True):
+    """
+    Helper function to load and export a dummy file.
+
+    :param path: The path to export the json to
+    :param semafor: Whether to use semafor or semeval
+    :return:
+    """
+
+    reader = None
+
+    if semafor:
+        reader = SemaforReader(cM)
+        reader.read_data(
+            "semafor_dummy.sentences",
+            "semafor_dummy.frame.elements",
+        )
+
+        reader.export_to_json(path)
+    else:
+        reader = SemevalReader(cM)
+        reader.read_data("semeval_dummy.xml")
+
+    return reader
+
+
+@pytest.mark.parametrize("use_semafor", [True, False])
+def test_json_export(use_semafor: bool):
+    """
+    Tests if a file can be read and exported to a json file.
+
+    :param use_semafor: Whether to use semafor or semeval
+    :return:
+    """
+
+    read_and_export("test.json", use_semafor)
+
+
+@pytest.mark.parametrize("use_semafor", [True, False])
+def test_comparison(use_semafor: bool):
+    """
+    Tests if two different readers are correctly detected.
+
+    :param use_semafor: Whether to use semafor or semeval
+    :return:
+    """
+
+    path = "test.json"
+
+    reader_original = read_and_export(path, use_semafor)
+
+    reader = RawReader(cM)
+    reader.import_from_json(path)
+
+    reader.annotations[0][0].frame = "Different"
+
+    assert not reader == reader_original
+
+
+@pytest.mark.parametrize("use_semafor", [True, False])
+def test_json_import(use_semafor: bool):
+    """
+    Tests the correctness of the json importing.
+
+    :param use_semafor: Whether to use semafor or semeval
+    :return:
+    """
+
+    path = "test.json"
+
+    reader_original = read_and_export(path, use_semafor)
+
+    reader = RawReader(cM)
+    reader.import_from_json(path)
+
+    assert reader == reader_original
