@@ -18,10 +18,13 @@ class Net(nn.Module):
         activation_functions: list,
         num_classes: int,
         device: torch.device,
+        embedding_layer: torch.nn.Embedding,
     ):
         super(Net, self).__init__()
 
         self.device = device
+
+        self.embedding_layer = embedding_layer
 
         self.dropout = nn.Dropout(p=0.2)
         self.input_size = 401
@@ -53,7 +56,22 @@ class Net(nn.Module):
 
     def forward(self, x):
 
-        x = torch.cat(x).view(len(x), 1, -1)
+        sent_len = len(x)
+
+        x = torch.tensor(x).to(self.device)
+
+        embedded = self.embedding_layer(x[:, :1].type(torch.long))
+
+        #rest = x[1:]
+
+        #x = [embedded, x[1:]]
+
+        #print(embedded.view(len(embedded), -1).shape)
+        #print(x[:, 1:].shape)
+
+        x = torch.cat((embedded.view(len(embedded), -1), x[:, 1:]), 1)
+
+        x = x.view(sent_len, 1, -1)
 
         x = Variable(x).to(self.device)
 
@@ -77,7 +95,7 @@ class Net(nn.Module):
 
 
 class SpanIdNetwork(object):
-    def __init__(self, cM: ConfigManager, num_classes: int):
+    def __init__(self, cM: ConfigManager, num_classes: int, embedding_layer: torch.nn.Embedding,):
 
         self.cM = cM
         self.best_acc = 0
@@ -95,6 +113,7 @@ class SpanIdNetwork(object):
             self.cM.activation_functions,
             num_classes,
             self.device,
+            embedding_layer,
         )
 
         self.net.to(self.device)

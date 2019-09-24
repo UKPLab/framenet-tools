@@ -30,15 +30,17 @@ class SpanID(PipelineStage):
 
         m_reader.generate_pos_tags()
 
-        m_reader.embed_words()
+        #m_reader.embed_words()
         m_reader.embed_frames()
 
         m_reader_dev.generate_pos_tags()
 
-        m_reader_dev.embed_words()
+        #m_reader_dev.embed_words()
         m_reader_dev.embed_frames()
 
         self.s_i.train(m_reader, m_reader_dev)
+
+        self.s_i.save_model(self.cM.saved_model)
 
     def predict(self, m_reader: DataReader):
         """
@@ -47,11 +49,11 @@ class SpanID(PipelineStage):
         :return:
         """
 
-        self.s_i.load()
+        self.s_i.load_model(self.cM.saved_model)
 
         m_reader.generate_pos_tags()
 
-        m_reader.embed_words()
+        #m_reader.embed_words()
         m_reader.embed_frames()
 
         self.s_i.predict_spans(m_reader)
