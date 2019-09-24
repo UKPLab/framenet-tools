@@ -1,11 +1,13 @@
 import json
 import logging
+import numpy as np
 import random
 
 from tqdm import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
+from framenet_tools.data_handler.annotation import Annotation
 from framenet_tools.utils.postagger import PosTagger
 
 
@@ -30,6 +32,26 @@ class DataReader(object):
         # Flags
         self.is_annotated = None
         self.is_loaded = False
+
+    def __eq__(self, x):
+        """
+        The overwriting of the comparison function
+
+        :param x: Another instance of this class
+        :return: True if equal, otherwise false
+        """
+
+        if not len(self.annotations) == len(x.annotations):
+            return False
+
+        equal = True
+
+        for s_annos, d_annos in zip(self.annotations, x.annotations):
+            for s_anno, d_anno in zip(s_annos, d_annos):
+                if not s_anno == d_anno:
+                    equal = False
+
+        return equal
 
     def loaded(self, is_annotated: bool):
         """
@@ -73,14 +95,16 @@ class DataReader(object):
                 prediction_dict["id"] = frame_count
                 prediction_dict["fee"] = annotation.fee_raw
                 prediction_dict["frame"] = annotation.frame_confidence
+                prediction_dict["position"] = annotation.position[0]
                 prediction_dict["roles"] = []
 
                 role_id = 0
 
-                for span in annotation.role_positions:
+                for span, role in zip(annotation.role_positions, annotation.roles):
 
                     span_dict = dict()
                     span_dict["role_id"] = role_id
+                    span_dict["role"] = role
                     span_dict["span"] = span
 
                     role_id += 1
@@ -98,6 +122,71 @@ class DataReader(object):
 
         with open(path, "w") as out:
             json.dump(out_data, out, indent=4)
+
+    def import_from_json(self, path: str):
+        """
+        Reads the data from a given json file
+
+        :param path: The path to the json file
+        :return:
+        """
+
+        sent_num = 0
+
+        with open(path) as file:
+            json_data = json.load(file)
+
+        for data_pair in json_data:
+
+            self.sentences.append(data_pair["sentence"])
+
+            prediction = data_pair["prediction"]
+
+            for data in prediction:
+
+                frame = None
+                fee = None
+                position = None
+
+                if not data["frame"] == []:
+                    confidence = [i[1] for i in data["frame"]]
+                    confidence_max = np.asarray(confidence).argmax()
+
+                    frame = data["frame"][confidence_max][0]
+
+                if not data["fee"] == "":
+                    fee = data["fee"]  # Frame evoking element
+
+                if not data["position"] == "":
+                    position = data["position"]
+                    position = (position, position)
+
+                role_positions = []
+                roles = []
+
+                for role_data in data["roles"]:
+                    role_positions.append(tuple(role_data["span"]))
+                    roles.append(role_data["role"])
+
+                # As this original information is lost, simply equal fee and fee_raw
+                fee_raw = fee
+
+                if sent_num >= len(self.annotations):
+                    self.annotations.append([])
+
+                self.annotations[sent_num].append(
+                    Annotation(
+                        frame,
+                        fee,
+                        position,
+                        fee_raw,
+                        self.sentences[sent_num],
+                        roles,
+                        role_positions,
+                    )
+                )
+
+            sent_num = sent_num + 1
 
     def embed_word(self, word: str):
         """
