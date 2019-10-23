@@ -31,11 +31,11 @@ class Net(nn.Module):
 
         last_size = embedding_size * 2
 
+        logging.debug(f"Hidden sizes: {hidden_sizes}")
+        logging.debug(f"Activation functions: {activation_functions}")
+
         # Programmatically add new layers according to the config file
         for i in range(len(hidden_sizes)):
-
-            logging.debug(f"Hidden sizes: {hidden_sizes}")
-            logging.debug(f"Activation functions: {activation_functions}")
 
             if activation_functions[i].lower() == "dropout":
                 # Add dropout

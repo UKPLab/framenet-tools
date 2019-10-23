@@ -61,6 +61,12 @@ class ConfigManager(object):
         self.learning_rate = 0.001
         self.embedding_size = 300
 
+        self.span_hidden_sizes = [250, 0.4, 100, 0.2]
+        self.span_layers = ["LSTM", "Dropout", "LSTM", "Dropout"]
+        self.span_num_epochs = 50
+        self.span_learning_rate = 0.001
+        self.span_embedding_size = 300
+
         self.autostopper = True
         self.autostopper_threshold = 5
 
@@ -171,8 +177,9 @@ class ConfigManager(object):
                     if key == "autostopper_threshold":
                         self.autostopper_threshold = int(config[section][key])
 
-            if section == "HYPERPARAMETER":
+            if section == "HYPERPARAMETER_FRAMEID":
                 for key in config[section]:
+
                     if key == "hidden_sizes":
                         # Find numbers and convert to int using regex
                         found_numbers = re.findall(r"[0-9.]+", config[section][key])
@@ -194,6 +201,27 @@ class ConfigManager(object):
 
                     if key == "embedding_size":
                         self.embedding_size = int(config[section][key])
+
+            if section == "HYPERPARAMETER_SPANID":
+                for key in config[section]:
+
+                    if key == "hidden_sizes":
+                        found_numbers = re.findall(r"[0-9.]+", config[section][key])
+                        self.span_hidden_sizes = [float(t) for t in found_numbers]
+
+                    if key == "layers":
+                        self.span_layers = re.findall(
+                            r"\w+", config[section][key]
+                        )
+
+                    if key == "num_epochs":
+                        self.span_num_epochs = int(config[section][key])
+
+                    if key == "learning_rate":
+                        self.span_learning_rate = float(config[section][key])
+
+                    if key == "embedding_size":
+                        self.span_embedding_size = int(config[section][key])
 
         return True
 
@@ -249,7 +277,7 @@ class ConfigManager(object):
         config_string += "autostopper: " + str(self.autostopper) + "\n"
         config_string += "autostopper_threshold: " + str(self.autostopper_threshold) + "\n"
 
-        config_string += "\n[HYPERPARAMETER]\n"
+        config_string += "\n[HYPERPARAMETER_FRAMEID]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"
         config_string += (
             "activation_functions: " + str(self.activation_functions) + "\n"
@@ -258,6 +286,15 @@ class ConfigManager(object):
         config_string += "num_epochs: " + str(self.num_epochs) + "\n"
         config_string += "learning_rate: " + str(self.learning_rate) + "\n"
         config_string += "embedding_size: " + str(self.embedding_size) + "\n"
+
+        config_string += "\n[HYPERPARAMETER_SPANID]\n"
+        config_string += "hidden_sizes: " + str(self.span_hidden_sizes) + "\n"
+        config_string += (
+                "layers: " + str(self.span_layers) + "\n"
+        )
+        config_string += "num_epochs: " + str(self.span_num_epochs) + "\n"
+        config_string += "learning_rate: " + str(self.span_learning_rate) + "\n"
+        config_string += "embedding_size: " + str(self.span_embedding_size) + "\n"
 
         with open(path, "w") as file:
             file.write(config_string)

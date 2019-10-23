@@ -375,8 +375,6 @@ class SpanIdentifier(object):
                 ]
                 xs.append(combined)
 
-
-
         return xs, ys
 
     def load(self):
