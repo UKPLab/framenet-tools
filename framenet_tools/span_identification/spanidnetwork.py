@@ -38,7 +38,7 @@ class Net(nn.Module):
         logging.debug(f"Activation functions: {layers}")
 
         self.hidden_layers = []
-        last_size = embedding_size + frame_embedding_size + 1
+        last_size = embedding_size + frame_embedding_size + 4
 
         for i in range(len(hidden_sizes)):
 

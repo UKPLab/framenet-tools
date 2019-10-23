@@ -56,6 +56,8 @@ class SpanIdentifier(object):
             dtype=torch.long, use_vocab=True, preprocessing=None
         )
 
+        self.dep_dict = []
+
     def query(
         self,
         embedded_sentence: List[float],
@@ -343,11 +345,15 @@ class SpanIdentifier(object):
 
         pos_tagger = PosTagger(self.cM.use_spacy)
 
+        en_nlp = spacy.load("en_core_web_sm")
+
         for annotations_sentence, sentence in zip(
             m_reader.annotations, m_reader.sentences
         ):
 
             pos_tags = pos_tagger.get_tags(sentence)
+
+            doc = en_nlp(" ".join(sentence))
 
             for annotation in annotations_sentence:
 
@@ -369,13 +375,29 @@ class SpanIdentifier(object):
                             [self.input_field.vocab.stoi[word]]
                             + annotation.embedded_frame
                             + [pos_to_int(pos_tag[1])]
+                            + [self.dep_to_int(token.dep_)]
+                            + [token.head.idx-token.idx]
+                            + [pos_to_int(token.head.tag_)]
 
 
-                    for word, pos_tag in zip(sentence, pos_tags)
+                    for word, pos_tag, token in zip(sentence, pos_tags, doc)
                 ]
                 xs.append(combined)
 
         return xs, ys
+
+    def dep_to_int(self, dep: str):
+        """
+        Converts a dependency feature into a number
+
+        :param dep: The feature
+        :return: A consistent number
+        """
+
+        if dep not in self.dep_dict:
+            self.dep_dict.append(dep)
+
+        return self.dep_dict.index(dep)
 
     def load(self):
         """
