@@ -56,6 +56,7 @@ class SpanIdentifier(object):
             dtype=torch.long, use_vocab=True, preprocessing=None
         )
 
+        self.en_nlp = spacy.load("en_core_web_sm")
         self.dep_dict = []
 
     def query(
@@ -83,10 +84,7 @@ class SpanIdentifier(object):
             return self.query_nn(embedded_sentence, annotation, pos_tags)
 
     def query_nn(
-        self,
-        embedded_sentence: List[float],
-        annotation: Annotation,
-        pos_tags: List[str],
+        self, sentence: List[float], annotation: Annotation, pos_tags: List[str]
     ):
         """
         Predicts the possible spans using the LSTM.
@@ -94,7 +92,7 @@ class SpanIdentifier(object):
         NOTE: In order to use this, the network must be trained beforehand
 
         :param pos_tags: The postags of the sentence
-        :param embedded_sentence: The embedded words of the sentence
+        :param sentence: The embedded words of the sentence
         :param annotation: The annotation of the sentence to predict
         :return: A list of possible span tuples
         """
@@ -103,11 +101,16 @@ class SpanIdentifier(object):
         count = 0
         new_span = -1
 
+        doc = self.en_nlp(" ".join(sentence))
+
         combined = [
             [self.input_field.vocab.stoi[word]]
             + annotation.embedded_frame
             + [pos_to_int(pos_tag[1])]
-            for word, pos_tag in zip(embedded_sentence, pos_tags)
+            + [self.dep_to_int(token.dep_)]
+            + [token.head.idx - token.idx]
+            + [pos_to_int(token.head.tag_)]
+            for word, pos_tag, token in zip(sentence, pos_tags, doc)
         ]
 
         bio_tags = self.network.predict(combined)[0]
@@ -345,15 +348,13 @@ class SpanIdentifier(object):
 
         pos_tagger = PosTagger(self.cM.use_spacy)
 
-        en_nlp = spacy.load("en_core_web_sm")
-
         for annotations_sentence, sentence in zip(
             m_reader.annotations, m_reader.sentences
         ):
 
             pos_tags = pos_tagger.get_tags(sentence)
 
-            doc = en_nlp(" ".join(sentence))
+            doc = self.en_nlp(" ".join(sentence))
 
             for annotation in annotations_sentence:
 
@@ -370,16 +371,12 @@ class SpanIdentifier(object):
                 ys.append(spans)
 
                 combined = [
-
-
-                            [self.input_field.vocab.stoi[word]]
-                            + annotation.embedded_frame
-                            + [pos_to_int(pos_tag[1])]
-                            + [self.dep_to_int(token.dep_)]
-                            + [token.head.idx-token.idx]
-                            + [pos_to_int(token.head.tag_)]
-
-
+                    [self.input_field.vocab.stoi[word]]
+                    + annotation.embedded_frame
+                    + [pos_to_int(pos_tag[1])]
+                    + [self.dep_to_int(token.dep_)]
+                    + [token.head.idx - token.idx]
+                    + [pos_to_int(token.head.tag_)]
                     for word, pos_tag, token in zip(sentence, pos_tags, doc)
                 ]
                 xs.append(combined)
@@ -457,10 +454,7 @@ class SpanIdentifier(object):
             dtype=torch.long, use_vocab=True, preprocessing=None
         )  # , fix_length= max_length) #No padding necessary anymore, since avg
         output_field = data.Field(dtype=torch.long)
-        data_fields = [
-            ("Sentence", input_field),
-            ("Frame", output_field),
-        ]
+        data_fields = [("Sentence", input_field), ("Frame", output_field)]
 
         xs = []
         ys = []
@@ -471,9 +465,7 @@ class SpanIdentifier(object):
 
         shuffle_concurrent_lists([xs, ys])
 
-        examples = [
-            data.Example.fromlist([x, y], data_fields) for x, y in zip(xs, ys)
-        ]
+        examples = [data.Example.fromlist([x, y], data_fields) for x, y in zip(xs, ys)]
 
         dataset = data.Dataset(examples, fields=data_fields)
 
@@ -533,10 +525,7 @@ class SpanIdentifier(object):
             for annotation in m_reader.annotations[i]:
 
                 p_role_positions = self.query(
-                    m_reader.sentences[i],
-                    annotation,
-                    m_reader.pos_tags[i],
-                    use_static,
+                    m_reader.sentences[i], annotation, m_reader.pos_tags[i], use_static
                 )
 
                 annotation.role_positions = p_role_positions
