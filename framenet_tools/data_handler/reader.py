@@ -100,7 +100,12 @@ class DataReader(object):
 
                 role_id = 0
 
-                for span, role in zip(annotation.role_positions, annotation.roles):
+                roles = annotation.roles
+
+                if not annotation.roles:
+                    roles = ["Default"] * len(annotation.role_positions)
+
+                for span, role in zip(annotation.role_positions, roles):
 
                     span_dict = dict()
                     span_dict["role_id"] = role_id
@@ -263,7 +268,7 @@ class DataReader(object):
         :return:
         """
 
-        if (not self.annotations[0].embedded_frame is None) and not force:
+        if (not self.annotations[0][0].embedded_frame is None) and not force:
             return
 
         self.cM.fEM.read_frame_embeddings()

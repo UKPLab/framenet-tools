@@ -37,63 +37,37 @@ def calc_f(tp: int, fp: int, fn: int):
     return pr, re, f
 
 
-def evaluate_span_identification(
-    cM: ConfigManager, span_identifier: SpanIdentifier = None
-):
+def evaluate_span_identification(m_reader: DataReader, original_reader: DataReader):
     """
     Evaluates the span identification for its F1 score
 
-    :param cM: The ConfigManager containing the evaluation files
-    :param span_identifier: Optionally an instance of a SpanIdentifier
-    :return: A Triple of Precision, Recall and F1-Score
+    :param m_reader: The reader containing the predicted annotations
+    :param original_reader: The original reader containing the gold annotations
+    :return: A Triple of True positives, False positives and False negatives
     """
 
-    logging.info(f"Evaluating Span Identification:")
+    tp = fp = fn = 0
 
-    for file in cM.semeval_files:
+    for i in range(len(m_reader.sentences)):
 
-        logging.info(f"Evaluating on: {file}")
+        gold_annotations = original_reader.annotations[i]
+        predictied_annotations = m_reader.annotations[i]
 
-        m_data_reader = SemevalReader(cM)
-        m_data_reader.read_data(file)
-        m_data_reader.embed_words()
-        m_data_reader.embed_frames()
-        m_data_reader.generate_pos_tags()
+        for gold_annotation, predictied_annotation in zip(
+            gold_annotations, predictied_annotations
+        ):
 
-        gold_sentences = deepcopy(m_data_reader.annotations)
+            for role_posistion in gold_annotation.role_positions:
+                if role_posistion in predictied_annotation.role_positions:
+                    tp += 1
+                else:
+                    fn += 1
 
-        span_identifier.predict_spans(m_data_reader)
+            for role_posistion in predictied_annotation.role_positions:
+                if role_posistion not in gold_annotation.role_positions:
+                    fp += 1
 
-        tp = fp = fn = 0
-
-        for i in range(len(m_data_reader.sentences)):
-
-            gold_annotations = gold_sentences[i]
-            predictied_annotations = m_data_reader.annotations[i]
-
-            for gold_annotation, predictied_annotation in zip(
-                gold_annotations, predictied_annotations
-            ):
-
-                for role_posistion in gold_annotation.role_positions:
-                    if role_posistion in predictied_annotation.role_positions:
-                        tp += 1
-                    else:
-                        fn += 1
-
-                for role_posistion in predictied_annotation.role_positions:
-                    if role_posistion not in gold_annotation.role_positions:
-                        fp += 1
-
-        pr, re, f1 = calc_f(tp, fp, fn)
-
-        logging.info(
-            f"FEE Evaluation complete!\n"
-            f"True Positives: {tp} False Postives: {fp} False Negatives: {fn} \n"
-            f"Precision: {pr} Recall: {re} F1-Score: {f1}"
-        )
-
-    return pr, re, f1
+    return tp, fp, fn
 
 
 def evaluate_fee_identification(m_reader: DataReader, original_reader: DataReader):
@@ -188,6 +162,9 @@ def evaluate_stages(
 
     if max(levels) == 1:
         tp, fp, fn = evaluate_frame_identification(m_reader, original_reader)
+
+    if max(levels) == 2:
+        tp, fp, fn = evaluate_span_identification(m_reader, original_reader)
 
     pr, re, f1 = calc_f(tp, fp, fn)
 

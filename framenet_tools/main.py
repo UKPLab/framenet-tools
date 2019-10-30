@@ -55,6 +55,9 @@ def create_argparser():
         "--frameid", help="Use frame identification.", action="store_true"
     )
     parser.add_argument(
+        "--spanid", help="Use the span identification.", action="store_true"
+    )
+    parser.add_argument(
         "--path", help="A path specification used by some actions.", type=str
     )
     parser.add_argument(
@@ -105,6 +108,9 @@ def eval_args(
 
     if parsed.frameid:
         levels.append(1)
+
+    if parsed.spanid:
+        levels.append(2)
 
     if parsed.batchsize is not None:
         cM.batch_size = parsed.batchsize
@@ -195,4 +201,3 @@ def main():
     parser = create_argparser()
 
     eval_args(parser)
-

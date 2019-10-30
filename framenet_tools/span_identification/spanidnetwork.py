@@ -14,61 +14,79 @@ class Net(nn.Module):
     def __init__(
         self,
         embedding_size: int,
+        frame_embedding_size: int,
         hidden_sizes: list,
-        activation_functions: list,
+        layers: list,
         num_classes: int,
         device: torch.device,
+        embedding_layer: torch.nn.Embedding,
     ):
         super(Net, self).__init__()
 
         self.device = device
 
-        self.dropout = nn.Dropout(p=0.2)
+        self.embedding_layer = embedding_layer
+
         self.input_size = 401
-        self.hidden_size = 250  # hidden_sizes[0]
+        self.hidden_size = 450
+        self.hidden_size2 = 200
 
-        self.lstm1 = nn.LSTM(self.input_size, self.hidden_size, bidirectional=True)
+        # Dynamic instantiation of the activation function
+        #act_func = getattr(nn, span_layers[i])().to(self.device)
 
-        self.dropout1 = nn.Dropout(p=0.4)
+        logging.debug(f"Hidden sizes: {hidden_sizes}")
+        logging.debug(f"Activation functions: {layers}")
 
-        self.lstm2 = nn.LSTM(self.hidden_size * 2, 100, bidirectional=True)
+        self.hidden_layers = []
+        last_size = embedding_size + frame_embedding_size + 4
 
-        self.dropout2 = nn.Dropout(p=0.2)
+        for i in range(len(hidden_sizes)):
 
-        self.hidden_to_tag = nn.Linear(200, num_classes)
-        self.hidden = self.init_hidden()
-        self.hidden2 = self.init_hidden2()
+            if layers[i].lower() == "dropout":
+                # Add dropout
+                self.add_module(str(i), nn.Dropout(hidden_sizes[i]))
+                self.hidden_layers.append(getattr(self, str(i)))
 
-    def init_hidden(self):
-        return (
-            Variable(torch.zeros(1, 1, self.hidden_size)).to(self.device),
-            Variable(torch.zeros(1, 1, self.hidden_size)).to(self.device),
-        )
+                continue
 
-    def init_hidden2(self):
-        return (
-            Variable(torch.zeros(1, 1, 100)).to(self.device),
-            Variable(torch.zeros(1, 1, 100)).to(self.device),
-        )
+            hidden_sizes[i] = int(hidden_sizes[i])
+
+            self.add_module(str(i),  getattr(nn, layers[i])(last_size, hidden_sizes[i], bidirectional=True).to(self.device))
+
+            # Saving function ref
+            self.hidden_layers.append(getattr(self, str(i)))
+
+            # Double due to the bidirectional processing
+            last_size = hidden_sizes[i] * 2
+
+        # Last layer
+        self.hidden_to_tag = nn.Linear(last_size, num_classes)
 
     def forward(self, x):
 
-        x = torch.cat(x).view(len(x), 1, -1)
+        sent_len = len(x)
+
+        x = torch.tensor(x).to(self.device)
+
+        embedded = self.embedding_layer(x[:, :1].type(torch.long))
+
+        x = torch.cat((embedded.view(len(embedded), -1), x[:, 1:]), 1)
+
+        x = x.view(sent_len, 1, -1)
 
         x = Variable(x).to(self.device)
 
         # As every sequence is porcessed at once, only the outputs are required
-        y, _ = self.lstm1(x)
+        for hidden_layer in self.hidden_layers:
+            if isinstance(hidden_layer, nn.Dropout):
+                x = hidden_layer(x)
+                continue
 
-        y = self.dropout1(y)
-
-        y, _ = self.lstm2(y)
-
-        y = self.dropout2(y)
+            x, _ = hidden_layer(x)
 
         outputs = []
 
-        for i in y:
+        for i in x:
             outputs.append(self.hidden_to_tag(i))
 
         outputs = torch.stack(outputs, 1).squeeze(2)
@@ -77,7 +95,7 @@ class Net(nn.Module):
 
 
 class SpanIdNetwork(object):
-    def __init__(self, cM: ConfigManager, num_classes: int):
+    def __init__(self, cM: ConfigManager, num_classes: int, embedding_layer: torch.nn.Embedding,):
 
         self.cM = cM
         self.best_acc = 0
@@ -91,10 +109,12 @@ class SpanIdNetwork(object):
 
         self.net = Net(
             self.cM.embedding_size,
-            [250],
-            self.cM.activation_functions,
+            100,
+            self.cM.span_hidden_sizes,
+            self.cM.span_layers,
             num_classes,
             self.device,
+            embedding_layer,
         )
 
         self.net.to(self.device)
@@ -102,7 +122,7 @@ class SpanIdNetwork(object):
         # Loss and Optimizer
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(
-            self.net.parameters(), lr=self.cM.learning_rate
+            self.net.parameters(), lr=self.cM.span_learning_rate
         )
 
     def predict(self, sent: List[int]):
@@ -126,8 +146,9 @@ class SpanIdNetwork(object):
         :return:
         """
 
-        self.net.hidden = self.net.init_hidden()
-        self.net.hidden2 = self.net.init_hidden2()
+        # NOT needed anymore
+        #self.net.hidden = self.net.init_hidden()
+        #self.net.hidden2 = self.net.init_hidden2()
 
     def train_model(
         self,
@@ -149,7 +170,7 @@ class SpanIdNetwork(object):
 
         dataset_size = len(xs)
 
-        for epoch in range(self.cM.num_epochs):
+        for epoch in range(self.cM.span_num_epochs):
 
             total_loss = 0
             total_hits = 0

@@ -24,7 +24,7 @@ def get_stages(i: int, cM: ConfigManager):
     stages = [
         FeeID(cM),
         FrameID(cM),
-        # SpanID(cM),
+        SpanID(cM),
         # RoleID(cM)
     ]
 
@@ -45,7 +45,7 @@ class Pipeline(object):
         self.levels = levels
 
         if not levels:
-            self.levels = [0, 1]
+            self.levels = [0, 1, 2]
 
         self.stages = [get_stages(level, cM) for level in self.levels]
 

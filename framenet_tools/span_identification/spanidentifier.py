@@ -1,4 +1,7 @@
 import logging
+import os
+import pickle
+
 import spacy
 import re
 import torch
@@ -15,6 +18,26 @@ from framenet_tools.utils.static_utils import shuffle_concurrent_lists, pos_to_i
 from framenet_tools.span_identification.spanidnetwork import SpanIdNetwork
 
 
+def get_dataset(reader: DataReader):
+    """
+    Loads the dataset and combines the necessary data
+
+    :param reader: The reader that contains the dataset
+    :return: xs: A list of sentences appended with its FEE
+             ys: A list of frames corresponding to the given sentences
+    """
+
+    xs = []
+    ys = []
+
+    for annotation_sentences in reader.annotations:
+        for annotation in annotation_sentences:
+            xs.append([annotation.fee_raw] + annotation.sentence)
+            ys.append(annotation.frame)
+
+    return xs, ys
+
+
 class SpanIdentifier(object):
     """
     The Span Identifier for predicting possible role spans of a given sentence
@@ -29,6 +52,12 @@ class SpanIdentifier(object):
 
         self.cM = cM
         self.network = None
+        self.input_field = data.Field(
+            dtype=torch.long, use_vocab=True, preprocessing=None
+        )
+
+        self.en_nlp = spacy.load("en_core_web_sm")
+        self.dep_dict = []
 
     def query(
         self,
@@ -55,10 +84,7 @@ class SpanIdentifier(object):
             return self.query_nn(embedded_sentence, annotation, pos_tags)
 
     def query_nn(
-        self,
-        embedded_sentence: List[float],
-        annotation: Annotation,
-        pos_tags: List[str],
+        self, sentence: List[float], annotation: Annotation, pos_tags: List[str]
     ):
         """
         Predicts the possible spans using the LSTM.
@@ -66,7 +92,7 @@ class SpanIdentifier(object):
         NOTE: In order to use this, the network must be trained beforehand
 
         :param pos_tags: The postags of the sentence
-        :param embedded_sentence: The embedded words of the sentence
+        :param sentence: The embedded words of the sentence
         :param annotation: The annotation of the sentence to predict
         :return: A list of possible span tuples
         """
@@ -75,9 +101,16 @@ class SpanIdentifier(object):
         count = 0
         new_span = -1
 
+        doc = self.en_nlp(" ".join(sentence))
+
         combined = [
-            torch.tensor([word + annotation.embedded_frame + [pos_to_int(pos_tag[1])]])
-            for word, pos_tag in zip(embedded_sentence, pos_tags)
+            [self.input_field.vocab.stoi[word]]
+            + annotation.embedded_frame
+            + [pos_to_int(pos_tag[1])]
+            + [self.dep_to_int(token.dep_)]
+            + [token.head.idx - token.idx]
+            + [pos_to_int(token.head.tag_)]
+            for word, pos_tag, token in zip(sentence, pos_tags, doc)
         ]
 
         bio_tags = self.network.predict(combined)[0]
@@ -315,11 +348,13 @@ class SpanIdentifier(object):
 
         pos_tagger = PosTagger(self.cM.use_spacy)
 
-        for annotations_sentence, emb_sentence, sentence in zip(
-            m_reader.annotations, m_reader.embedded_sentences, m_reader.sentences
+        for annotations_sentence, sentence in zip(
+            m_reader.annotations, m_reader.sentences
         ):
 
             pos_tags = pos_tagger.get_tags(sentence)
+
+            doc = self.en_nlp(" ".join(sentence))
 
             for annotation in annotations_sentence:
 
@@ -336,18 +371,30 @@ class SpanIdentifier(object):
                 ys.append(spans)
 
                 combined = [
-                    torch.tensor(
-                        [
-                            emb_word
-                            + annotation.embedded_frame
-                            + [pos_to_int(pos_tag[1])]
-                        ]
-                    )
-                    for emb_word, pos_tag in zip(emb_sentence, pos_tags)
+                    [self.input_field.vocab.stoi[word]]
+                    + annotation.embedded_frame
+                    + [pos_to_int(pos_tag[1])]
+                    + [self.dep_to_int(token.dep_)]
+                    + [token.head.idx - token.idx]
+                    + [pos_to_int(token.head.tag_)]
+                    for word, pos_tag, token in zip(sentence, pos_tags, doc)
                 ]
                 xs.append(combined)
 
         return xs, ys
+
+    def dep_to_int(self, dep: str):
+        """
+        Converts a dependency feature into a number
+
+        :param dep: The feature
+        :return: A consistent number
+        """
+
+        if dep not in self.dep_dict:
+            self.dep_dict.append(dep)
+
+        return self.dep_dict.index(dep)
 
     def load(self):
         """
@@ -359,6 +406,80 @@ class SpanIdentifier(object):
         self.network = SpanIdNetwork(self.cM, 3)
         self.network.load_model("data/models/span_test.m")
 
+    def save_model(self, name: str):
+        """
+        Saves a model as a file
+
+        :param name: The path of the model to save to
+        :return:
+        """
+
+        # Saving the current config
+        self.cM.create_config(name + ".span.cfg")
+
+        # Saving all Vocabs
+        pickle.dump(self.input_field.vocab, open(name + ".span.in_voc", "wb"))
+
+    def load_model(self, name: str):
+        """
+        Loads a model from a given file
+
+        NOTE: This drops the current model!
+
+        :param name: The path of the model to load
+        :return:
+        """
+
+        # Loading config
+        self.cM = ConfigManager(name + ".span.cfg")
+
+        # Loading Vocabs
+        in_voc = pickle.load(open(name + ".span.in_voc", "rb"))
+
+        self.input_field.vocab = in_voc
+
+        embed = torch.nn.Embedding.from_pretrained(self.input_field.vocab.vectors)
+
+        self.network = SpanIdNetwork(self.cM, 3, embed)
+        self.network.load_model("data/models/span_test.m")
+
+    def gen_embedding_layer(self, reader: DataReader):
+        """
+
+        :param reader:
+        :return:
+        """
+
+        input_field = data.Field(
+            dtype=torch.long, use_vocab=True, preprocessing=None
+        )  # , fix_length= max_length) #No padding necessary anymore, since avg
+        output_field = data.Field(dtype=torch.long)
+        data_fields = [("Sentence", input_field), ("Frame", output_field)]
+
+        xs = []
+        ys = []
+
+        new_xs, new_ys = get_dataset(reader)
+        xs += new_xs
+        ys += new_ys
+
+        shuffle_concurrent_lists([xs, ys])
+
+        examples = [data.Example.fromlist([x, y], data_fields) for x, y in zip(xs, ys)]
+
+        dataset = data.Dataset(examples, fields=data_fields)
+
+        input_field.build_vocab(dataset)
+        output_field.build_vocab(dataset)
+
+        input_field.vocab.load_vectors("glove.6B.300d")
+
+        embed = torch.nn.Embedding.from_pretrained(input_field.vocab.vectors)
+
+        self.input_field = input_field
+
+        return embed
+
     def train(self, mReader, mReaderDev):
         """
         Trains the model on all of the given annotations.
@@ -366,6 +487,8 @@ class SpanIdentifier(object):
         :param annotations: A list of all annotations to train the model from
         :return:
         """
+
+        embed = self.gen_embedding_layer(mReader)
 
         xs, ys = self.get_dataset_comb(mReader)
 
@@ -375,7 +498,7 @@ class SpanIdentifier(object):
 
         num_classes = 3
 
-        self.network = SpanIdNetwork(self.cM, num_classes)
+        self.network = SpanIdNetwork(self.cM, num_classes, embed)
 
         self.network.train_model(xs, ys, dev_xs, dev_ys)
 
@@ -402,10 +525,7 @@ class SpanIdentifier(object):
             for annotation in m_reader.annotations[i]:
 
                 p_role_positions = self.query(
-                    m_reader.embedded_sentences[i],
-                    annotation,
-                    m_reader.pos_tags[i],
-                    use_static,
+                    m_reader.sentences[i], annotation, m_reader.pos_tags[i], use_static
                 )
 
                 annotation.role_positions = p_role_positions
