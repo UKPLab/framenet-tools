@@ -5,7 +5,7 @@ import torchtext
 import os
 
 from torch.autograd import Variable
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from tensorboardX import SummaryWriter
 from typing import List
 
@@ -173,41 +173,42 @@ class FrameIDNetwork(object):
 
         writer = SummaryWriter()
 
-        for epoch in range(self.cM.num_epochs):
+        for epoch in tqdm(range(self.cM.num_epochs), desc='Epoch'):
 
             total_loss = 0
             total_hits = 0
             count = 0
 
-            progress_bar = tqdm(train_iter)
+            with tqdm(train_iter, desc='Iteration') as progress_bar:
+                for batch in progress_bar:
 
-            for batch in progress_bar:
+                    sent = batch.Sentence
+                    labels = Variable(batch.Frame[0]).to(self.device)
 
-                sent = batch.Sentence
-                labels = Variable(batch.Frame[0]).to(self.device)
+                    # Forward + Backward + Optimize
+                    self.optimizer.zero_grad()  # zero the gradient buffer
+                    outputs = self.net(sent)
 
-                # Forward + Backward + Optimize
-                self.optimizer.zero_grad()  # zero the gradient buffer
-                outputs = self.net(sent)
+                    loss = self.criterion(outputs, labels)
+                    loss.backward()
+                    self.optimizer.step()
 
-                loss = self.criterion(outputs, labels)
-                loss.backward()
-                self.optimizer.step()
+                    total_loss += loss.item()
 
-                total_loss += loss.item()
+                    _, predicted = torch.max(outputs.data, 1)
+                    total_hits += (predicted == labels).sum().item()
 
-                _, predicted = torch.max(outputs.data, 1)
-                total_hits += (predicted == labels).sum().item()
+                    count += labels.size(0)
 
-                count += labels.size(0)
-
-                # Just update every 20 iterations
-                if count % 20 == 0:
-                    train_loss = round((total_loss / count), 4)
-                    train_acc = round((total_hits / count), 4)
-                    progress_bar.set_description(
-                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Frames: {count}/{dataset_size}"
-                    )
+                    # Just update every 20 iterations
+                    if count % 20 == 0:
+                        train_loss = round((total_loss / count), 4)
+                        train_acc = round((total_hits / count), 4)
+                        progress_bar.set_postfix(
+                            Loss=train_loss,
+                            Acc=train_acc,
+                            Frames= f'{count}/{dataset_size}'
+                        )
 
             train_loss = total_loss / count
             train_acc = total_hits / count

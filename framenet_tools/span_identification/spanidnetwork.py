@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from torch.autograd import Variable
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
@@ -217,12 +217,12 @@ class SpanIdNetwork(object):
                         train_loss = round((total_loss / count), 4)
                         train_acc = round((total_hits / count), 4)
                         perf_acc = round((perf_match / count), 4)
-                        progress_bar.set_description(
+                        progress_bar.set_postfix(
                             Loss= train_loss,
                             Acc=train_acc,
                             Perfect=perf_acc,
                             Frames=f"{count}/{dataset_size}",
-                            OccSpans={occ}
+                            OccSpans=occ
                         )
 
             self.eval_dev(dev_xs, dev_ys)
