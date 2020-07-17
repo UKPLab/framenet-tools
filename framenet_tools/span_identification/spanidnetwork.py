@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from torch.autograd import Variable
-from tqdm.auto import tqdm
+from tqdm import tqdm
 from typing import List
 
 from framenet_tools.config import ConfigManager
@@ -170,7 +170,7 @@ class SpanIdNetwork(object):
 
         dataset_size = len(xs)
 
-        for epoch in tqdm(range(self.cM.span_num_epochs), desc="Epoch"):
+        for epoch in range(self.cM.span_num_epochs):
 
             total_loss = 0
             total_hits = 0
@@ -180,7 +180,7 @@ class SpanIdNetwork(object):
 
             shuffle_concurrent_lists([xs, ys])
 
-            with tqdm(zip(xs, ys), desc=f"Iteration") as progress_bar:
+            with tqdm(zip(xs, ys), position=0, desc=f"[Epoch: {epoch+1}/{self.cM.span_num_epochs}] Iteration") as progress_bar:
 
                 for x, y in progress_bar:
 

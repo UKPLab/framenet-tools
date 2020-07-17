@@ -5,7 +5,7 @@ import torchtext
 import os
 
 from torch.autograd import Variable
-from tqdm.auto import tqdm
+from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from typing import List
 
@@ -173,13 +173,13 @@ class FrameIDNetwork(object):
 
         writer = SummaryWriter()
 
-        for epoch in tqdm(range(self.cM.num_epochs), desc='Epoch'):
+        for epoch in range(self.cM.num_epochs):
 
             total_loss = 0
             total_hits = 0
             count = 0
 
-            with tqdm(train_iter, desc='Iteration') as progress_bar:
+            with tqdm(train_iter, position=0, desc=f'[Epoch: {epoch}/{self.cM.num_epochs}] Iteration') as progress_bar:
                 for batch in progress_bar:
 
                     sent = batch.Sentence
