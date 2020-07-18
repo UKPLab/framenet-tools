@@ -179,35 +179,36 @@ class FrameIDNetwork(object):
             total_hits = 0
             count = 0
 
-            progress_bar = tqdm(train_iter)
+            with tqdm(train_iter, position=0, desc=f'[Epoch: {epoch}/{self.cM.num_epochs}] Iteration') as progress_bar:
+                for batch in progress_bar:
 
-            for batch in progress_bar:
+                    sent = batch.Sentence
+                    labels = Variable(batch.Frame[0]).to(self.device)
 
-                sent = batch.Sentence
-                labels = Variable(batch.Frame[0]).to(self.device)
+                    # Forward + Backward + Optimize
+                    self.optimizer.zero_grad()  # zero the gradient buffer
+                    outputs = self.net(sent)
 
-                # Forward + Backward + Optimize
-                self.optimizer.zero_grad()  # zero the gradient buffer
-                outputs = self.net(sent)
+                    loss = self.criterion(outputs, labels)
+                    loss.backward()
+                    self.optimizer.step()
 
-                loss = self.criterion(outputs, labels)
-                loss.backward()
-                self.optimizer.step()
+                    total_loss += loss.item()
 
-                total_loss += loss.item()
+                    _, predicted = torch.max(outputs.data, 1)
+                    total_hits += (predicted == labels).sum().item()
 
-                _, predicted = torch.max(outputs.data, 1)
-                total_hits += (predicted == labels).sum().item()
+                    count += labels.size(0)
 
-                count += labels.size(0)
-
-                # Just update every 20 iterations
-                if count % 20 == 0:
-                    train_loss = round((total_loss / count), 4)
-                    train_acc = round((total_hits / count), 4)
-                    progress_bar.set_description(
-                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Frames: {count}/{dataset_size}"
-                    )
+                    # Just update every 20 iterations
+                    if count % 20 == 0:
+                        train_loss = round((total_loss / count), 4)
+                        train_acc = round((total_hits / count), 4)
+                        progress_bar.set_postfix(
+                            Loss=train_loss,
+                            Acc=train_acc,
+                            Frames= f'{count}/{dataset_size}'
+                        )
 
             train_loss = total_loss / count
             train_acc = total_hits / count

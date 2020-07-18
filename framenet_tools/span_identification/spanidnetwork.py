@@ -180,46 +180,50 @@ class SpanIdNetwork(object):
 
             shuffle_concurrent_lists([xs, ys])
 
-            progress_bar = tqdm(zip(xs, ys))
+            with tqdm(zip(xs, ys), position=0, desc=f"[Epoch: {epoch+1}/{self.cM.span_num_epochs}] Iteration") as progress_bar:
 
-            for x, y in progress_bar:
+                for x, y in progress_bar:
 
-                output_dim = len(x)
+                    output_dim = len(x)
 
-                labels = Variable(torch.tensor(y)).to(self.device)
-                labels = torch.reshape(labels, (1, output_dim))
+                    labels = Variable(torch.tensor(y)).to(self.device)
+                    labels = torch.reshape(labels, (1, output_dim))
 
-                self.reset_hidden()
+                    self.reset_hidden()
 
-                # Forward + Backward + Optimize
-                self.optimizer.zero_grad()  # zero the gradient buffer
-                outputs = self.net(x)
+                    # Forward + Backward + Optimize
+                    self.optimizer.zero_grad()  # zero the gradient buffer
+                    outputs = self.net(x)
 
-                outputs = torch.reshape(outputs, (1, 3, output_dim))
+                    outputs = torch.reshape(outputs, (1, 3, output_dim))
 
-                loss = self.criterion(outputs, labels)
-                loss.backward()
-                self.optimizer.step()
-                total_loss += loss.item()
-                _, predicted = torch.max(outputs.data, 1)
+                    loss = self.criterion(outputs, labels)
+                    loss.backward()
+                    self.optimizer.step()
+                    total_loss += loss.item()
+                    _, predicted = torch.max(outputs.data, 1)
 
-                su = sum(predicted[0])
+                    su = sum(predicted[0])
 
-                occ += su
-                total_hits += (predicted == labels).sum().item() / len(predicted[0])
-                if (predicted == labels).sum().item() == len(predicted[0]):
-                    perf_match += 1
+                    occ += su
+                    total_hits += (predicted == labels).sum().item() / len(predicted[0])
+                    if (predicted == labels).sum().item() == len(predicted[0]):
+                        perf_match += 1
 
-                count += 1
+                    count += 1
 
-                # Just update every 20 iterations
-                if count % 20 == 0:
-                    train_loss = round((total_loss / count), 4)
-                    train_acc = round((total_hits / count), 4)
-                    perf_acc = round((perf_match / count), 4)
-                    progress_bar.set_description(
-                        f"Epoch {(epoch + 1)}/{self.cM.num_epochs} Loss: {train_loss} Acc: {train_acc} Perfect: {perf_acc} Frames: {count}/{dataset_size} OccSpans: {occ}"
-                    )
+                    # Just update every 20 iterations
+                    if count % 20 == 0:
+                        train_loss = round((total_loss / count), 4)
+                        train_acc = round((total_hits / count), 4)
+                        perf_acc = round((perf_match / count), 4)
+                        progress_bar.set_postfix(
+                            Loss= train_loss,
+                            Acc=train_acc,
+                            Perfect=perf_acc,
+                            Frames=f"{count}/{dataset_size}",
+                            OccSpans=occ
+                        )
 
             self.eval_dev(dev_xs, dev_ys)
 

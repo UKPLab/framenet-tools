@@ -24,8 +24,8 @@ required_files = [
 def check_files(path):
     logging.info(f"SRLPackage: Checking for required files:")
 
-    for dir, required_file in zip(dirs, required_files):
-        complete_path = path + dir
+    for _dir, required_file in zip(dirs, required_files):
+        complete_path = path + _dir
 
         if os.path.isdir(complete_path):
             logging.info(f"[Skip] Already found {complete_path}!")
