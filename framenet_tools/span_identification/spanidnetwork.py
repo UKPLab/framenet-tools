@@ -32,7 +32,7 @@ class Net(nn.Module):
         self.hidden_size2 = 200
 
         # Dynamic instantiation of the activation function
-        #act_func = getattr(nn, span_layers[i])().to(self.device)
+        # act_func = getattr(nn, span_layers[i])().to(self.device)
 
         logging.debug(f"Hidden sizes: {hidden_sizes}")
         logging.debug(f"Activation functions: {layers}")
@@ -51,7 +51,12 @@ class Net(nn.Module):
 
             hidden_sizes[i] = int(hidden_sizes[i])
 
-            self.add_module(str(i),  getattr(nn, layers[i])(last_size, hidden_sizes[i], bidirectional=True).to(self.device))
+            self.add_module(
+                str(i),
+                getattr(nn, layers[i])(last_size, hidden_sizes[i], bidirectional=True).to(
+                    self.device
+                ),
+            )
 
             # Saving function ref
             self.hidden_layers.append(getattr(self, str(i)))
@@ -95,7 +100,9 @@ class Net(nn.Module):
 
 
 class SpanIdNetwork(object):
-    def __init__(self, cM: ConfigManager, num_classes: int, embedding_layer: torch.nn.Embedding,):
+    def __init__(
+        self, cM: ConfigManager, num_classes: int, embedding_layer: torch.nn.Embedding,
+    ):
 
         self.cM = cM
         self.best_acc = 0
@@ -121,9 +128,7 @@ class SpanIdNetwork(object):
 
         # Loss and Optimizer
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(
-            self.net.parameters(), lr=self.cM.span_learning_rate
-        )
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.cM.span_learning_rate)
 
     def predict(self, sent: List[int]):
         """
@@ -147,8 +152,8 @@ class SpanIdNetwork(object):
         """
 
         # NOT needed anymore
-        #self.net.hidden = self.net.init_hidden()
-        #self.net.hidden2 = self.net.init_hidden2()
+        # self.net.hidden = self.net.init_hidden()
+        # self.net.hidden2 = self.net.init_hidden2()
 
     def train_model(
         self,
@@ -180,7 +185,11 @@ class SpanIdNetwork(object):
 
             shuffle_concurrent_lists([xs, ys])
 
-            with tqdm(zip(xs, ys), position=0, desc=f"[Epoch: {epoch+1}/{self.cM.span_num_epochs}] Iteration") as progress_bar:
+            with tqdm(
+                zip(xs, ys),
+                position=0,
+                desc=f"[Epoch: {epoch+1}/{self.cM.span_num_epochs}] Iteration",
+            ) as progress_bar:
 
                 for x, y in progress_bar:
 
@@ -218,11 +227,11 @@ class SpanIdNetwork(object):
                         train_acc = round((total_hits / count), 4)
                         perf_acc = round((perf_match / count), 4)
                         progress_bar.set_postfix(
-                            Loss= train_loss,
+                            Loss=train_loss,
                             Acc=train_acc,
                             Perfect=perf_acc,
                             Frames=f"{count}/{dataset_size}",
-                            OccSpans=occ
+                            OccSpans=occ,
                         )
 
             self.eval_dev(dev_xs, dev_ys)

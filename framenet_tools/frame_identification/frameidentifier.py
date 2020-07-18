@@ -72,9 +72,7 @@ class FrameIdentifier(object):
         if batch_size is None:
             batch_size = self.cM.batch_size
 
-        examples = [
-            data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
-        ]
+        examples = [data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)]
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 
@@ -82,9 +80,7 @@ class FrameIdentifier(object):
 
         return iterator
 
-    def evaluate(
-        self, predictions: List[torch.tensor], xs: List[str], reader: DataReader
-    ):
+    def evaluate(self, predictions: List[torch.tensor], xs: List[str], reader: DataReader):
         """
         Evaluates the model
 
@@ -176,9 +172,7 @@ class FrameIdentifier(object):
             confidence, frame = torch.max(network_output, 0)
             frames.append((self.output_field.vocab.itos[frame.item()], confidence.item()))
 
-            network_output = torch.cat(
-                [network_output[:frame], network_output[frame + 1:]]
-            )
+            network_output = torch.cat([network_output[:frame], network_output[frame + 1 :]])
 
         return frames
 
@@ -224,9 +218,7 @@ class FrameIdentifier(object):
             prediction_dict["id"] = frame_count
             prediction_dict["fee"] = x[0]
             if not fee_only:
-                prediction_dict["frame"] = self.output_field.vocab.itos[
-                    next(prediction).item()
-                ]
+                prediction_dict["frame"] = self.output_field.vocab.itos[next(prediction).item()]
 
             data_dict["prediction"].append(prediction_dict)
 
@@ -329,9 +321,7 @@ class FrameIdentifier(object):
         shuffle_concurrent_lists([xs, ys])
 
         # Zip datasets and generate complete dictionary
-        examples = [
-            data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
-        ]
+        examples = [data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)]
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 

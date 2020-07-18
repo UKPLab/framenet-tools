@@ -86,9 +86,7 @@ class PosTagger(object):
 
         for tag in tags:
             pos_tags.append(tag[1])
-            lemmas.append(
-                self.lemmatizer.lemmatize(tag[0], pos=get_pos_constants(tag[1]))
-            )
+            lemmas.append(self.lemmatizer.lemmatize(tag[0], pos=get_pos_constants(tag[1])))
         chunks = nltk.ne_chunk(tags)
         for chunk in chunks:
             if isinstance(chunk, Tree):

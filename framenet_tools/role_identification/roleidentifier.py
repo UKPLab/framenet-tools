@@ -3,7 +3,6 @@ from framenet_tools.config import ConfigManager
 
 
 class RoleIdentifier(object):
-
     def __init__(self, cM: ConfigManager):
         self.cM = cM
 

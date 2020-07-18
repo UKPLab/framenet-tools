@@ -52,9 +52,7 @@ class SpanIdentifier(object):
 
         self.cM = cM
         self.network = None
-        self.input_field = data.Field(
-            dtype=torch.long, use_vocab=True, preprocessing=None
-        )
+        self.input_field = data.Field(dtype=torch.long, use_vocab=True, preprocessing=None)
 
         self.en_nlp = spacy.load("en_core_web_sm")
         self.dep_dict = []
@@ -83,9 +81,7 @@ class SpanIdentifier(object):
         else:
             return self.query_nn(embedded_sentence, annotation, pos_tags)
 
-    def query_nn(
-        self, sentence: List[float], annotation: Annotation, pos_tags: List[str]
-    ):
+    def query_nn(self, sentence: List[float], annotation: Annotation, pos_tags: List[str]):
         """
         Predicts the possible spans using the LSTM.
 
@@ -325,9 +321,7 @@ class SpanIdentifier(object):
         if batch_size is None:
             batch_size = self.cM.batch_size
 
-        examples = [
-            data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)
-        ]
+        examples = [data.Example.fromlist([x, y], self.data_fields) for x, y in zip(xs, ys)]
 
         dataset = data.Dataset(examples, fields=self.data_fields)
 
@@ -348,9 +342,7 @@ class SpanIdentifier(object):
 
         pos_tagger = PosTagger(self.cM.use_spacy)
 
-        for annotations_sentence, sentence in zip(
-            m_reader.annotations, m_reader.sentences
-        ):
+        for annotations_sentence, sentence in zip(m_reader.annotations, m_reader.sentences):
 
             pos_tags = pos_tagger.get_tags(sentence)
 

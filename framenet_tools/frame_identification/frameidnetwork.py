@@ -118,9 +118,7 @@ class Net(nn.Module):
 
 
 class FrameIDNetwork(object):
-    def __init__(
-        self, cM: ConfigManager, embedding_layer: torch.nn.Embedding, num_classes: int
-    ):
+    def __init__(self, cM: ConfigManager, embedding_layer: torch.nn.Embedding, num_classes: int):
 
         self.cM = cM
 
@@ -145,9 +143,7 @@ class FrameIDNetwork(object):
 
         # Loss and Optimizer
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(
-            self.net.parameters(), lr=self.cM.learning_rate
-        )
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.cM.learning_rate)
 
     def train_model(
         self,
@@ -179,7 +175,9 @@ class FrameIDNetwork(object):
             total_hits = 0
             count = 0
 
-            with tqdm(train_iter, position=0, desc=f'[Epoch: {epoch}/{self.cM.num_epochs}] Iteration') as progress_bar:
+            with tqdm(
+                train_iter, position=0, desc=f"[Epoch: {epoch}/{self.cM.num_epochs}] Iteration"
+            ) as progress_bar:
                 for batch in progress_bar:
 
                     sent = batch.Sentence
@@ -205,9 +203,7 @@ class FrameIDNetwork(object):
                         train_loss = round((total_loss / count), 4)
                         train_acc = round((total_hits / count), 4)
                         progress_bar.set_postfix(
-                            Loss=train_loss,
-                            Acc=train_acc,
-                            Frames= f'{count}/{dataset_size}'
+                            Loss=train_loss, Acc=train_acc, Frames=f"{count}/{dataset_size}"
                         )
 
             train_loss = total_loss / count
@@ -236,13 +232,9 @@ class FrameIDNetwork(object):
                 f"Train Acc: {train_acc}, Dev Acc: {dev_acc}, Train Loss: {train_loss}, Dev Loss: {dev_loss}"
             )
 
-            writer.add_scalars(
-                "data/loss", {"train_loss": train_loss, "dev_loss": dev_loss}, epoch
-            )
+            writer.add_scalars("data/loss", {"train_loss": train_loss, "dev_loss": dev_loss}, epoch)
 
-            writer.add_scalars(
-                "data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch
-            )
+            writer.add_scalars("data/acc", {"train_acc": train_acc, "dev_acc": dev_acc}, epoch)
 
             if auto_stopper and (last_improvement > autostopper_threshold):
                 writer.close()
@@ -336,7 +328,7 @@ class FrameIDNetwork(object):
         :return:
         """
 
-        upper_path = path[:path.rfind('/')]
+        upper_path = path[: path.rfind("/")]
 
         if not os.path.isdir(upper_path):
             os.makedirs(upper_path)

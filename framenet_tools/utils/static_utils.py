@@ -88,9 +88,9 @@ def load_pkl_from_path(str_path_file: str):
     logging.debug(f"Loading pkl from path: {str_path_file}")
 
     # Minor adjustments as the code seems to be for python2
-    with open(str_path_file, 'rb') as f:
+    with open(str_path_file, "rb") as f:
         u = pickle._Unpickler(f)
-        u.encoding = 'latin1'
+        u.encoding = "latin1"
         loaded_pkl = u.load()
 
     return loaded_pkl
@@ -120,8 +120,16 @@ def download_frame_embeddings():
     """
 
     path = "data/frame_embeddings/"
-    files = ["dict_frame_to_emb_50dim_TransE_list.txt", "dict_frame_to_emb_100dim_wsb_list.txt", "dict_frame_to_emb_300dim_w2v_list.txt"]
-    pkl_files = ["dict_frame_to_emb_50dim_transE_npArray.pkl", "dict_frame_to_emb_100dim_wsb_npArray.pkl", "dict_frame_to_emb_300dim_w2v_npArray.pkl"]
+    files = [
+        "dict_frame_to_emb_50dim_TransE_list.txt",
+        "dict_frame_to_emb_100dim_wsb_list.txt",
+        "dict_frame_to_emb_300dim_w2v_list.txt",
+    ]
+    pkl_files = [
+        "dict_frame_to_emb_50dim_transE_npArray.pkl",
+        "dict_frame_to_emb_100dim_wsb_npArray.pkl",
+        "dict_frame_to_emb_300dim_w2v_npArray.pkl",
+    ]
 
     url = "https://public.ukp.informatik.tu-darmstadt.de/repl4nlp17-frameEmbeddings/"
 
@@ -137,7 +145,6 @@ def download_frame_embeddings():
 
             dict_frame_emb = load_pkl_from_path(path + pkl_file)
             print_dict_to_txt(path + file, dict_frame_emb)
-
 
 
 def shuffle_concurrent_lists(l: List[List[object]]):

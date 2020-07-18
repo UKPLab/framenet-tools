@@ -124,9 +124,7 @@ class SemevalReader(DataReader):
                             fe = label.get("name")
                             start_char = int(label.get("start"))
                             end_char = int(label.get("end"))
-                            start, end = char_pos_to_sentence_pos(
-                                start_char, end_char, words
-                            )
+                            start, end = char_pos_to_sentence_pos(start_char, end_char, words)
 
                             roles.append(fe)
                             role_positions.append((start, end))

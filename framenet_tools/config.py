@@ -73,7 +73,7 @@ class ConfigManager(object):
         if not self.load_config(path):
             download_resources()
             get_spacy_en_model()
-            self.create_config('config.file')
+            self.create_config("config.file")
 
         self.wEM = WordEmbeddingManager()
         self.fEM = FrameEmbeddingManager()
@@ -186,9 +186,7 @@ class ConfigManager(object):
                         self.hidden_sizes = [float(t) for t in found_numbers]
 
                     if key == "activation_functions":
-                        self.activation_functions = re.findall(
-                            r"\w+", config[section][key]
-                        )
+                        self.activation_functions = re.findall(r"\w+", config[section][key])
 
                     if key == "batch_size":
                         self.batch_size = int(config[section][key])
@@ -210,9 +208,7 @@ class ConfigManager(object):
                         self.span_hidden_sizes = [float(t) for t in found_numbers]
 
                     if key == "layers":
-                        self.span_layers = re.findall(
-                            r"\w+", config[section][key]
-                        )
+                        self.span_layers = re.findall(r"\w+", config[section][key])
 
                     if key == "num_epochs":
                         self.span_num_epochs = int(config[section][key])
@@ -265,9 +261,7 @@ class ConfigManager(object):
 
         config_string += "[SEMEVAL]\n"
         for file_path in self.semeval_all:
-            config_string += (
-                file_path.rsplit("/")[-1].rsplit(".")[0] + ": " + file_path + "\n"
-            )
+            config_string += file_path.rsplit("/")[-1].rsplit(".")[0] + ": " + file_path + "\n"
 
         config_string += "\n[VARIABLES]\n"
         config_string += "model_path: " + self.saved_model + "\n"
@@ -279,9 +273,7 @@ class ConfigManager(object):
 
         config_string += "\n[HYPERPARAMETER_FRAMEID]\n"
         config_string += "hidden_sizes: " + str(self.hidden_sizes) + "\n"
-        config_string += (
-            "activation_functions: " + str(self.activation_functions) + "\n"
-        )
+        config_string += "activation_functions: " + str(self.activation_functions) + "\n"
         config_string += "batch_size: " + str(self.batch_size) + "\n"
         config_string += "num_epochs: " + str(self.num_epochs) + "\n"
         config_string += "learning_rate: " + str(self.learning_rate) + "\n"
@@ -289,9 +281,7 @@ class ConfigManager(object):
 
         config_string += "\n[HYPERPARAMETER_SPANID]\n"
         config_string += "hidden_sizes: " + str(self.span_hidden_sizes) + "\n"
-        config_string += (
-                "layers: " + str(self.span_layers) + "\n"
-        )
+        config_string += "layers: " + str(self.span_layers) + "\n"
         config_string += "num_epochs: " + str(self.span_num_epochs) + "\n"
         config_string += "learning_rate: " + str(self.span_learning_rate) + "\n"
         config_string += "embedding_size: " + str(self.span_embedding_size) + "\n"

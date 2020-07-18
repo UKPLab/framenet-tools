@@ -238,7 +238,7 @@ class FeeIdentifier(object):
         """
 
         mReader.annotations = []
-        #fee_finder = FeeIdentifier(self.cM)
+        # fee_finder = FeeIdentifier(self.cM)
 
         for sentence in mReader.sentences:
             possible_fees = self.query([sentence])
@@ -246,8 +246,6 @@ class FeeIdentifier(object):
 
             # Create new Annotation for each possible frame evoking element
             for possible_fee in possible_fees:
-                predicted_annotations.append(
-                    Annotation(fee_raw=possible_fee, sentence=sentence)
-                )
+                predicted_annotations.append(Annotation(fee_raw=possible_fee, sentence=sentence))
 
             mReader.annotations.append(predicted_annotations)

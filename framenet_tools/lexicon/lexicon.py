@@ -4,11 +4,10 @@ import logging
 import lzma
 import pickle
 
-FN = '{http://framenet.icsi.berkeley.edu}'
+FN = "{http://framenet.icsi.berkeley.edu}"
 
 
 class LexiconDataSet(object):
-
     def __init__(self):
         self.loaded = False
         self.lexicon = dict()
@@ -25,20 +24,22 @@ class LexiconDataSet(object):
         tree = ET.parse(filePath)
         root = tree.getroot()
 
-        lexicalUnit = root.get('name')
-        lexicalUnitWithoutSyntax = lexicalUnit.rsplit('.')[0]
+        lexicalUnit = root.get("name")
+        lexicalUnitWithoutSyntax = lexicalUnit.rsplit(".")[0]
 
-        frame = root.get('frame')
+        frame = root.get("frame")
 
-        for FrameElement in root.findall(FN + 'header/' + FN + 'frame/' + FN + 'FE'):
+        for FrameElement in root.findall(FN + "header/" + FN + "frame/" + FN + "FE"):
             if lexicalUnit not in self.lexicon:
                 self.lexicon[lexicalUnit] = []
 
             if lexicalUnitWithoutSyntax not in self.lexiconWithoutSyntax:
                 self.lexiconWithoutSyntax[lexicalUnitWithoutSyntax] = []
 
-            self.lexicon[lexicalUnit].append([frame, FrameElement.get('name')])
-            self.lexiconWithoutSyntax[lexicalUnitWithoutSyntax].append([frame, FrameElement.get('name')])
+            self.lexicon[lexicalUnit].append([frame, FrameElement.get("name")])
+            self.lexiconWithoutSyntax[lexicalUnitWithoutSyntax].append(
+                [frame, FrameElement.get("name")]
+            )
 
     def loadFrame(self, filePath):
         """
@@ -50,13 +51,15 @@ class LexiconDataSet(object):
         tree = ET.parse(filePath)
         root = tree.getroot()
 
-        lexicalUnit = root.get('name')
+        lexicalUnit = root.get("name")
 
-        for FrameElement in root.findall(FN + 'FE'):
+        for FrameElement in root.findall(FN + "FE"):
             if lexicalUnit not in self.frameToFE:
                 self.frameToFE[lexicalUnit] = []
 
-            self.frameToFE[lexicalUnit].append([FrameElement.get('coreType'), FrameElement.get('name')])
+            self.frameToFE[lexicalUnit].append(
+                [FrameElement.get("coreType"), FrameElement.get("name")]
+            )
 
     def createFrameToFE(self, framToFEDir):
         """
@@ -81,15 +84,17 @@ class LexiconDataSet(object):
         tree = ET.parse(filePath)
         root = tree.getroot()
 
-        for frame in root.findall('frame'):
+        for frame in root.findall("frame"):
 
-            lexicalUnit = frame.get('name')
-            print(frame.get('name'))
-            for fes in frame.findall('fes'):
-                for FrameElement in fes.findall('fe'):
+            lexicalUnit = frame.get("name")
+            print(frame.get("name"))
+            for fes in frame.findall("fes"):
+                for FrameElement in fes.findall("fe"):
                     if lexicalUnit not in self.frameToFE:
                         self.frameToFE[lexicalUnit] = []
-                    self.frameToFE[lexicalUnit].append([FrameElement.get('coreType'), FrameElement.get('name')])
+                    self.frameToFE[lexicalUnit].append(
+                        [FrameElement.get("coreType"), FrameElement.get("name")]
+                    )
 
     def createFrameToFESalsa(self, fullPath):
         """
@@ -98,7 +103,7 @@ class LexiconDataSet(object):
         :return:
         """
 
-        logging.info(f'{fullPath}')
+        logging.info(f"{fullPath}")
         self.loadSalsa(fullPath)
 
     def createLexicon(self, lexicalUnitDir):
@@ -111,7 +116,7 @@ class LexiconDataSet(object):
         for file in os.listdir(lexicalUnitDir):
             if file.endswith(".xml"):
                 fullPath = os.path.join(lexicalUnitDir, file)
-                logging.info(f'{fullPath}')
+                logging.info(f"{fullPath}")
                 self.loadFileToLexicon(fullPath)
 
     def save(self, lexiconFile):
@@ -122,9 +127,8 @@ class LexiconDataSet(object):
         """
 
         if self.loaded:
-            logging.info(f'Saving dataset to {lexiconFile}')
-            with lzma.open(lexiconFile, 'wb') as f:
+            logging.info(f"Saving dataset to {lexiconFile}")
+            with lzma.open(lexiconFile, "wb") as f:
                 pickle.dump(self, f)
         else:
             logging.error(f'Dataset not loaded, call "build" method first!')
-

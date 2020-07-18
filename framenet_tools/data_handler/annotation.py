@@ -16,7 +16,7 @@ class Annotation(object):
         fee_raw: str = None,
         sentence: List[str] = [],
         roles: List[str] = [],
-        role_positions: List[Tuple[int, int]] = []
+        role_positions: List[Tuple[int, int]] = [],
     ):
         self.frame = frame
         self.fee = fee
@@ -42,7 +42,14 @@ class Annotation(object):
 
         :return: A handle consisting of all data saved in this object
         """
-        return [self.frame, self.position, self.fee_raw, self.sentence, self.roles, self.role_positions]
+        return [
+            self.frame,
+            self.position,
+            self.fee_raw,
+            self.sentence,
+            self.roles,
+            self.role_positions,
+        ]
 
     def __eq__(self, x):
         """

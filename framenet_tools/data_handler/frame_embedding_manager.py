@@ -8,9 +8,7 @@ class FrameEmbeddingManager(object):
     Loads and provides the specified frame-embeddings
     """
 
-    def __init__(
-        self, path: str = "data/frame_embeddings/dict_frame_to_emb_100dim_wsb_list.txt"
-    ):
+    def __init__(self, path: str = "data/frame_embeddings/dict_frame_to_emb_100dim_wsb_list.txt"):
 
         self.path = path
         self.frames = None

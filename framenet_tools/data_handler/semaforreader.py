@@ -10,9 +10,7 @@ class SemaforReader(DataReader):
     Inherits from DataReader
     """
 
-    def __init__(
-        self, cM: ConfigManager, path_sent: str = None, path_elements: str = None
-    ):
+    def __init__(self, cM: ConfigManager, path_sent: str = None, path_elements: str = None):
 
         DataReader.__init__(self, cM)
 
@@ -46,9 +44,7 @@ class SemaforReader(DataReader):
             fee = element_data[4]  # Frame evoking element
             position = element_data[5].rsplit("_")  # Position of word in sentence
             position = (int(position[0]), int(position[-1]))
-            fee_raw = element_data[6].rsplit(" ")[
-                0
-            ]  # Frame evoking element as it appeared
+            fee_raw = element_data[6].rsplit(" ")[0]  # Frame evoking element as it appeared
 
             sent_num = int(element_data[7])  # Sentence number
 
@@ -59,13 +55,7 @@ class SemaforReader(DataReader):
 
             self.annotations[sent_num].append(
                 Annotation(
-                    frame,
-                    fee,
-                    position,
-                    fee_raw,
-                    self.sentences[sent_num],
-                    roles,
-                    role_positions,
+                    frame, fee, position, fee_raw, self.sentences[sent_num], roles, role_positions,
                 )
             )
 

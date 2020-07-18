@@ -45,42 +45,27 @@ def create_argparser():
     )
 
     parser.add_argument(
-        "action",
-        help=f"Actions to perform, namely: download, convert, train, predict, evaluate",
+        "action", help=f"Actions to perform, namely: download, convert, train, predict, evaluate",
     )
     parser.add_argument(
         "--feeid", help="Use frame evoking element identification.", action="store_true"
     )
-    parser.add_argument(
-        "--frameid", help="Use frame identification.", action="store_true"
-    )
-    parser.add_argument(
-        "--spanid", help="Use the span identification.", action="store_true"
-    )
-    parser.add_argument(
-        "--path", help="A path specification used by some actions.", type=str
-    )
-    parser.add_argument(
-        "--out_path", help="The path used for saving predictions", type=str
-    )
+    parser.add_argument("--frameid", help="Use frame identification.", action="store_true")
+    parser.add_argument("--spanid", help="Use the span identification.", action="store_true")
+    parser.add_argument("--path", help="A path specification used by some actions.", type=str)
+    parser.add_argument("--out_path", help="The path used for saving predictions", type=str)
     parser.add_argument(
         "--use_eval_files",
         help="Specify if eval files should be used for training as well.",
         action="store_true",
     )
-    parser.add_argument(
-        "--batchsize", help="The Batchsize to use for training.", type=int
-    )
-    parser.add_argument(
-        "--config", help="The path to the config file to use.", type=str
-    )
+    parser.add_argument("--batchsize", help="The Batchsize to use for training.", type=int)
+    parser.add_argument("--config", help="The path to the config file to use.", type=str)
 
     return parser
 
 
-def eval_args(
-    parser: argparse.ArgumentParser, args: List[str] = None
-):
+def eval_args(parser: argparse.ArgumentParser, args: List[str] = None):
     """
     Evaluates the given arguments and runs to program accordingly.
 
@@ -101,7 +86,7 @@ def eval_args(
         cM = ConfigManager(parsed.config)
     else:
         # Otherwise try to load the standard file
-        cM = ConfigManager('config.file')
+        cM = ConfigManager("config.file")
 
     if parsed.feeid:
         levels.append(0)
@@ -194,9 +179,7 @@ def main():
     :return:
     """
 
-    logging.basicConfig(
-        format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO
-    )
+    logging.basicConfig(format="%(asctime)s-%(levelname)s-%(message)s", level=logging.INFO)
 
     parser = create_argparser()
 

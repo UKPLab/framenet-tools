@@ -53,9 +53,7 @@ def evaluate_span_identification(m_reader: DataReader, original_reader: DataRead
         gold_annotations = original_reader.annotations[i]
         predictied_annotations = m_reader.annotations[i]
 
-        for gold_annotation, predictied_annotation in zip(
-            gold_annotations, predictied_annotations
-        ):
+        for gold_annotation, predictied_annotation in zip(gold_annotations, predictied_annotations):
 
             for role_posistion in gold_annotation.role_positions:
                 if role_posistion in predictied_annotation.role_positions:
@@ -83,9 +81,7 @@ def evaluate_fee_identification(m_reader: DataReader, original_reader: DataReade
 
     tp = fp = fn = 0
 
-    for gold_annotations, predictied_annotations in zip(
-        gold_sentences, m_reader.annotations
-    ):
+    for gold_annotations, predictied_annotations in zip(gold_sentences, m_reader.annotations):
         for gold_annotation in gold_annotations:
             if gold_annotation.fee_raw in [x.fee_raw for x in predictied_annotations]:
                 tp += 1
@@ -93,9 +89,7 @@ def evaluate_fee_identification(m_reader: DataReader, original_reader: DataReade
                 fn += 1
 
         for predicted_annotation in predictied_annotations:
-            if predicted_annotation.fee_raw not in [
-                x.fee_raw for x in gold_annotations
-            ]:
+            if predicted_annotation.fee_raw not in [x.fee_raw for x in gold_annotations]:
                 fp += 1
 
     return tp, fp, fn
@@ -145,9 +139,7 @@ def evaluate_frame_identification(m_reader: DataReader, original_reader: DataRea
     return tp, fp, fn
 
 
-def evaluate_stages(
-    m_reader: DataReader, original_reader: DataReader, levels: List[int]
-):
+def evaluate_stages(m_reader: DataReader, original_reader: DataReader, levels: List[int]):
     """
     Evaluates the stages specified in levels
 
