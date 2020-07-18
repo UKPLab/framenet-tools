@@ -126,7 +126,7 @@ Unidecode==1.0.23
 urllib3==1.24.1
 wcwidth==0.1.7
 websocket-client==0.56.0
-Werkzeug==0.15.2
+Werkzeug==0.15.3
 word2number==1.1
 wrapt==1.10.11
 xmltodict==0.12.0
