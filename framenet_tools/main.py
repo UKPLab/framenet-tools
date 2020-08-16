@@ -103,7 +103,8 @@ def eval_args(parser: argparse.ArgumentParser, args: List[str] = None):
     if parsed.action == "download":
 
         if parsed.path is not None:
-            check_files(os.path.join(os.getcwd(), parsed.download))
+            # check_files(os.path.join(os.getcwd(), parsed.download))
+            check_files(os.path.join(os.getcwd(), parsed.path))
         else:
             check_files(os.getcwd())
 
