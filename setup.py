@@ -10,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="framenet_tools",
-    version="0.0.1",
+    version="0.1.0",
     # scripts=["SRLPackage"],
     author="Andre Markard",
     author_email="andre@markard.eu",
