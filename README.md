@@ -84,3 +84,21 @@ Currently support formats include:
 - SEMAFOR CoNLL: the format used by the SEMAFOR parser
 
 NOTE: If the format is not supported, [pyfn][1] might be providing a conversion.
+
+## Citing & Authors
+If you find this repository helpful, feel free to cite
+
+```
+@software{andre_markard_2020_3993970,
+  author       = {André Markard and
+                  Jan-Christoph Klie},
+  title        = {{FrameNet Tools: A Python library to work with 
+                   FrameNet}},
+  month        = aug,
+  year         = 2020,
+  publisher    = {Zenodo},
+  version      = {v0.1.0},
+  doi          = {10.5281/zenodo.3993970},
+  url          = {https://doi.org/10.5281/zenodo.3993970}
+}
+```
