@@ -51,7 +51,7 @@ jsondiff==1.1.1
 jsonnet==0.12.1
 jsonpickle==1.1
 kiwisolver==1.0.1
-lxml==4.3.0
+lxml==4.6.2
 MarkupSafe==1.1.1
 matplotlib==3.0.3
 mmh3==2.5.1
