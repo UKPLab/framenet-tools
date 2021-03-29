@@ -90,7 +90,7 @@ python-jose==2.0.2
 pytorch-ignite==0.1.2
 pytorch-pretrained-bert==0.6.1
 pytz==2018.9
-PyYAML==5.1
+PyYAML==5.4
 regex==2018.1.10
 requests==2.21.0
 responses==0.10.6
