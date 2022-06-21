@@ -64,7 +64,7 @@ msgpack-numpy==0.4.3.2
 murmurhash==1.0.2
 networkx==2.2
 nltk==3.6.5
-numpy==1.16.0
+numpy==1.22.0
 numpydoc==0.8.0
 overrides==1.9
 packaging==19.0
